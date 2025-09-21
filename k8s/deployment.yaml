@@ -1,0 +1,126 @@
+# Engine Framework - Shared Kubernetes Configuration
+
+# Base Deployment Template
+# Usage: Copy to k8s/deployment.yaml and customize per repository
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: engine-engine-core
+  labels:
+    app: engine-engine-core
+    component: engine_core
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: engine-engine-core
+  template:
+    metadata:
+      labels:
+        app: engine-engine-core
+        component: engine_core
+    spec:
+      containers:
+      - name: app
+        image: ghcr.io/engine-framework/engine-core:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: engine-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: engine-secrets
+              key: redis-url
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+
+---
+# Service Template
+apiVersion: v1
+kind: Service
+metadata:
+  name: engine-engine-core
+  labels:
+    app: engine-engine-core
+spec:
+  selector:
+    app: engine-engine-core
+  ports:
+  - port: 80
+    targetPort: 8000
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Ingress Template
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: engine-engine-core
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: engine-core.engine-framework.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: engine-engine-core
+            port:
+              number: 80
+
+---
+# HorizontalPodAutoscaler Template
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: engine-engine-core
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: engine-engine-core
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

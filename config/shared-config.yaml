@@ -1,0 +1,54 @@
+# Engine Framework - Shared CI/CD Configuration
+# This file contains common configuration used across all repositories
+
+# Python Configuration
+PYTHON_VERSION: "3.11"
+PYTHON_VERSIONS: ["3.11", "3.12", "3.13"]
+
+# Node.js Configuration
+NODE_VERSION: "18"
+NODE_VERSIONS: ["18", "20"]
+
+# Docker Configuration
+DOCKER_REGISTRY: "ghcr.io/engine-framework"
+DOCKER_PLATFORMS: ["linux/amd64", "linux/arm64"]
+
+# Testing Configuration
+TEST_PARALLEL_WORKERS: 4
+TEST_COVERAGE_MINIMUM: 85
+
+# Code Quality
+BLACK_LINE_LENGTH: 88
+ISORT_PROFILE: "black"
+
+# Security Scanning
+SECURITY_SCAN_ENABLED: true
+DEPENDENCY_SCAN_ENABLED: true
+
+# Release Configuration
+RELEASE_BRANCHES: ["main", "develop"]
+TAG_PREFIX: "v"
+
+# Notification Configuration
+SLACK_WEBHOOK_URL: "${{ secrets.SLACK_WEBHOOK_URL }}"
+DISCORD_WEBHOOK_URL: "${{ secrets.DISCORD_WEBHOOK_URL }}"
+
+# Environment Variables
+ENVIRONMENTS:
+  - name: "development"
+    branch: "develop"
+    auto_deploy: false
+  - name: "staging"
+    branch: "main"
+    auto_deploy: true
+  - name: "production"
+    tag_pattern: "v*"
+    auto_deploy: true
+
+# Build Configuration
+BUILD_CACHE_ENABLED: true
+BUILD_CACHE_TTL: "7d"
+
+# Monitoring
+MONITORING_ENABLED: true
+METRICS_RETENTION: "30d"
