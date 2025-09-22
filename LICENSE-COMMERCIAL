@@ -1,0 +1,52 @@
+# Engine Framework - Commercial License
+
+Copyright (c) 2024 Engine Framework Contributors
+
+## Commercial License Terms
+
+This commercial license grants you the right to use, modify, and distribute the Engine Framework Enterprise Edition for commercial purposes, subject to the following terms and conditions:
+
+### 1. License Grant
+Subject to the payment of applicable license fees and compliance with these terms, Engine Framework Contributors ("Licensor") grants you a non-exclusive, non-transferable license to:
+
+- Use the Engine Framework Enterprise Edition in production environments
+- Modify the source code for your internal business purposes
+- Distribute derivative works commercially
+- Access premium support and enterprise features
+
+### 2. Enterprise Features
+This commercial license includes access to:
+- Advanced workflow orchestration capabilities
+- Enterprise-grade security features
+- High-performance optimizations
+- Priority support and SLAs
+- Custom integrations and connectors
+- Advanced analytics and monitoring
+
+### 3. Restrictions
+You may NOT:
+- Redistribute the software under open source licenses
+- Use the software in violation of applicable laws
+- Reverse engineer core algorithms (except as permitted by law)
+- Remove or alter copyright notices
+
+### 4. Support and Maintenance
+- 24/7 priority support
+- Regular security updates
+- Feature requests prioritization
+- Direct access to engineering team
+
+### 5. Warranty and Liability
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. LICENSOR DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+IN NO EVENT SHALL LICENSOR BE LIABLE FOR ANY DAMAGES ARISING FROM USE OF THE SOFTWARE.
+
+### 6. Termination
+This license terminates automatically if you violate any terms. Upon termination, you must cease all use and destroy all copies.
+
+### 7. Governing Law
+This license is governed by the laws of [Jurisdiction to be determined].
+
+### 8. Contact
+For licensing inquiries: licensing@engine-framework.org
+For support: enterprise@engine-framework.org

@@ -6,7 +6,7 @@ authors = ["Engine Framework Team <engine@example.com>"]
 readme = "README.md"
 packages = [{include = "engine_core", from = "src"}]
 exclude = ["**/tests/**", "**/__pycache__/**", "**/*.pyc", "**/.pytest_cache/**"]
-license = "MIT"
+license = "AGPL-3.0"
 homepage = "https://github.com/engine-agi/engine-core"
 repository = "https://github.com/engine-agi/engine-core"
 keywords = ["ai", "agents", "orchestration", "framework", "pregel", "actor-model"]
