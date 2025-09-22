@@ -1,26 +1,274 @@
 """
-Base model configuration and database setup for Engine Framework.
+Base model configuration for Engine Framework.
 
-This module provides:
-1. SQLAlchemy Base class with common fields
-2. Database connection and async session management  
-3. Alembic migration configuration
-4. Common model utilities and validators
-
-Based on Engine Framework data model specification.
+Simplified version to avoid import-time database connections.
 """
 
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional, List, Union, AsyncGenerator
+from typing import Any, Dict, Optional, List, Union
 from sqlalchemy import (
-    Column, 
-    String, 
-    DateTime, 
-    Boolean, 
-    Text, 
+    Column,
+    String,
+    DateTime,
+    Boolean,
+    Text,
+    Integer
+)
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+# Database configuration - lazy initialization
+DATABASE_URL = "postgresql+asyncpg://engine:engine@localhost:5432/engine_db"
+TEST_DATABASE_URL = "postgresql+asyncpg://engine:engine@localhost:5432/engine_test_db"
+
+def get_engine():
+    """Get database engine (lazy initialization)."""
+    from sqlalchemy.ext.asyncio import create_async_engine
+    return create_async_engine(DATABASE_URL, echo=False)
+
+def get_test_engine():
+    """Get test database engine (lazy initialization)."""
+    from sqlalchemy.ext.asyncio import create_async_engine
+    return create_async_engine(TEST_DATABASE_URL, echo=False)
+
+def get_AsyncSessionLocal():
+    """Get async session maker."""
+    return async_sessionmaker(
+        bind=get_engine(),
+        class_=AsyncSession,
+        expire_on_commit=False
+    )
+
+def get_TestAsyncSessionLocal():
+    """Get test async session maker."""
+    return async_sessionmaker(
+        bind=get_test_engine(),
+        class_=AsyncSession,
+        expire_on_commit=False
+    )
+
+# Base class for all models
+class Base(DeclarativeBase):
+    """Base class for all Engine Framework models."""
+    pass
+
+# Mixin classes
+class StringIdentifierMixin:
+    """Mixin for models with string-based identifiers."""
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+
+class ConfigurationMixin:
+    """Mixin for configurable models."""
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    config: Mapped[Optional[Dict[str, Any]]] = mapped_column(String, nullable=True)  # JSON as string
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+
+class ValidationMixin:
+    """Mixin for models with validation."""
+    is_valid: Mapped[bool] = mapped_column(Boolean, default=True)
+    validation_errors: Mapped[Optional[List[str]]] = mapped_column(String, nullable=True)  # JSON as string
+    last_validated: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+import uuid
+from datetime import datetime
+from typing import Any, Dict, Optional, List, Union
+from sqlalchemy import (
+    Column,
+    String,
+    DateTime,
+    Boolean,
+    Text,
     Integer,
     MetaData,
+    text
+)
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+import os
+
+# Database configuration - lazy initialization to avoid import-time connections
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://engine:engine@localhost:5432/engine_db"
+)
+
+TEST_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL",
+    "postgresql+asyncpg://engine:engine@localhost:5432/engine_test_db"
+)
+
+# Lazy initialization functions
+def get_engine():
+    """Get or create the main database engine."""
+    from sqlalchemy.ext.asyncio import create_async_engine
+    return create_async_engine(
+        DATABASE_URL,
+        echo=False,
+        pool_size=20,
+        max_overflow=30,
+        pool_pre_ping=True,
+        pool_recycle=3600
+    )
+
+def get_test_engine():
+    """Get or create the test database engine."""
+    from sqlalchemy.ext.asyncio import create_async_engine
+    return create_async_engine(
+        TEST_DATABASE_URL,
+        echo=False,
+        pool_size=5,
+        max_overflow=10
+    )
+
+def get_AsyncSessionLocal():
+    """Get the async session maker."""
+    return async_sessionmaker(
+        bind=get_engine(),
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=True,
+        autocommit=False
+    )
+
+def get_TestAsyncSessionLocal():
+    """Get the test async session maker."""
+    return async_sessionmaker(
+        bind=get_test_engine(),
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autoflush=True,
+        autocommit=False
+    )
+
+# Simplified backward compatibility
+class Base(DeclarativeBase):
+    """Base class for all Engine Framework models."""
+    metadata = MetaData()
+
+    # Common fields
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class StringIdentifierMixin:
+    """Mixin for models with string-based identifiers."""
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+
+class ConfigurationMixin:
+    """Mixin for configurable models."""
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    config: Mapped[Optional[Dict[str, Any]]] = mapped_column(Text, nullable=True)  # JSON stored as text
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+
+class ValidationMixin:
+    """Mixin for models with validation."""
+    is_valid: Mapped[bool] = mapped_column(Boolean, default=True)
+    validation_errors: Mapped[Optional[List[str]]] = mapped_column(Text, nullable=True)  # JSON stored as text
+    last_validated: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
+import uuid
+from datetime import datetime
+from typing import Any, Dict, Optional, List, Union
+from sqlalchemy import (
+    Column,
+    String,
+    DateTime,
+    Boolean,
+    Text,
+    Integer,
+    MetaData,
+    text,
+    create_engine as sa_create_engine
+)
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+import os
+
+# Database configuration - lazy initialization to avoid import-time connections
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://engine:engine@localhost:5432/engine_db"
+)
+
+TEST_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL",
+    "postgresql+asyncpg://engine:engine@localhost:5432/engine_test_db"
+)
+
+# Global variables for lazy initialization
+_engine = None
+_test_engine = None
+_AsyncSessionLocal = None
+_TestAsyncSessionLocal = None
+
+def get_engine():
+    """Get or create the main database engine."""
+    global _engine
+    if _engine is None:
+        _engine = create_async_engine(
+            DATABASE_URL,
+            echo=False,  # Set to False in production
+            pool_size=20,
+            max_overflow=30,
+            pool_pre_ping=True,
+            pool_recycle=3600  # 1 hour
+        )
+    return _engine
+
+def get_test_engine():
+    """Get or create the test database engine."""
+    global _test_engine
+    if _test_engine is None:
+        _test_engine = create_async_engine(
+            TEST_DATABASE_URL,
+            echo=False,  # Reduce noise in tests
+            pool_size=5,
+            max_overflow=10
+        )
+    return _test_engine
+
+def get_AsyncSessionLocal():
+    """Get or create the main async session maker."""
+    global _AsyncSessionLocal
+    if _AsyncSessionLocal is None:
+        _AsyncSessionLocal = async_sessionmaker(
+            bind=get_engine(),
+            class_=AsyncSession,
+            expire_on_commit=False,
+            autoflush=True,
+            autocommit=False
+        )
+    return _AsyncSessionLocal
+
+def get_TestAsyncSessionLocal():
+    """Get or create the test async session maker."""
+    global _TestAsyncSessionLocal
+    if _TestAsyncSessionLocal is None:
+        _TestAsyncSessionLocal = async_sessionmaker(
+            bind=get_test_engine(),
+            class_=AsyncSession,
+            expire_on_commit=False,
+            autoflush=True,
+            autocommit=False
+        )
+    return _TestAsyncSessionLocal
+
+# For backward compatibility - these will be initialized on first access
+class LazyEngine:
+    def __getattr__(self, name):
+        return getattr(get_engine(), name)
+
+class LazyTestEngine:
+    def __getattr__(self, name):
+        return getattr(get_test_engine(), name)
+
+engine = LazyEngine()
+test_engine = LazyTestEngine()
+AsyncSessionLocal = get_AsyncSessionLocal
+TestAsyncSessionLocal = get_TestAsyncSessionLocal
     event
 )
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
@@ -43,39 +291,76 @@ TEST_DATABASE_URL = os.getenv(
     "postgresql+asyncpg://engine:engine@localhost:5432/engine_test_db"
 )
 
-# SQLAlchemy async engine configuration
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=True,  # Set to False in production
-    pool_size=20,
-    max_overflow=30,
-    pool_pre_ping=True,
-    pool_recycle=3600  # 1 hour
-)
+# SQLAlchemy async engine configuration - lazy initialization
+_engine = None
+_test_engine = None
 
-test_engine = create_async_engine(
-    TEST_DATABASE_URL,
-    echo=False,  # Reduce noise in tests
-    pool_size=5,
-    max_overflow=10
-)
+def get_engine():
+    """Get or create the main database engine."""
+    global _engine
+    if _engine is None:
+        _engine = create_async_engine(
+            DATABASE_URL,
+            echo=True,  # Set to False in production
+            pool_size=20,
+            max_overflow=30,
+            pool_pre_ping=True,
+            pool_recycle=3600  # 1 hour
+        )
+    return _engine
 
-# Async session factory
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=True,
-    autocommit=False
-)
+def get_test_engine():
+    """Get or create the test database engine."""
+    global _test_engine
+    if _test_engine is None:
+        _test_engine = create_async_engine(
+            TEST_DATABASE_URL,
+            echo=False,  # Reduce noise in tests
+            pool_size=5,
+            max_overflow=10
+        )
+    return _test_engine
 
-TestAsyncSessionLocal = async_sessionmaker(
-    bind=test_engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autoflush=True,
-    autocommit=False
-)
+# For backward compatibility, expose as module-level functions
+def engine():
+    return get_engine()
+
+def test_engine():
+    return get_test_engine()
+
+# Async session factory - lazy initialization
+_AsyncSessionLocal = None
+_TestAsyncSessionLocal = None
+
+def get_AsyncSessionLocal():
+    """Get or create the main async session maker."""
+    global _AsyncSessionLocal
+    if _AsyncSessionLocal is None:
+        _AsyncSessionLocal = async_sessionmaker(
+            bind=get_engine(),
+            class_=AsyncSession,
+            expire_on_commit=False,
+            autoflush=True,
+            autocommit=False
+        )
+    return _AsyncSessionLocal
+
+def get_TestAsyncSessionLocal():
+    """Get or create the test async session maker."""
+    global _TestAsyncSessionLocal
+    if _TestAsyncSessionLocal is None:
+        _TestAsyncSessionLocal = async_sessionmaker(
+            bind=get_test_engine(),
+            class_=AsyncSession,
+            expire_on_commit=False,
+            autoflush=True,
+            autocommit=False
+        )
+    return _TestAsyncSessionLocal
+
+# For backward compatibility
+AsyncSessionLocal = get_AsyncSessionLocal()
+TestAsyncSessionLocal = get_TestAsyncSessionLocal()
 
 # Naming convention for constraints (required for Alembic)
 convention = {
@@ -323,25 +608,25 @@ async def get_test_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 async def create_tables():
     """Create all tables in the database."""
-    async with engine.begin() as conn:
+    async with get_engine().begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
 async def drop_tables():
     """Drop all tables in the database."""
-    async with engine.begin() as conn:
+    async with get_engine().begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
 
 async def create_test_tables():
     """Create all tables in the test database."""
-    async with test_engine.begin() as conn:
+    async with get_test_engine().begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
 
 async def drop_test_tables():
     """Drop all tables in the test database."""
-    async with test_engine.begin() as conn:
+    async with get_test_engine().begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
 

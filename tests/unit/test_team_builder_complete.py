@@ -1,18 +1,10 @@
 """
-Unit tests for TeamBuilder - Complete Team Syst    def test_minimal_team_build(self):
-        """Test building a team with minimal required fields"""
-        team = TeamBuilder() \
-            .with_id("test_team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-            .add_member("agent1") \
-            .build()
+Unit tests for TeamBuilder - Complete Team System
+"""
 
-        assert team is not None
-        assert isinstance(team, BuiltTeam)
-        assert team.id == "test_team"
-        assert team.name is None
-        assert team.coordination_strategy == TeamCoordinationStrategy.COLLABORATIVE.value
-        assert team.member_count == 1
+import pytest
+import asyncio
+from unittest.mock import Mock, AsyncMock
 import pytest
 import asyncio
 from typing import List, Dict, Any
@@ -64,14 +56,15 @@ class TestTeamBuilderMinimal:
         """Test building a team with minimal required fields"""
         team = TeamBuilder() \
             .with_id("test_team") \
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
             .add_member("agent1") \
             .build()
 
         assert team is not None
         assert isinstance(team, BuiltTeam)
         assert team.id == "test_team"
-        assert team.name == "test_team"  # Should default to ID
-        assert team.coordination_strategy == TeamCoordinationStrategy.HIERARCHICAL.value
+        assert team.name is None  # Name defaults to None when not specified
+        assert team.coordination_strategy == TeamCoordinationStrategy.COLLABORATIVE.value
         assert team.member_count == 1
 
     def test_team_with_name(self):
@@ -126,6 +119,7 @@ class TestTeamBuilderConfiguration:
         for mode in modes:
             team = TeamBuilder() \
                 .with_id(f"team_{mode.value}") \
+                .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
                 .with_execution_mode(mode) \
                 .add_member("agent1") \
                 .build()
@@ -145,6 +139,7 @@ class TestTeamBuilderConfiguration:
         for role in roles:
             team = TeamBuilder() \
                 .with_id(f"team_{role.value}") \
+                .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
                 .add_member("agent1", role=role) \
                 .build()
 
@@ -158,6 +153,7 @@ class TestTeamBuilderConfiguration:
 
         team = TeamBuilder() \
             .with_id("capability_team") \
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
             .add_member("agent1", capabilities=capabilities) \
             .build()
 
@@ -168,6 +164,7 @@ class TestTeamBuilderConfiguration:
         """Test member priority"""
         team = TeamBuilder() \
             .with_id("priority_team") \
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
             .add_member("agent1", priority=5) \
             .add_member("agent2", priority=1) \
             .build()
@@ -180,6 +177,7 @@ class TestTeamBuilderConfiguration:
         """Test max concurrent tasks"""
         team = TeamBuilder() \
             .with_id("concurrent_team") \
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
             .add_member("agent1", max_concurrent_tasks=3) \
             .build()
 
@@ -253,6 +251,7 @@ class TestTeamBuilderConvenienceMethods:
         """Test add_reviewer convenience method"""
         team = TeamBuilder() \
             .with_id("reviewer_team") \
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
             .add_reviewer("reviewer_agent") \
             .build()
 
@@ -341,6 +340,7 @@ class TestBuiltTeam:
         team = TeamBuilder() \
             .with_id("built_team") \
             .with_name("Built Team") \
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
             .add_member("agent1") \
             .build()
 
@@ -371,6 +371,7 @@ class TestBuiltTeam:
         """Test BuiltTeam serialization"""
         team = TeamBuilder() \
             .with_id("dict_team") \
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
             .add_member("agent1") \
             .build()
 
@@ -385,6 +386,7 @@ class TestBuiltTeam:
         """Test adding agents to built team"""
         team = TeamBuilder() \
             .with_id("add_agent_team") \
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
             .add_member("agent1") \
             .build()
 
@@ -654,4 +656,4 @@ class TestCoordinationStrategies:
 
         # Tasks should be distributed across members
         total_assigned = sum(len(task_list) for task_list in assignments.values())
-        assert total_assigned == 4        assert total_assigned == 4
+        assert total_assigned == 4

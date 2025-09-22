@@ -250,7 +250,7 @@ class PatternBasedIntentRecognizer(IntentRecognizer):
         """Initialize regex patterns for intent recognition."""
         return {
             IntentCategory.CREATE: [
-                r'\b(create|make|build|generate|new|add)\s+(.+)',
+                r'\b(create|make|build|new|add)\s+(.+)',
                 r'\bI\s+(want|need)\s+to\s+(create|make|build)\s+(.+)',
                 r'\bLet\'?s\s+(create|make|build)\s+(.+)'
             ],
@@ -1316,8 +1316,7 @@ class ProtocolParser:
         # Add step IDs and estimated durations
         for i, step in enumerate(steps):
             step['id'] = f"step_{i+1}"
-            step['estimated_duration'] = str(10.0 + (i * 5.0))  # Simple duration estimation
-            step['requirements'] = str(command.requirements)
+            step['estimated_duration'] = 10.0 + (i * 5.0)  # Simple duration estimation
             step['parameters'] = json.dumps(command.parameters)
         
         return steps

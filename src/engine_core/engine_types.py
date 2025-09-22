@@ -14,7 +14,7 @@ Key Components:
 
 from typing import Dict, Any, Optional, List, Union
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # Status Enumerations
@@ -129,7 +129,7 @@ class EngineError(Exception):
         self.details = details or {}
         self.component = component or "unknown"
         self.recoverable = recoverable
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(timezone.utc)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert error to dictionary for serialization."""
@@ -205,11 +205,11 @@ class ExecutionContext:
         self.session_id = session_id
         self.correlation_id = correlation_id
         self.metadata = metadata or {}
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
 
     def get_duration(self) -> float:
         """Get execution duration in seconds."""
-        return (datetime.utcnow() - self.start_time).total_seconds()
+        return (datetime.now(timezone.utc) - self.start_time).total_seconds()
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert context to dictionary."""
