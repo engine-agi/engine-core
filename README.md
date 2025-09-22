@@ -2,7 +2,7 @@
 
 [![PyPI version](https://badge.fury.io/py/engine-core.svg)](https://pypi.org/project/engine-core/)
 [![Python versions](https://img.shields.io/pypi/pyversions/engine-core.svg)](https://pypi.org/project/engine-core/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-AGPL%203.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Tests](https://github.com/engine-agi/engine-core/actions/workflows/tests.yml/badge.svg)](https://github.com/engine-agi/engine-core/actions)
 
 **Engine Framework Core** - AI Agent Orchestration System
@@ -22,21 +22,35 @@ A powerful framework for building AI agent orchestration systems based on Pregel
 
 ## 📦 Installation
 
-```bash
-# From PyPI
-pip install engine-core
+### 🚀 Quick Install (Recommended)
 
-# From source
+```bash
+pip install engine-core
+```
+
+**That's it!** Engine Core v1.0.0 is now available on PyPI and ready to use.
+
+### 📋 Requirements
+
+- **Python**: 3.11 or higher
+- **Optional Dependencies**:
+  - PostgreSQL (for data persistence)
+  - Redis (for workflow caching and pub/sub)
+
+### 🔧 Alternative Installation Methods
+
+```bash
+# From source (development)
 git clone https://github.com/engine-agi/engine-core.git
 cd engine-core
 pip install -e .
+
+# With optional dependencies
+pip install engine-core[postgres,redis]
+
+# Development installation with all tools
+pip install -e ".[dev]"
 ```
-
-### Requirements
-
-- Python 3.11+
-- PostgreSQL (optional, for persistence)
-- Redis (optional, for workflows and caching)
 
 ## 🚀 Quick Start
 
@@ -120,7 +134,23 @@ poetry run pytest
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**.
+
+### 📋 Dual Licensing
+
+**Engine Framework** uses a dual licensing model:
+
+- **AGPL-3.0**: For open-source usage, community contributions, and non-commercial projects
+- **Commercial License**: For enterprise deployments, proprietary integrations, and commercial products
+
+### 📞 Commercial Licensing
+
+For commercial usage or if you need a different license:
+- Contact: [licensing@engine-framework.com](mailto:licensing@engine-framework.com)
+- Enterprise features and support available
+- Custom deployment options
+
+See the [LICENSE](LICENSE) file and [LICENSE-COMMERCIAL](LICENSE-COMMERCIAL) for details.
 
 ## 🆘 Support
 

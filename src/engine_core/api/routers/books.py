@@ -26,7 +26,7 @@ from ..schemas.book_schemas import (
     SectionSchema
 )
 from ..schemas.base_schemas import BaseResponseSchema, ErrorResponseSchema
-from ...core.book import BookBuilder, Book, SemanticSearchEngine
+from ...core.book import BookBuilder, Book
 
 # Create router instance
 router = APIRouter(

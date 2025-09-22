@@ -269,8 +269,6 @@ engine = LazyEngine()
 test_engine = LazyTestEngine()
 AsyncSessionLocal = get_AsyncSessionLocal
 TestAsyncSessionLocal = get_TestAsyncSessionLocal
-    event
-)
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.postgresql import UUID, JSONB

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "engine-core"
-version = "1.0.0"
+version = "1.0.1"
 description = "Engine Framework Core - AI Agent Orchestration System"
 authors = ["Engine Framework Team <engine@example.com>"]
 readme = "README.md"
@@ -13,7 +13,7 @@ keywords = ["ai", "agents", "orchestration", "framework", "pregel", "actor-model
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
