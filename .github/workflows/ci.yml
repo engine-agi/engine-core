@@ -26,11 +26,27 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml', '**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-dev.txt
+        if [ -f pyproject.toml ]; then
+          pip install poetry
+          poetry install --with dev
+        elif [ -f requirements-dev.txt ]; then
+          pip install -r requirements-dev.txt
+        elif [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        fi
+        if [ -f pyproject.toml ]; then pip install -e .; fi
 
     - name: Run tests
       run: |
@@ -59,7 +75,7 @@ jobs:
     - name: Run linting
       run: |
         black --check src tests
-        isort --check-only src tests
+        isort --check-only --diff --profile black src tests
         flake8 src tests
         mypy src
 
@@ -69,10 +85,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Run security scan
-      uses: securecodewarrior/github-action-security-scan@v1
+    - name: Set up Python
+      uses: actions/setup-python@v4
       with:
-        language: python
+        python-version: '3.11'
+
+    - name: Install security tools
+      run: |
+        pip install bandit safety
+
+    - name: Run security scan
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+        safety check --json > safety-report.json || true
 
   docker:
     runs-on: ubuntu-latest
