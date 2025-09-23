@@ -6,14 +6,15 @@ Simplified version to avoid import-time database connections.
 
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional, List, Union
+from typing import Any, Dict, Optional, List, Union, AsyncGenerator
 from sqlalchemy import (
     Column,
     String,
     DateTime,
     Boolean,
     Text,
-    Integer
+    Integer,
+    event
 )
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column

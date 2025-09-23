@@ -13,24 +13,30 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import logging
 
-from .protocol import (
-    ProtocolParser,
-    IntentRecognizer,
-    PatternBasedIntentRecognizer,
-    CommandType,
-    IntentCategory,
-    ContextScope,
-    CommandPriority,
-    CommandContext,
-    ParsedCommand,
-    ExecutionPlan
-)
-
-# Type checking imports
+# Lazy imports to avoid database dependencies at import time
 if TYPE_CHECKING:
+    from .protocol import (
+        ProtocolParser,
+        IntentRecognizer,
+        PatternBasedIntentRecognizer,
+        CommandType,
+        IntentCategory,
+        ContextScope,
+        CommandPriority,
+        CommandContext,
+        ParsedCommand,
+        ExecutionPlan
+    )
     from ..agents.agent_builder import BuiltAgent
 
-logger = logging.getLogger(__name__)
+# Initialize logger only when needed
+logger = None
+
+def get_logger():
+    global logger
+    if logger is None:
+        logger = logging.getLogger(__name__)
+    return logger
 
 
 @dataclass
@@ -44,12 +50,12 @@ class ProtocolConfiguration:
     tags: List[str] = field(default_factory=list)
 
     # Parser configuration
-    intent_recognizer: Optional[IntentRecognizer] = None
-    supported_intents: List[IntentCategory] = field(default_factory=lambda: list(IntentCategory))
-    supported_command_types: List[CommandType] = field(default_factory=lambda: list(CommandType))
+    intent_recognizer: Optional[Any] = None  # IntentRecognizer
+    supported_intents: List[Any] = field(default_factory=lambda: [])  # List[IntentCategory]
+    supported_command_types: List[Any] = field(default_factory=lambda: [])  # List[CommandType]
 
     # Context configuration
-    default_scope: ContextScope = ContextScope.SESSION
+    default_scope: Any = "SESSION"  # ContextScope.SESSION
     max_context_history: int = 100
     context_timeout_seconds: int = 3600  # 1 hour
 
@@ -71,7 +77,7 @@ class ProtocolConfiguration:
     # Custom extensions
     custom_validators: List[Callable] = field(default_factory=list)
     custom_transformers: List[Callable] = field(default_factory=list)
-    custom_recognizers: List[IntentRecognizer] = field(default_factory=list)
+    custom_recognizers: List[Any] = field(default_factory=list)  # List[IntentRecognizer]
 
     # Metadata
     created_at: datetime = field(default_factory=datetime.utcnow)
@@ -84,7 +90,7 @@ class BuiltProtocol:
     """Built protocol with all components configured."""
     id: str
     configuration: ProtocolConfiguration
-    parser: ProtocolParser
+    parser: Any  # ProtocolParser
     statistics: Dict[str, Any] = field(default_factory=dict)
 
     @property
@@ -100,18 +106,18 @@ class BuiltProtocol:
     async def parse_command(
         self,
         text: str,
-        context: Optional['CommandContext'] = None
-    ) -> 'ParsedCommand':
+        context: Optional[Any] = None  # Optional['CommandContext']
+    ) -> Any:  # 'ParsedCommand'
         """Parse a command using this protocol."""
         return await self.parser.parse_command(text, context)
 
     async def create_execution_plan(
         self,
-        command: 'ParsedCommand',
-        context: 'CommandContext',
-        available_agents: Optional[List['BuiltAgent']] = None,
+        command: Any,  # 'ParsedCommand'
+        context: Any,  # 'CommandContext'
+        available_agents: Optional[List[Any]] = None,  # Optional[List['BuiltAgent']]
         available_tools: Optional[List[str]] = None
-    ) -> 'ExecutionPlan':
+    ) -> Any:  # 'ExecutionPlan'
         """Create execution plan for a command."""
         return await self.parser.create_execution_plan(
             command, context, available_agents, available_tools
@@ -154,10 +160,10 @@ class ProtocolBuilder:
         """Initialize protocol builder with defaults."""
         self._config = ProtocolConfiguration(
             id="",
-            supported_intents=list(IntentCategory),
-            supported_command_types=list(CommandType)
+            supported_intents=[],  # Will be populated with all IntentCategory values at build time
+            supported_command_types=[]  # Will be populated with all CommandType values at build time
         )
-        self._custom_recognizers: List[IntentRecognizer] = []
+        self._custom_recognizers: List[Any] = []  # List[IntentRecognizer]
         self._validators: List[Callable] = []
         self._transformers: List[Callable] = []
 
@@ -193,17 +199,17 @@ class ProtocolBuilder:
         self._config.tags = tags
         return self
 
-    def with_supported_intents(self, intents: List[IntentCategory]) -> 'ProtocolBuilder':
+    def with_supported_intents(self, intents: List[Any]) -> 'ProtocolBuilder':  # List[IntentCategory]
         """Set supported intent categories."""
         self._config.supported_intents = intents
         return self
 
-    def with_supported_command_types(self, command_types: List[CommandType]) -> 'ProtocolBuilder':
+    def with_supported_command_types(self, command_types: List[Any]) -> 'ProtocolBuilder':  # List[CommandType]
         """Set supported command types."""
         self._config.supported_command_types = command_types
         return self
 
-    def with_default_scope(self, scope: ContextScope) -> 'ProtocolBuilder':
+    def with_default_scope(self, scope: Any) -> 'ProtocolBuilder':  # ContextScope
         """Set default context scope."""
         self._config.default_scope = scope
         return self
@@ -277,7 +283,7 @@ class ProtocolBuilder:
         self._config.confidence_threshold = threshold
         return self
 
-    def with_custom_intent_recognizer(self, recognizer: IntentRecognizer) -> 'ProtocolBuilder':
+    def with_custom_intent_recognizer(self, recognizer: Any) -> 'ProtocolBuilder':  # IntentRecognizer
         """Add custom intent recognizer."""
         self._custom_recognizers.append(recognizer)
         return self
@@ -302,6 +308,15 @@ class ProtocolBuilder:
         if not self._config.id:
             raise ValueError("Protocol ID is required")
 
+        # Lazy imports to avoid database dependencies
+        from .protocol import ProtocolParser, PatternBasedIntentRecognizer, IntentCategory, CommandType
+
+        # Set defaults if not specified
+        if not self._config.supported_intents:
+            self._config.supported_intents = list(IntentCategory)
+        if not self._config.supported_command_types:
+            self._config.supported_command_types = list(CommandType)
+
         # Create intent recognizer
         intent_recognizer = self._create_intent_recognizer()
 
@@ -318,11 +333,13 @@ class ProtocolBuilder:
             parser=parser
         )
 
-        logger.info(f"Built protocol '{built_protocol.id}' with {len(self._config.supported_intents)} supported intents")
+        get_logger().info(f"Built protocol '{built_protocol.id}' with {len(self._config.supported_intents)} supported intents")
         return built_protocol
 
-    def _create_intent_recognizer(self) -> IntentRecognizer:
+    def _create_intent_recognizer(self):
         """Create intent recognizer based on configuration."""
+        from .protocol import PatternBasedIntentRecognizer
+
         if self._custom_recognizers:
             # Use custom recognizer if provided
             return self._custom_recognizers[0]  # Use first custom recognizer
@@ -330,7 +347,7 @@ class ProtocolBuilder:
             # Use default pattern-based recognizer
             return PatternBasedIntentRecognizer()
 
-    def _configure_parser(self, parser: ProtocolParser) -> None:
+    def _configure_parser(self, parser: Any) -> None:  # ProtocolParser
         """Apply configuration settings to parser."""
         # This would configure the parser with the builder settings
         # For now, the parser uses its default configuration
