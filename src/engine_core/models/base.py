@@ -635,12 +635,12 @@ def get_alembic_config():
     from alembic.config import Config
     
     # Path to alembic.ini file
-    alembic_cfg = Config(str(Path(__file__).parent.parent.parent / "alembic.ini"))
+    alembic_cfg = Config(str(Path(__file__).parent.parent.parent.parent / "engine-infra" / "config" / "alembic.ini"))
     
     # Set script location
     alembic_cfg.set_main_option(
         "script_location", 
-        str(Path(__file__).parent.parent.parent / "alembic")
+        str(Path(__file__).parent.parent.parent.parent / "engine-infra" / "alembic")
     )
     
     # Set database URL

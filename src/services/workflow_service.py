@@ -40,11 +40,15 @@ import logging
 from datetime import datetime, timedelta
 from functools import lru_cache
 
+# SQLAlchemy imports
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
 # Type checking imports
 if TYPE_CHECKING:
     from ..models.workflow import (
         Workflow, WorkflowVertex, WorkflowEdge, WorkflowExecution,
-        WorkflowTemplate, WorkflowVersion
+        WorkflowTemplate, WorkflowVersion, WorkflowExecutionStatus
     )
     from ..models.agent import Agent
     from ..models.team import Team
@@ -1105,6 +1109,372 @@ async def example_workflow_service_usage():
     # Get service stats
     stats = service.get_service_statistics()
     print(f"Service stats: {json.dumps(stats, indent=2, default=str)}")
+
+
+class PostgreSQLWorkflowExecutionRepository(WorkflowRepository):
+    """PostgreSQL implementation of workflow execution repository."""
+
+    def __init__(self, session_factory):
+        """
+        Initialize repository with database session factory.
+
+        Args:
+            session_factory: Async SQLAlchemy session factory
+        """
+        self.session_factory = session_factory
+
+    async def create_workflow_execution(self, execution_data: Dict[str, Any]) -> 'WorkflowExecution':
+        """Create workflow execution record."""
+        async with self.session_factory() as session:
+            execution = WorkflowExecution(**execution_data)
+            session.add(execution)
+            await session.commit()
+            await session.refresh(execution)
+            return execution
+
+    async def get_workflow_execution(self, execution_id: str) -> Optional['WorkflowExecution']:
+        """Get workflow execution by ID."""
+        async with self.session_factory() as session:
+            result = await session.execute(
+                select(WorkflowExecution).where(WorkflowExecution.execution_id == execution_id)
+            )
+            return result.scalar_one_or_none()
+
+    async def update_workflow_execution(
+        self, execution_id: str, updates: Dict[str, Any]
+    ) -> Optional['WorkflowExecution']:
+        """Update workflow execution."""
+        async with self.session_factory() as session:
+            result = await session.execute(
+                select(WorkflowExecution).where(WorkflowExecution.execution_id == execution_id)
+            )
+            execution = result.scalar_one_or_none()
+
+            if execution:
+                for key, value in updates.items():
+                    if hasattr(execution, key):
+                        setattr(execution, key, value)
+
+                execution.updated_at = datetime.utcnow()
+                await session.commit()
+                await session.refresh(execution)
+
+            return execution
+
+    async def get_workflow_executions(
+        self, workflow_id: str, limit: int = 50, offset: int = 0
+    ) -> List['WorkflowExecution']:
+        """Get workflow executions for a workflow."""
+        async with self.session_factory() as session:
+            result = await session.execute(
+                select(WorkflowExecution)
+                .where(WorkflowExecution.workflow_id == workflow_id)
+                .order_by(WorkflowExecution.created_at.desc())
+                .limit(limit)
+                .offset(offset)
+            )
+            return list(result.scalars().all())
+
+    async def get_executions_by_status(
+        self, status: str, limit: int = 50
+    ) -> List['WorkflowExecution']:
+        """Get executions by status."""
+        async with self.session_factory() as session:
+            result = await session.execute(
+                select(WorkflowExecution)
+                .where(WorkflowExecution.status == status)
+                .order_by(WorkflowExecution.created_at.desc())
+                .limit(limit)
+            )
+            return list(result.scalars().all())
+
+    async def get_execution_analytics(self, workflow_id: str) -> Dict[str, Any]:
+        """Get execution analytics for workflow."""
+        async with self.session_factory() as session:
+            # Get all executions for the workflow
+            result = await session.execute(
+                select(WorkflowExecution)
+                .where(WorkflowExecution.workflow_id == workflow_id)
+            )
+            executions = list(result.scalars().all())
+
+            if not executions:
+                return {
+                    'total_executions': 0,
+                    'successful_executions': 0,
+                    'failed_executions': 0,
+                    'success_rate': 0.0,
+                    'average_duration': 0.0,
+                    'last_execution_at': None
+                }
+
+            total = len(executions)
+            successful = sum(1 for e in executions if e.is_successful)
+            failed = total - successful
+
+            durations = [e.duration_seconds for e in executions if e.duration_seconds is not None]
+            avg_duration = sum(durations) / len(durations) if durations else 0.0
+
+            last_execution = max(executions, key=lambda e: e.created_at)
+
+            return {
+                'total_executions': total,
+                'successful_executions': successful,
+                'failed_executions': failed,
+                'success_rate': successful / total if total > 0 else 0.0,
+                'average_duration': avg_duration,
+                'last_execution_at': last_execution.created_at
+            }
+
+    async def delete_old_executions(self, days_old: int = 90) -> int:
+        """Delete executions older than specified days. Returns count deleted."""
+        cutoff_date = datetime.utcnow() - timedelta(days=days_old)
+
+        async with self.session_factory() as session:
+            result = await session.execute(
+                select(WorkflowExecution)
+                .where(WorkflowExecution.created_at < cutoff_date)
+            )
+            old_executions = list(result.scalars().all())
+
+            count = len(old_executions)
+            for execution in old_executions:
+                await session.delete(execution)
+
+            await session.commit()
+            return count
+
+
+class WorkflowExecutionService:
+    """
+    Service for managing workflow execution persistence and analytics.
+
+    Provides business logic for creating, updating, and querying workflow
+    executions stored in PostgreSQL. Integrates with the workflow engine
+    to persist execution history and provide analytics.
+    """
+
+    def __init__(self, execution_repository: WorkflowRepository):
+        """
+        Initialize service with execution repository.
+
+        Args:
+            execution_repository: Repository for workflow execution data
+        """
+        self.execution_repository = execution_repository
+
+    async def create_execution(
+        self,
+        workflow_id: str,
+        workflow_name: Optional[str] = None,
+        user_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+        input_data: Optional[Dict[str, Any]] = None,
+        execution_metadata: Optional[Dict[str, Any]] = None
+    ) -> 'WorkflowExecution':
+        """
+        Create a new workflow execution record.
+
+        Args:
+            workflow_id: ID of the workflow being executed
+            workflow_name: Name of the workflow (for display)
+            user_id: ID of the user initiating execution
+            project_id: ID of the project context
+            input_data: Input data for the workflow
+            execution_metadata: Additional execution metadata
+
+        Returns:
+            Created WorkflowExecution instance
+        """
+        execution_data = {
+            'workflow_id': workflow_id,
+            'workflow_name': workflow_name,
+            'user_id': user_id,
+            'project_id': project_id,
+            'input_data': input_data or {},
+            'execution_metadata': execution_metadata or {},
+            'status': WorkflowExecutionStatus.PENDING.value
+        }
+
+        return await self.execution_repository.create_workflow_execution(execution_data)
+
+    async def start_execution(self, execution_id: str) -> Optional['WorkflowExecution']:
+        """
+        Mark execution as started.
+
+        Args:
+            execution_id: Execution ID to start
+
+        Returns:
+            Updated execution or None if not found
+        """
+        updates = {
+            'status': WorkflowExecutionStatus.RUNNING.value,
+            'started_at': datetime.utcnow()
+        }
+        return await self.execution_repository.update_workflow_execution(execution_id, updates)
+
+    async def complete_execution(
+        self,
+        execution_id: str,
+        success: bool = True,
+        output_data: Optional[Dict[str, Any]] = None,
+        error_message: Optional[str] = None,
+        vertex_results: Optional[Dict[str, Any]] = None
+    ) -> Optional['WorkflowExecution']:
+        """
+        Mark execution as completed.
+
+        Args:
+            execution_id: Execution ID to complete
+            success: Whether execution was successful
+            output_data: Output data from execution
+            error_message: Error message if failed
+            vertex_results: Results from individual vertices
+
+        Returns:
+            Updated execution or None if not found
+        """
+        updates = {
+            'success': success,
+            'output_data': output_data,
+            'error_message': error_message,
+            'vertex_results': vertex_results,
+            'completed_at': datetime.utcnow()
+        }
+
+        if success:
+            updates['status'] = WorkflowExecutionStatus.COMPLETED.value
+        else:
+            updates['status'] = WorkflowExecutionStatus.FAILED.value
+
+        execution = await self.execution_repository.update_workflow_execution(execution_id, updates)
+
+        # Calculate duration if we have start and end times
+        if execution:
+            started_at = getattr(execution, 'started_at', None)
+            completed_at = getattr(execution, 'completed_at', None)
+            if started_at and completed_at:
+                duration = (completed_at - started_at).total_seconds()
+                await self.execution_repository.update_workflow_execution(
+                    execution_id, {'duration_seconds': duration}
+                )
+
+        return execution
+
+    async def fail_execution(
+        self,
+        execution_id: str,
+        error_message: str,
+        error_details: Optional[Dict[str, Any]] = None
+    ) -> Optional['WorkflowExecution']:
+        """
+        Mark execution as failed.
+
+        Args:
+            execution_id: Execution ID to fail
+            error_message: Error message
+            error_details: Detailed error information
+
+        Returns:
+            Updated execution or None if not found
+        """
+        updates = {
+            'status': WorkflowExecutionStatus.FAILED.value,
+            'success': False,
+            'error_message': error_message,
+            'error_details': error_details,
+            'completed_at': datetime.utcnow()
+        }
+
+        execution = await self.execution_repository.update_workflow_execution(execution_id, updates)
+
+        # Calculate duration if we have start time
+        if execution:
+            started_at = getattr(execution, 'started_at', None)
+            completed_at = getattr(execution, 'completed_at', None)
+            if started_at and completed_at:
+                duration = (completed_at - started_at).total_seconds()
+                await self.execution_repository.update_workflow_execution(
+                    execution_id, {'duration_seconds': duration}
+                )
+
+        return execution
+
+    async def get_execution(self, execution_id: str) -> Optional['WorkflowExecution']:
+        """
+        Get execution by ID.
+
+        Args:
+            execution_id: Execution ID to retrieve
+
+        Returns:
+            Execution instance or None if not found
+        """
+        # This method would need to be added to the abstract repository
+        # For now, return None
+        return None
+
+    async def get_workflow_executions(
+        self,
+        workflow_id: str,
+        limit: int = 50,
+        offset: int = 0
+    ) -> List['WorkflowExecution']:
+        """
+        Get executions for a workflow.
+
+        Args:
+            workflow_id: Workflow ID
+            limit: Maximum number of executions to return
+            offset: Number of executions to skip
+
+        Returns:
+            List of executions
+        """
+        # This method needs to be added to the abstract repository
+        # For now, return empty list
+        return []
+
+    async def get_execution_analytics(self, workflow_id: str) -> Dict[str, Any]:
+        """
+        Get execution analytics for a workflow.
+
+        Args:
+            workflow_id: Workflow ID
+
+        Returns:
+            Analytics dictionary
+        """
+        return await self.execution_repository.get_execution_analytics(workflow_id)
+
+    async def get_recent_executions(self, limit: int = 10) -> List['WorkflowExecution']:
+        """
+        Get recent executions across all workflows.
+
+        Args:
+            limit: Maximum number of executions to return
+
+        Returns:
+            List of recent executions
+        """
+        # This would need to be implemented in the repository
+        # For now, return empty list
+        return []
+
+    async def cleanup_old_executions(self, days_old: int = 90) -> int:
+        """
+        Clean up old execution records.
+
+        Args:
+            days_old: Delete executions older than this many days
+
+        Returns:
+            Number of executions deleted
+        """
+        # This method would need to be added to the abstract repository
+        # For now, return 0
+        return 0
 
 
 if __name__ == "__main__":

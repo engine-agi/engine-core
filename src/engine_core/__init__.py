@@ -11,6 +11,7 @@ from .core.teams import TeamBuilder
 from .core.workflows import WorkflowBuilder, WorkflowEngine
 from .core.tools import ToolBuilder, ToolExecutor
 from .core.book import BookBuilder
+from .core.protocols import ProtocolBuilder
 
 __all__ = [
     'AgentBuilder',
@@ -19,5 +20,6 @@ __all__ = [
     'WorkflowEngine',
     'ToolBuilder',
     'ToolExecutor',
-    'BookBuilder'
+    'BookBuilder',
+    'ProtocolBuilder'
 ]

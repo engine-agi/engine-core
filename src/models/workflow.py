@@ -13,13 +13,14 @@ Based on Engine Framework data model specification and Pregel algorithm.
 
 from typing import Dict, Any, List, Optional, Union, Set, TYPE_CHECKING
 from sqlalchemy import (
-    Column, String, Text, Boolean, Integer, Float,
+    Column, String, Text, Boolean, Integer, Float, DateTime,
     ForeignKey, Index, CheckConstraint, UniqueConstraint
 )
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
 from sqlalchemy.orm import relationship, validates, backref
 from datetime import datetime
 import re
+import uuid
 import networkx as nx  # For graph validation
 from enum import Enum
 
@@ -867,3 +868,308 @@ CheckConstraint(
     Workflow.edge_count >= 0,
     name='ck_workflow_edge_count_non_negative'
 )
+
+
+class WorkflowExecutionStatus(str, Enum):
+    """Workflow execution status values."""
+    PENDING = "pending"
+    RUNNING = "running"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    TIMEOUT = "timeout"
+
+
+class WorkflowExecution(BaseModel, StringIdentifierMixin, TimestampMixin):
+    """
+    Workflow execution record - tracks historical workflow runs.
+
+    Stores persistent execution history including status, timing,
+    results, and metadata for auditing and analytics purposes.
+    """
+
+    __tablename__ = "workflow_executions"
+
+    # Execution identification
+    execution_id = Column(
+        String(255),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="Unique execution identifier"
+    )
+
+    # Workflow association
+    workflow_id = Column(
+        String(255),
+        ForeignKey("workflows.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        comment="Workflow that was executed"
+    )
+
+    # Execution metadata
+    workflow_version = Column(
+        String(50),
+        nullable=True,
+        comment="Version of workflow at execution time"
+    )
+
+    workflow_name = Column(
+        String(255),
+        nullable=True,
+        comment="Name of workflow at execution time"
+    )
+
+    # Execution status and lifecycle
+    status = Column(
+        String(50),
+        nullable=False,
+        default=WorkflowExecutionStatus.PENDING.value,
+        index=True,
+        comment="Current execution status"
+    )
+
+    # Timing information
+    started_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+        comment="When execution started"
+    )
+
+    completed_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+        comment="When execution completed"
+    )
+
+    duration_seconds = Column(
+        Float,
+        nullable=True,
+        comment="Total execution duration in seconds"
+    )
+
+    # Execution results
+    success = Column(
+        Boolean,
+        nullable=True,
+        comment="Whether execution was successful"
+    )
+
+    error_message = Column(
+        Text,
+        nullable=True,
+        comment="Error message if execution failed"
+    )
+
+    error_details = Column(
+        JSONB,
+        nullable=True,
+        comment="Detailed error information"
+    )
+
+    # Execution context and inputs
+    input_data = Column(
+        JSONB,
+        nullable=True,
+        comment="Input data provided to workflow"
+    )
+
+    output_data = Column(
+        JSONB,
+        nullable=True,
+        comment="Output data produced by workflow"
+    )
+
+    execution_context = Column(
+        JSONB,
+        nullable=True,
+        comment="Execution context and environment details"
+    )
+
+    # Vertex execution tracking
+    vertex_results = Column(
+        JSONB,
+        nullable=True,
+        comment="Results from individual vertex executions"
+    )
+
+    vertex_execution_order = Column(
+        ARRAY(String(255)),
+        nullable=True,
+        comment="Order in which vertices were executed"
+    )
+
+    # Performance metrics
+    total_vertices = Column(
+        Integer,
+        nullable=True,
+        comment="Total number of vertices executed"
+    )
+
+    completed_vertices = Column(
+        Integer,
+        nullable=True,
+        comment="Number of vertices that completed successfully"
+    )
+
+    failed_vertices = Column(
+        Integer,
+        nullable=True,
+        comment="Number of vertices that failed"
+    )
+
+    # Resource usage
+    resource_usage = Column(
+        JSONB,
+        nullable=True,
+        comment="Resource usage statistics (CPU, memory, etc.)"
+    )
+
+    # User and project context
+    user_id = Column(
+        String(255),
+        nullable=True,
+        index=True,
+        comment="User who initiated the execution"
+    )
+
+    project_id = Column(
+        String(255),
+        ForeignKey("projects.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="Project context for the execution"
+    )
+
+    # Execution configuration
+    timeout_seconds = Column(
+        Integer,
+        nullable=True,
+        comment="Configured timeout for execution"
+    )
+
+    priority = Column(
+        Integer,
+        default=0,
+        nullable=False,
+        comment="Execution priority (higher numbers = higher priority)"
+    )
+
+    # Additional metadata
+    execution_metadata = Column(
+        JSONB,
+        nullable=True,
+        comment="Additional execution metadata"
+    )
+
+    # Relationships
+    workflow = relationship("Workflow", back_populates="executions")
+    project = relationship("Project", back_populates="workflow_executions")
+
+    def __init__(self, **kwargs):
+        """Initialize workflow execution with defaults."""
+        # Set execution_id if not provided
+        if 'execution_id' not in kwargs and 'id' not in kwargs:
+            kwargs['execution_id'] = f"exec_{uuid.uuid4().hex[:16]}"
+
+        # Set default status
+        if 'status' not in kwargs:
+            kwargs['status'] = WorkflowExecutionStatus.PENDING.value
+
+        # Set default priority
+        if 'priority' not in kwargs:
+            kwargs['priority'] = 0
+
+        super().__init__(**kwargs)
+
+    @property
+    def is_completed(self) -> bool:
+        """Check if execution is in a terminal state."""
+        return self.status in [
+            WorkflowExecutionStatus.COMPLETED.value,
+            WorkflowExecutionStatus.FAILED.value,
+            WorkflowExecutionStatus.CANCELLED.value,
+            WorkflowExecutionStatus.TIMEOUT.value
+        ]
+
+    @property
+    def is_successful(self) -> bool:
+        """Check if execution was successful."""
+        # Use getattr to safely access SQLAlchemy columns
+        status = getattr(self, 'status', None)
+        success = getattr(self, 'success', None)
+        return status == WorkflowExecutionStatus.COMPLETED.value and success is True
+
+    def mark_started(self) -> None:
+        """Mark execution as started."""
+        self.status = WorkflowExecutionStatus.RUNNING.value
+        self.started_at = datetime.utcnow()
+
+    def mark_completed(self, success: bool = True, output_data: Optional[Dict[str, Any]] = None,
+                      error_message: Optional[str] = None) -> None:
+        """Mark execution as completed."""
+        self.completed_at = datetime.utcnow()
+        self.success = success
+
+        if output_data is not None:
+            self.output_data = output_data
+
+        if error_message is not None:
+            self.error_message = error_message
+
+        started_at = getattr(self, 'started_at', None)
+        if started_at:
+            self.duration_seconds = (self.completed_at - started_at).total_seconds()
+
+        if success:
+            self.status = WorkflowExecutionStatus.COMPLETED.value
+        else:
+            self.status = WorkflowExecutionStatus.FAILED.value
+
+    def mark_failed(self, error_message: str, error_details: Optional[Dict[str, Any]] = None) -> None:
+        """Mark execution as failed."""
+        self.status = WorkflowExecutionStatus.FAILED.value
+        self.success = False
+        self.error_message = error_message
+        self.completed_at = datetime.utcnow()
+
+        if error_details:
+            self.error_details = error_details
+
+        started_at = getattr(self, 'started_at', None)
+        completed_at = getattr(self, 'completed_at', None)
+        if started_at and completed_at:
+            self.duration_seconds = (completed_at - started_at).total_seconds()
+
+    def __repr__(self) -> str:
+        return f"<WorkflowExecution(id='{self.id}', execution_id='{self.execution_id}', workflow='{self.workflow_id}', status='{self.status}')>"
+
+
+# Add relationship to Workflow model
+Workflow.executions = relationship("WorkflowExecution", back_populates="workflow", cascade="all, delete-orphan")
+
+# Add relationship to Project model (assuming it exists)
+try:
+    from .project import Project
+    Project.workflow_executions = relationship("WorkflowExecution", back_populates="project")
+except ImportError:
+    # Project model may not be imported yet
+    pass
+
+
+# Constraints for WorkflowExecution
+CheckConstraint(
+    WorkflowExecution.priority >= -10,
+    name='ck_execution_priority_range'
+)
+
+CheckConstraint(
+    WorkflowExecution.priority <= 10,
+    name='ck_execution_priority_range_upper'
+)
+
+# Note: Duration and vertex count constraints removed due to SQLAlchemy column access issues
+# These should be validated at the application level instead

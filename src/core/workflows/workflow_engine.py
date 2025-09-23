@@ -39,6 +39,8 @@ if TYPE_CHECKING:
     from ..agents.agent_builder import BuiltAgent
     from ..teams.team_builder import BuiltTeam
 
+# from .actors import WorkflowCoordinatorActor, VertexActor
+
 logger = logging.getLogger(__name__)
 
 
@@ -813,9 +815,17 @@ class WorkflowEngine:
     async def execute_workflow(
         self,
         context: WorkflowExecutionContext,
-        input_data: Optional[Dict[str, Any]] = None
+        input_data: Optional[Dict[str, Any]] = None,
+        use_actor_model: bool = True
     ) -> Dict[str, Any]:
-        """Execute workflow using Pregel model."""
+        """Execute workflow using Pregel model or Actor Model.
+        
+        Args:
+            context: Execution context
+            input_data: Initial input data for vertices
+            use_actor_model: If True, use actor-based execution for parallelism.
+                           If False, use traditional superstep execution.
+        """
         start_time = datetime.utcnow()
         
         try:
@@ -828,63 +838,13 @@ class WorkflowEngine:
             
             self.state = WorkflowState.PLANNING
             
-            # Get execution order
-            execution_levels = self.get_execution_order()
-            if not execution_levels:
-                raise ValueError("No executable vertices found")
-            
-            self.state = WorkflowState.EXECUTING
-            
-            # Execute vertices level by level (supersteps)
-            completed_vertices = set()
-            all_results = {}
-            
-            for superstep, level in enumerate(execution_levels):
-                logger.info(f"Executing superstep {superstep} with vertices: {level}")
+            if use_actor_model:
+                # Use Actor Model for parallel execution
+                return await self._execute_with_actor_model(context, input_data or {})
+            else:
+                # Use traditional superstep execution
+                return await self._execute_with_supersteps(context, input_data or {})
                 
-                # Execute vertices in current level concurrently
-                level_results = await self._execute_superstep(
-                    level, completed_vertices, context, input_data or {}
-                )
-                
-                # Process results and pass messages
-                for vertex_id, result in level_results.items():
-                    all_results[vertex_id] = result
-                    
-                    if result.status == VertexState.COMPLETED:
-                        completed_vertices.add(vertex_id)
-                        
-                        # Send messages to dependent vertices
-                        await self._propagate_messages(vertex_id, result)
-                    else:
-                        # Handle failed vertex
-                        logger.error(f"Vertex {vertex_id} failed: {result.error}")
-                        self.state = WorkflowState.FAILED
-                        raise RuntimeError(f"Vertex {vertex_id} execution failed: {result.error}")
-            
-            self.state = WorkflowState.COMPLETED
-            execution_time = (datetime.utcnow() - start_time).total_seconds()
-            
-            # Update stats
-            self.execution_stats['total_executions'] += 1
-            self.execution_stats['successful_executions'] += 1
-            self.execution_stats['average_execution_time'] = (
-                (self.execution_stats['average_execution_time'] * 
-                 (self.execution_stats['successful_executions'] - 1) + execution_time) / 
-                self.execution_stats['successful_executions']
-            )
-            
-            # Compile final results
-            return {
-                'execution_id': context.execution_id,
-                'status': 'completed',
-                'execution_time': execution_time,
-                'vertices_executed': len(completed_vertices),
-                'supersteps': len(execution_levels),
-                'results': {vid: result.to_dict() for vid, result in all_results.items()},
-                'final_outputs': self._collect_final_outputs(all_results)
-            }
-            
         except Exception as e:
             self.state = WorkflowState.FAILED
             execution_time = (datetime.utcnow() - start_time).total_seconds()
@@ -898,8 +858,7 @@ class WorkflowEngine:
                 'execution_id': context.execution_id,
                 'status': 'failed',
                 'execution_time': execution_time,
-                'error': str(e),
-                'results': {}
+                'error': str(e)
             }
     
     async def _execute_superstep(
@@ -1004,6 +963,139 @@ class WorkflowEngine:
             vertex.input_messages.clear()
             vertex.output_messages.clear()
             vertex.result = None
+    
+    async def _execute_with_actor_model(
+        self,
+        context: WorkflowExecutionContext,
+        input_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Execute workflow using Actor Model for true parallelism."""
+        start_time = datetime.utcnow()
+        
+        try:
+            # Create vertex actors
+            vertex_actors = {}
+            for vertex_id, vertex in self.vertices.items():
+                dependencies = set(vertex.dependencies)
+                dependents = set(vertex.dependents)
+                
+                vertex_actor = VertexActor(
+                    vertex_id=vertex_id,
+                    computation=vertex.computation,
+                    dependencies=dependencies,
+                    dependents=dependents
+                )
+                vertex_actors[vertex_id] = vertex_actor
+            
+            # Create workflow coordinator
+            coordinator = WorkflowCoordinatorActor(
+                workflow_id=context.workflow_id,
+                vertices=vertex_actors
+            )
+            
+            # Execute workflow using actors
+            result = await coordinator.execute_workflow(context, input_data)
+            
+            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            
+            # Update workflow state
+            if result['status'] == 'completed':
+                self.state = WorkflowState.COMPLETED
+                self.execution_stats['total_executions'] += 1
+                self.execution_stats['successful_executions'] += 1
+                self.execution_stats['average_execution_time'] = (
+                    (self.execution_stats['average_execution_time'] * 
+                     (self.execution_stats['successful_executions'] - 1) + execution_time) / 
+                    self.execution_stats['successful_executions']
+                )
+            else:
+                self.state = WorkflowState.FAILED
+                self.execution_stats['total_executions'] += 1
+                self.execution_stats['failed_executions'] += 1
+            
+            return {
+                'execution_id': context.execution_id,
+                'status': result['status'],
+                'execution_time': execution_time,
+                'vertices_executed': len(result['completed_vertices']),
+                'execution_model': 'actor',
+                'results': result['result'],
+                'completed_vertices': result['completed_vertices'],
+                'failed_vertices': result['failed_vertices']
+            }
+            
+        except Exception as e:
+            self.state = WorkflowState.FAILED
+            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            
+            logger.error(f"Actor model execution failed: {str(e)}")
+            raise
+    
+    async def _execute_with_supersteps(
+        self,
+        context: WorkflowExecutionContext,
+        input_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Execute workflow using traditional superstep model."""
+        start_time = datetime.utcnow()
+        
+        # Get execution order
+        execution_levels = self.get_execution_order()
+        if not execution_levels:
+            raise ValueError("No executable vertices found")
+        
+        self.state = WorkflowState.EXECUTING
+        
+        # Execute vertices level by level (supersteps)
+        completed_vertices = set()
+        all_results = {}
+        
+        for superstep, level in enumerate(execution_levels):
+            logger.info(f"Executing superstep {superstep} with vertices: {level}")
+            
+            # Execute vertices in current level concurrently
+            level_results = await self._execute_superstep(
+                level, completed_vertices, context, input_data
+            )
+            
+            # Process results and pass messages
+            for vertex_id, result in level_results.items():
+                all_results[vertex_id] = result
+                
+                if result.status == VertexState.COMPLETED:
+                    completed_vertices.add(vertex_id)
+                    
+                    # Send messages to dependent vertices
+                    await self._propagate_messages(vertex_id, result)
+                else:
+                    # Handle failed vertex
+                    logger.error(f"Vertex {vertex_id} failed: {result.error}")
+                    self.state = WorkflowState.FAILED
+                    raise RuntimeError(f"Vertex {vertex_id} execution failed: {result.error}")
+        
+        self.state = WorkflowState.COMPLETED
+        execution_time = (datetime.utcnow() - start_time).total_seconds()
+        
+        # Update stats
+        self.execution_stats['total_executions'] += 1
+        self.execution_stats['successful_executions'] += 1
+        self.execution_stats['average_execution_time'] = (
+            (self.execution_stats['average_execution_time'] * 
+             (self.execution_stats['successful_executions'] - 1) + execution_time) / 
+            self.execution_stats['successful_executions']
+        )
+        
+        # Compile final results
+        return {
+            'execution_id': context.execution_id,
+            'status': 'completed',
+            'execution_time': execution_time,
+            'vertices_executed': len(completed_vertices),
+            'supersteps': len(execution_levels),
+            'execution_model': 'superstep',
+            'results': {vid: result.to_dict() for vid, result in all_results.items()},
+            'final_outputs': self._collect_final_outputs(all_results)
+        }
 
 
 # === CONVENIENCE FUNCTIONS ===
