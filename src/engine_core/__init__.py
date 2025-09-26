@@ -12,6 +12,10 @@ from .core.workflows import WorkflowBuilder, WorkflowEngine
 from .core.tools import ToolBuilder, ToolExecutor
 from .core.book import BookBuilder
 from .core.protocols import ProtocolBuilder
+from .core.workflows.workflow_engine import WorkflowState
+from .core.book.book_builder import ContentType, AccessLevel, ContentStatus, SearchScope, SearchQuery
+from .core.teams.team_builder import TeamCoordinationStrategy, TeamMemberRole
+from .core.protocols.protocol import IntentCategory, CommandType, ContextScope, CommandContext
 
 __all__ = [
     'AgentBuilder',
@@ -21,5 +25,18 @@ __all__ = [
     'ToolBuilder',
     'ToolExecutor',
     'BookBuilder',
-    'ProtocolBuilder'
+    'ProtocolBuilder',
+    'WorkflowState',
+    'ContentType',
+    'AccessLevel',
+    'ContentStatus',
+    'SearchScope',
+    'SearchQuery',
+    'TeamCoordinationStrategy',
+    'TeamMemberRole',
+    'IntentCategory',
+    'CommandType',
+    'ContextScope',
+    'CommandContext',
+    '__version__'
 ]
