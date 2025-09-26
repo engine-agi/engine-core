@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from .enums import CommandType, ParameterType, ProtocolType
+
 # This module contains Pydantic schemas for protocol-related API operations
 
 
