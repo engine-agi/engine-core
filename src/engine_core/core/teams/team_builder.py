@@ -1,5 +1,5 @@
 """
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Set, Tuple
 from enum import Enum
 from dataclasses import dataclass, field
@@ -37,7 +37,7 @@ Key Features:
 import asyncio
 import json
 import uuid
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -46,12 +46,12 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 # Import agent system
 
 # Type checking imports to avoid circular imports
-if TYPE_CHECKING:
-    from ...models.agent import Agent
-    from ...models.book import Book
-    from ...models.protocol import Protocol
-    from ...models.team import Team
-    from ...models.workflow import Workflow
+# if TYPE_CHECKING:
+#     from ...models.agent import Agent
+#     from ...models.book import Book
+#     from ...models.protocol import Protocol
+#     from ...models.team import Team
+#     from ...models.workflow import Workflow
 
 
 class TeamCoordinationStrategy(Enum):

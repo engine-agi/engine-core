@@ -1,7 +1,7 @@
 """
 from pydantic import ValidationError
 from pydantic import ValidationError
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime
@@ -38,7 +38,7 @@ Architecture:
 import asyncio
 import logging
 import uuid
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -56,14 +56,14 @@ from ..core.agents.agent_builder import (
 )
 
 # Type checking imports to avoid circular imports
-if TYPE_CHECKING:
-    from ..models.agent import Agent
-    from ..models.book import Book
-    from ..models.infrastructure import User
-    from ..models.project import Project
-    from ..models.protocol import Protocol
-    from ..models.tool import Tool
-    from ..models.workflow import Workflow
+# if TYPE_CHECKING:
+#     from ..models.agent import Agent
+#     from ..models.book import Book
+#     from ..models.infrastructure import User
+#     from ..models.project import Project
+#     from ..models.protocol import Protocol
+#     from ..models.tool import Tool
+#     from ..models.workflow import Workflow
 
 logger = logging.getLogger(__name__)
 
