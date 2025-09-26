@@ -1,28 +1,12 @@
 """
-from pathlib import Path
-from fastapi import Depends
-from fastapi import HTTPException
-from pydantic import BaseModel
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
 Books API Router - Simplified version for Engine Framework.
 
 This router provides basic book management endpoints with placeholder implementations.
 """
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel, Field
 
 
@@ -121,7 +105,7 @@ class BookResponse(BaseModel):
 
 @router.get("/", response_model=BookListResponse)
 async def list_books(
-    project_id: str = Path(..., description="Project ID"),
+    project_id: str,
     current_user: dict = Depends(get_current_user),
 ):
     """List all books in a project."""
@@ -129,13 +113,13 @@ async def list_books(
         # Placeholder implementation
         return BookListResponse(books=[], total=0)
 
-    except Exception as e:
+    except Exception as e:  # noqa: F841
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.post("/", response_model=BookResponse)
 async def create_book(
-    project_id: str = Path(..., description="Project ID"),
+    project_id: str,
     current_user: dict = Depends(get_current_user),
     book_data: BookCreate = Body(...),
 ):
@@ -159,7 +143,7 @@ async def create_book(
 
         return response
 
-    except Exception as e:
+    except Exception as e:  # noqa: F841
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
