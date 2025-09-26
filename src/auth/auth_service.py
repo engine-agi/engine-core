@@ -1,16 +1,4 @@
 """
-from fastapi import Depends
-from fastapi import HTTPException
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Authentication Service - User Authentication and Authorization.
 
 This module provides authentication and authorization services for the Engine Framework,
@@ -31,11 +19,12 @@ Architecture:
 - Configurable security policies
 """
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, Optional
 
 import jwt
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +107,7 @@ async def get_current_user(
             detail="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except jwt.JWTError:
+    except jwt.PyJWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication token",
@@ -162,8 +151,8 @@ def create_access_token(
 async def validate_user_permissions(
     user: Dict[str, Any],
     required_permissions: list,
-    resource_type: str = None,
-    resource_id: str = None,
+    resource_type: Optional[str] = None,
+    resource_id: Optional[str] = None,
 ) -> bool:
     """
     Validate if a user has required permissions for a resource.
