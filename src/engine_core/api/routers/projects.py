@@ -13,10 +13,10 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from src.api.dependencies import get_current_user, get_event_broadcaster
-from src.api.websocket import EventType
-from src.core.project_service import ProjectService, ProjectLimits
-from src.engine_core.engine_types import EngineError
+from engine_core.api.dependencies import get_current_user, get_event_broadcaster
+from engine_core.api.websocket import EventType
+from engine_core.core.project_service import ProjectService, ProjectLimits
+from engine_core.shared_types.engine_types import EngineError
 
 
 class ProjectSummary(BaseModel):

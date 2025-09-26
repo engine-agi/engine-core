@@ -1,18 +1,4 @@
 """
-from abc import abstractmethod
-from typing import Set, Tuple
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Protocol Parser - Semantic Command Processing System.
 
 The ProtocolParser implements intelligent command interpretation and execution
@@ -43,11 +29,11 @@ import json
 import logging
 import re
 import uuid
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
 
 # Type checking imports
 if TYPE_CHECKING:

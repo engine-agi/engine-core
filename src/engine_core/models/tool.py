@@ -1,17 +1,4 @@
 """
-from sqlalchemy import Column
-from typing import Set, Tuple
-from pydantic import BaseModel
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Tool model for Engine Framework.
 
 Tools provide external integrations for agents and teams, including:
@@ -25,14 +12,16 @@ Tools provide external integrations for agents and teams, including:
 Based on Engine Framework data model specification.
 """
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
-from sqlalchemy import Column
-
-    Column, String, Text, Boolean, Integer,
-    Index, CheckConstraint
+from sqlalchemy import (
+    Boolean, CheckConstraint, Column, Index, Integer, String, Text,
+    JSON as JSONB
 )
+from sqlalchemy.orm import validates
+
+from .base import SQLAlchemyBaseModel
 import json
 import re
 
@@ -61,7 +50,7 @@ class ToolStatus:
     DEPRECATED = "deprecated"
 
 
-class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin):
+class Tool(SQLAlchemyBaseModel):
     """
     Tool entity - external integrations and capabilities for agents.
 
@@ -656,41 +645,4 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         )
 
 
-# Database indexes for performance
-Index('idx_tool_type_status', Tool.type, Tool.status)
-Index('idx_tool_category_status', Tool.category, Tool.status)
-Index('idx_tool_usage_count', Tool.usage_count.desc())
-Index('idx_tool_success_rate', Tool.success_count, Tool.usage_count)
-
-# Database constraints
-CheckConstraint(
-    Tool.type.in_([ToolType.API, ToolType.CLI, ToolType.MCP,
-                   ToolType.DATABASE, ToolType.FILESYSTEM, ToolType.CUSTOM]),
-    name='ck_tool_type_valid'
-)
-
-CheckConstraint(
-    Tool.status.in_([ToolStatus.ACTIVE, ToolStatus.INACTIVE, ToolStatus.ERROR,
-                     ToolStatus.TESTING, ToolStatus.DEPRECATED]),
-    name='ck_tool_status_valid'
-)
-
-CheckConstraint(
-    Tool.usage_count >= 0,
-    name='ck_tool_usage_count_non_negative'
-)
-
-CheckConstraint(
-    Tool.success_count >= 0,
-    name='ck_tool_success_count_non_negative'
-)
-
-CheckConstraint(
-    Tool.error_count >= 0,
-    name='ck_tool_error_count_non_negative'
-)
-
-CheckConstraint(
-    Tool.success_count <= Tool.usage_count,
-    name='ck_tool_success_count_consistent'
-)
+# Database indexes and constraints can be added later when SQLAlchemy setup is complete

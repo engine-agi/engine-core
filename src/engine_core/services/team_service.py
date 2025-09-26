@@ -1,6 +1,4 @@
 """
-from pydantic import ValidationError
-from pydantic import ValidationError
 from abc import abstractmethod
 from enum import Enum
 from dataclasses import dataclass
@@ -44,10 +42,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import Field, ValidationError
+from pydantic import Field
 
 # Import core team system
-from ..core.teams.team_builder import (
     TeamBuilder, BuiltTeam, TeamExecutionContext, TeamTask, TeamMember,
     TeamCoordinationStrategy, TeamMemberRole, TeamExecutionMode, TeamState
 )

@@ -11,11 +11,11 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
-from src.api.dependencies import get_current_user
-from src.api.websocket import EventType, get_event_broadcaster
-from src.core.project_service import ProjectService
-from src.engine_core.engine_types import EngineError, ToolType
-from src.services.tool_service import ToolService
+from engine_core.api.dependencies import get_current_user
+from engine_core.api.websocket import EventType, get_event_broadcaster
+from engine_core.core.project_service import ProjectService
+from engine_core.shared_types.engine_types import EngineError, ToolType
+from engine_core.services.tool_service import ToolService
 
 
 class ToolAuthentication(BaseModel):
@@ -148,7 +148,7 @@ async def list_tools(
             raise HTTPException(status_code=404, detail="Project not found")
 
         # Get tools for the project
-        from src.services.tool_service import ToolSearchCriteria
+        from engine_core.services.tool_service import ToolSearchCriteria
 
         criteria = ToolSearchCriteria()
         tools_data = await tool_service.search_tools(criteria)

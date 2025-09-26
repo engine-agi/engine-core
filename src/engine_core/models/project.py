@@ -9,9 +9,10 @@ Based on Engine Framework data model specification.
 """
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from sqlalchemy import ARRAY, JSON, Column, DateTime, Integer, String, Text
+from pydantic import BaseModel
+from sqlalchemy import ARRAY, JSON, Column, String, Text
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:

@@ -29,9 +29,11 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 # Local imports
+from .agent_builder import AgentBuilder
+from .agent_config import AgentConfig, AgentExecutionConfig, AgentModel
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
@@ -208,7 +210,7 @@ class Agent:
             self.logger.info(f"Executing task: {task}")
 
             # Prepare execution context
-            execution_context = self._prepare_execution_context(
+            execution_context = await self._prepare_execution_context(
                 task, context or {}, **kwargs)
 
             # Apply protocol if available

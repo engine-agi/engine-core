@@ -1,18 +1,4 @@
 """
-from abc import abstractmethod
-from typing import Set, Tuple
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Tool Service - Business Logic Layer for Tool Management and Execution.
 
 The ToolService provides comprehensive tool lifecycle management functionality,
@@ -33,14 +19,24 @@ Architecture:
 - Repository pattern for tool persistence
 - Service layer for business logic coordination
 - Integration with ToolExecutor for secure execution
-- Event-driven updates for real-time monitoring
-- Caching for performance optimization
-
-Dependencies:
-- ToolBuilder, ToolRegistry, ToolExecutor (core tool system)
-- AgentService, WorkflowService (cross-service integration)
-- Database models (Tool, ToolExecution, ToolConfiguration)
 """
+import logging
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+from ..core.tools import (
+    ToolBuilder, ToolConfiguration, ToolCapability, ToolInterface,
+    ToolType, ToolExecutionMode, ToolStatus, PermissionLevel,
+    ExecutionEnvironment, ToolExecutionRequest, ToolExecutionResult,
+    ToolHealthCheck, ToolRegistry, APITool, CLITool, MCPTool, PluginTool
+)
+
+from ..core.tools.tool_executor import (
+    ToolExecutor, ExecutionContext, ExecutionMetrics, ResourceLimits,
+    SecurityPolicy, SecurityManager, ResourceManager, CacheManager,
+    ExecutionQueue, ExecutionPriority, ExecutionStatus,
+    create_tool_executor
+)
 import asyncio
 import importlib
 import json
@@ -58,17 +54,19 @@ from pydantic import Field
 
 # Type checking imports
 if TYPE_CHECKING:
-    from ..models.tool import Tool, ToolExecution, ToolTemplate
+    from ..models.tool import Tool
     from .agent_service import AgentService
     from .workflow_service import WorkflowService
 
 # Core imports
+from ..core.tools import (
     ToolBuilder, ToolConfiguration, ToolCapability, ToolInterface,
     ToolType, ToolExecutionMode, ToolStatus, PermissionLevel,
     ExecutionEnvironment, ToolExecutionRequest, ToolExecutionResult,
     ToolHealthCheck, ToolRegistry, APITool, CLITool, MCPTool, PluginTool
 )
 
+from ..core.tools.tool_executor import (
     ToolExecutor, ExecutionContext, ExecutionMetrics, ResourceLimits,
     SecurityPolicy, SecurityManager, ResourceManager, CacheManager,
     ExecutionQueue, ExecutionPriority, ExecutionStatus,

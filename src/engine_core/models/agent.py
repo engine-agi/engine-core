@@ -1,17 +1,4 @@
 """
-from sqlalchemy import Column
-from typing import Set, Tuple
-from pydantic import BaseModel
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Agent model for Engine Framework.
 
 An agent is an AI-powered entity with 11 configurable modules that can
@@ -33,19 +20,23 @@ The 11 agent modules provide comprehensive customization:
 Based on Engine Framework data model specification.
 """
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
-from sqlalchemy import Column
-
-   Column, String, Text, Boolean, Float, Integer,
-    ForeignKey, Index, CheckConstraint
+from sqlalchemy import (
+    Boolean, CheckConstraint, Column, Float, ForeignKey, Index, Integer,
+    String, Text
 )
-    import json
-    import re
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.orm import relationship, validates
 
-    # Type checking imports to avoid circular imports
-    if TYPE_CHECKING:
+from .base import SQLAlchemyBaseModel
+
+import json
+import re
+
+# Type checking imports to avoid circular imports
+if TYPE_CHECKING:
     from .book import Book
     from .project import Project
     from .protocol import Protocol
@@ -54,12 +45,7 @@ from sqlalchemy import Column
     from .workflow import Workflow
 
 
-    class Agent(
-    BaseModel,
-    StringIdentifierMixin,
-    ConfigurationMixin,
-    ValidationMixin,
-     TimestampMixin):
+class Agent(SQLAlchemyBaseModel):
     """
     Agent entity - AI-powered entity with 11 configurable modules.
 
@@ -81,199 +67,197 @@ from sqlalchemy import Column
 
     # Module 2: model (REQUIRED)
     model = Column(
-       String(100),
-        nullable = False,
-        index = True,
-        comment = "AI model identifier (e.g., 'claude-3.5-sonnet', 'gpt-4', 'llama-2-70b')"
+        String(100),
+        nullable=False,
+        index=True,
+        comment="AI model identifier (e.g., 'claude-3.5-sonnet', 'gpt-4', 'llama-2-70b')"
     )
 
-        # Module 3: stack (REQUIRED)
-        stack = Column(
-       ARRAY(String(100)),
-        nullable = False,
-        comment = "Technology stack capabilities (programming languages, frameworks, tools)"
+    # Module 3: stack (REQUIRED)
+    stack = Column(
+        ARRAY(String(100)),
+        nullable=False,
     )
 
-        # === OPTIONAL MODULES (8) ===
+    # === OPTIONAL MODULES (8) ===
 
-        # Module 4: name (optional)
-        name = Column(
-       String(255),
-        nullable = True,
-        index = True,
-        comment = "Human-readable agent name"
+    # Module 4: name (optional)
+    name = Column(
+        String(255),
+        nullable=True,
+        index=True,
+        comment="Human-readable agent name"
     )
 
-        # Module 5: speciality (optional)
-        speciality = Column(
-       Text,
-        nullable = True,
-        comment = "Domain expertise and specialized capabilities"
+    # Module 5: speciality (optional)
+    speciality = Column(
+        Text,
+        nullable=True,
+        comment="Domain expertise and specialized capabilities"
     )
 
-        # Module 6: persona (optional)
-        persona = Column(
-       Text,
-        nullable = True,
-        comment = "Personality traits, communication style, and behavioral characteristics"
+    # Module 6: persona (optional)
+    persona = Column(
+        Text,
+        nullable=True,
+        comment="Personality traits, communication style, and behavioral characteristics"
     )
 
-        # Module 7: tools (optional) - References to Tool entities
-        tools = Column(
-       ARRAY(String(255)),
-        nullable = True,
-        comment = "List of tool IDs this agent can use"
+    # Module 7: tools (optional) - References to Tool entities
+    tools = Column(
+        ARRAY(String(255)),
+        nullable=True,
+        comment="List of tool IDs this agent can use"
     )
 
-        # Module 8: protocol (optional) - Reference to Protocol entity
-        protocol_id = Column(
-       String(255),
+    # Module 8: protocol (optional) - Reference to Protocol entity
+    protocol_id = Column(
+        String(255),
         ForeignKey("protocols.id", ondelete="SET NULL"),
-        nullable = True,
-        index = True,
-        comment = "Protocol ID defining agent's command structure and behavior"
+        nullable=True,
+        index=True,
+        comment="Protocol ID defining agent's command structure and behavior"
     )
 
-        # Module 9: workflow (optional) - Reference to Workflow entity
-        workflow_id = Column(
-       String(255),
+    # Module 9: workflow (optional) - Reference to Workflow entity
+    workflow_id = Column(
+        String(255),
         ForeignKey("workflows.id", ondelete="SET NULL"),
-        nullable = True,
-        index = True,
-        comment = "Personal workflow ID for individual task execution"
+        nullable=True,
+        index=True,
+        comment="Personal workflow ID for individual task execution"
     )
 
-        # Module 10: book (optional) - Reference to Book entity
-        book_id = Column(
-       String(255),
+    # Module 10: book (optional) - Reference to Book entity
+    book_id = Column(
+        String(255),
         ForeignKey("books.id", ondelete="SET NULL"),
-        nullable = True,
-        index = True,
-        comment = "Memory/knowledge base ID for context and learning"
+        nullable=True,
+        index=True,
+        comment="Memory/knowledge base ID for context and learning"
     )
 
-        # Module 11: config (optional) - Inherited from ConfigurationMixin
-        # Advanced configuration already provided by parent class
+    # Module 11: config (optional) - Inherited from ConfigurationMixin
+    # Advanced configuration already provided by parent class
 
-        # === RELATIONSHIPS ===
+    # === RELATIONSHIPS ===
 
-        # Back-reference to project (set by project foreign key in junction table)
-        project_id = Column(
-       String(255),
+    # Back-reference to project (set by project foreign key in junction table)
+    project_id = Column(
+        String(255),
         ForeignKey("projects.id", ondelete="CASCADE"),
-        nullable = True,
-        index = True,
-        comment = "Project this agent belongs to"
+        nullable=True,
+        index=True,
+        comment="Project this agent belongs to"
     )
 
-        # Relationships
-        protocol = relationship("Protocol", back_populates="agents")
-        workflow = relationship("Workflow", back_populates="agents")
-        book = relationship("Book", back_populates="agents")
-        project = relationship("Project", back_populates="agents")
+    # Relationships
+    protocol = relationship("Protocol", back_populates="agents")
+    workflow = relationship("Workflow", back_populates="agents")
+    book = relationship("Book", back_populates="agents")
+    project = relationship("Project", back_populates="agents")
 
-        # === AGENT STATE AND EXECUTION ===
+    # === AGENT STATE AND EXECUTION ===
 
-        status = Column(
-       String(50),
-        nullable = False,
-        default = "idle",
-        index = True,
-        comment = "Current agent status"
+    status = Column(
+        String(50),
+        nullable=False,
+        default="idle",
+        index=True,
+        comment="Current agent status"
     )
 
-        # Execution metrics
-        total_executions = Column(
-       Integer,
-        default = 0,
-        nullable = False,
-        comment = "Total number of executions performed"
+    # Execution metrics
+    total_executions = Column(
+        Integer,
+        default=0,
+        nullable=False,
+        comment="Total number of executions performed"
     )
 
-        successful_executions = Column(
-       Integer,
-        default = 0,
-        nullable = False,
-        comment = "Number of successful executions"
+    successful_executions = Column(
+        Integer,
+        nullable=False,
+        comment="Number of successful executions"
     )
 
-        average_execution_time = Column(
-       Float,
-        nullable = True,
-        comment = "Average execution time in seconds"
+    average_execution_time = Column(
+        Float,
+        nullable=True,
+        comment="Average execution time in seconds"
     )
 
-        # Current execution context
-        current_task = Column(
-       String(255),
-        nullable = True,
-        comment = "Currently executing task or workflow"
+    # Current execution context
+    current_task = Column(
+        String(255),
+        nullable=True,
+        comment="Currently executing task or workflow"
     )
 
-        # Agent performance and learning
-        performance_score = Column(
-       Float,
-        nullable = True,
-        comment = "Agent performance score (0.0 to 1.0)"
+    # Agent performance and learning
+    performance_score = Column(
+        Float,
+        nullable=True,
+        comment="Agent performance score (0.0 to 1.0)"
     )
 
-        learning_data = Column(
-       JSONB,
-        nullable = True,
-        comment = "Learning history and adaptation data"
+    learning_data = Column(
+        JSONB,
+        nullable=True,
+        comment="Learning history and adaptation data"
     )
 
-        # Agent-specific metadata (avoiding conflict with SQLAlchemy's reserved
-        # 'metadata' attribute)
-        agent_metadata = Column(
-       JSONB,
-        nullable = True,
-        comment = "Agent-specific metadata and configuration"
+    # Agent-specific metadata (avoiding conflict with SQLAlchemy's reserved
+    # 'metadata' attribute)
+    agent_metadata = Column(
+        JSONB,
+        nullable=True,
+        comment="Agent-specific metadata and configuration"
     )
 
-        # Override the inherited metadata attribute to avoid SQLAlchemy conflict
-        metadata = None
+    # Override the inherited metadata attribute to avoid SQLAlchemy conflict
+    metadata = None
 
-        def __init__(self, **kwargs):
-    """Initialize agent with validation."""
+    def __init__(self, **kwargs):
+        """Initialize agent with validation."""
         # Set defaults
         if 'status' not in kwargs:
-    kwargs['status'] = 'idle'
+            kwargs['status'] = 'idle'
         if 'total_executions' not in kwargs:
-    kwargs['total_executions'] = 0
+            kwargs['total_executions'] = 0
         if 'successful_executions' not in kwargs:
-    kwargs['successful_executions'] = 0
+            kwargs['successful_executions'] = 0
 
         super().__init__(**kwargs)
 
-        def __repr__(self) -> str:
-    return f"<Agent(id='{self.id}', name='{self.name}', model='{self.model}')>"
+    def __repr__(self) -> str:
+        return f"<Agent(id='{self.id}', name='{self.name}', model='{self.model}')>"
 
-        # === VALIDATION METHODS ===
+    # === VALIDATION METHODS ===
 
-    @ validates('id')
-        def validate_id(self, key: str, value: str) -> str:
-    """Validate agent ID format."""
+    @validates('id')
+    def validate_id(self, key: str, value: str) -> str:
+        """Validate agent ID format."""
         if not value:
-    raise ValueError("Agent ID is required")
+            raise ValueError("Agent ID is required")
 
         # Must be alphanumeric with underscores, 2-100 characters
         if not re.match(r'^[a-zA-Z0-9_]{2,100}$', value):
-    raise ValueError(
-               "Agent ID must be 2-100 characters, containing only "
+            raise ValueError(
+                "Agent ID must be 2-100 characters, containing only "
                 "letters, numbers, and underscores"
             )
 
-            return value.lower()  # Normalize to lowercase
+        return value.lower()  # Normalize to lowercase
 
-    @ validates('model')
-            def validate_model(self, key: str, value: str) -> str:
-            """Validate AI model identifier."""
-            if not value or not value.strip():
+    @validates('model')
+    def validate_model(self, key: str, value: str) -> str:
+        """Validate AI model identifier."""
+        if not value or not value.strip():
             raise ValueError("AI model is required")
 
-            # List of supported models (can be extended)
-            supported_models = [
+        # List of supported models (can be extended)
+        supported_models = [
             'claude-3.5-sonnet', 'claude-3-haiku', 'claude-3-opus',
             'gpt-4', 'gpt-4-turbo', 'gpt-3.5-turbo',
             'llama-2-70b', 'llama-2-13b', 'llama-2-7b',
@@ -282,66 +266,66 @@ from sqlalchemy import Column
             'palm-2', 'palm-2-chat'
         ]
 
-            value = value.strip().lower()
-            if value not in supported_models:
-        raise ValueError(f"Model '{value}' not supported. Supported models: {', '.join(supported_models)}")
+        value = value.strip().lower()
+        if value not in supported_models:
+            raise ValueError(f"Model '{value}' not supported. Supported models: {', '.join(supported_models)}")
 
-            return value
+        return value
 
-    @ validates('stack')
-        def validate_stack(self, key: str, value: List[str]) -> List[str]:
+    @validates('stack')
+    def validate_stack(self, key: str, value: List[str]) -> List[str]:
         """Validate technology stack."""
         if not value or not isinstance(value, list):
-        raise ValueError("Technology stack is required and must be a list")
+            raise ValueError("Technology stack is required and must be a list")
 
         if len(value) == 0:
-        raise ValueError("At least one technology must be specified in stack")
+            raise ValueError("At least one technology must be specified in stack")
 
         # Validate each stack item
         valid_stack_items = []
         for item in value:
-        if not isinstance(item, str) or not item.strip():
-        raise ValueError("All stack items must be non-empty strings")
+            if not isinstance(item, str) or not item.strip():
+                raise ValueError("All stack items must be non-empty strings")
 
             item = item.strip().lower()
             if item not in valid_stack_items:
-        valid_stack_items.append(item)
+                valid_stack_items.append(item)
 
         if len(valid_stack_items) > 20:
-        raise ValueError("Maximum 20 technologies allowed in stack")
+            raise ValueError("Maximum 20 technologies allowed in stack")
 
         return valid_stack_items
 
-    @ validates('name')
-        def validate_name(self, key: str, value: Optional[str]) -> Optional[str]:
+    @validates('name')
+    def validate_name(self, key: str, value: Optional[str]) -> Optional[str]:
         """Validate agent name."""
         if value is not None:
-        value = value.strip()
+            value = value.strip()
             if len(value) > 255:
-        raise ValueError("Agent name cannot exceed 255 characters")
+                raise ValueError("Agent name cannot exceed 255 characters")
             return value if value else None
         return value
 
-    @ validates('status')
-        def validate_status(self, key: str, value: str) -> str:
+    @validates('status')
+    def validate_status(self, key: str, value: str) -> str:
         """Validate agent status."""
         valid_statuses = ['idle', 'active', 'busy', 'error', 'offline', 'maintenance']
 
         if value not in valid_statuses:
-        raise ValueError(f"Status must be one of: {', '.join(valid_statuses)}")
+            raise ValueError(f"Status must be one of: {', '.join(valid_statuses)}")
 
         return value
 
-    @ validates('performance_score')
-        def validate_performance_score(self, key: str, value: Optional[float]) -> Optional[float]:
+    @validates('performance_score')
+    def validate_performance_score(self, key: str, value: Optional[float]) -> Optional[float]:
         """Validate performance score."""
         if value is not None:
-        if not 0.0 <= value <= 1.0:
-        raise ValueError("Performance score must be between 0.0 and 1.0")
+            if not 0.0 <= value <= 1.0:
+                raise ValueError("Performance score must be between 0.0 and 1.0")
         return value
 
-    @ classmethod
-        def validate_data(cls, data: Dict[str, Any]) -> Dict[str, Any]:
+    @classmethod
+    def validate_data(cls, data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate agent data before creating/updating."""
         validated = data.copy()
 

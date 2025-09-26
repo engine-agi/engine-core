@@ -2,7 +2,10 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
+
+from .base_schemas import BaseResponseSchema
+from .enums import ProficiencyLevel
 
 # This module contains Pydantic schemas for agent-related API operations
 

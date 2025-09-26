@@ -1,18 +1,4 @@
 """
-from abc import abstractmethod
-from typing import Set, Tuple
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Team Builder - Core Team System with Coordination Strategies.
 
 The TeamBuilder provides a fluent interface for creating and configuring
@@ -37,15 +23,34 @@ Key Features:
 import asyncio
 import json
 import uuid
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
 from pydantic import Field
 
-# Import agent system
+# Forward declarations to avoid circular imports
+class BuiltAgent:
+    """Forward declaration for BuiltAgent to avoid circular imports."""
+    async def execute(self, message: str, context: Optional[AgentExecutionContext] = None) -> Any:
+        """Execute agent with message."""
+        pass
+
+class AgentExecutionContext:
+    """Forward declaration for AgentExecutionContext to avoid circular imports."""
+    def __init__(
+        self,
+        request_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        project_id: Optional[str] = None,
+        parent_context: Optional["AgentExecutionContext"] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        started_at: Optional[datetime] = None
+    ):
+        pass
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
@@ -54,6 +59,8 @@ if TYPE_CHECKING:
     from ...models.protocol import Protocol
     from ...models.team import Team
     from ...models.workflow import Workflow
+    # Real imports for type checking
+    from ...core.agents.agent_builder import BuiltAgent as RealBuiltAgent, AgentExecutionContext as RealAgentExecutionContext
 
 
 class TeamCoordinationStrategy(Enum):
@@ -179,7 +186,7 @@ class CoordinationStrategy(ABC):
         self,
         tasks: List[TeamTask],
         members: List[TeamMember],
-        agents: Dict[str, BuiltAgent],
+        agents: Dict[str, "BuiltAgent"],
         context: TeamExecutionContext
     ) -> List[TeamTask]:
         """Coordinate team execution for given tasks."""
@@ -202,7 +209,7 @@ class HierarchicalStrategy(CoordinationStrategy):
         self,
         tasks: List[TeamTask],
         members: List[TeamMember],
-        agents: Dict[str, BuiltAgent],
+        agents: Dict[str, "BuiltAgent"],
         context: TeamExecutionContext
     ) -> List[TeamTask]:
         """Coordinate execution hierarchically."""
@@ -335,7 +342,7 @@ class CollaborativeStrategy(CoordinationStrategy):
         self,
         tasks: List[TeamTask],
         members: List[TeamMember],
-        agents: Dict[str, BuiltAgent],
+        agents: Dict[str, "BuiltAgent"],
         context: TeamExecutionContext
     ) -> List[TeamTask]:
         """Coordinate execution collaboratively."""
@@ -482,7 +489,7 @@ class ParallelStrategy(CoordinationStrategy):
         self,
         tasks: List[TeamTask],
         members: List[TeamMember],
-        agents: Dict[str, BuiltAgent],
+        agents: Dict[str, "BuiltAgent"],
         context: TeamExecutionContext
     ) -> List[TeamTask]:
         """Coordinate execution in parallel."""
@@ -572,7 +579,7 @@ class ParallelStrategy(CoordinationStrategy):
 class TeamExecutionEngine:
     """Team execution engine with coordination strategies."""
 
-    def __init__(self, team_config: Dict[str, Any], agents: Dict[str, BuiltAgent]):
+    def __init__(self, team_config: Dict[str, Any], agents: Dict[str, "BuiltAgent"]):
         self.team_config = team_config
         self.agents = agents
         self.state = TeamState.IDLE
@@ -836,7 +843,7 @@ class TeamBuilder:
 
     # === BUILD METHODS ===
 
-    def build(self, agents: Optional[Dict[str, BuiltAgent]] = None) -> 'BuiltTeam':
+    def build(self, agents: Optional[Dict[str, "BuiltAgent"]] = None) -> 'BuiltTeam':
         """Build and return configured team."""
         if not self.validate():
             raise ValueError(
@@ -906,7 +913,7 @@ class BuiltTeam:
     Represents a fully configured team ready for task execution.
     """
 
-    def __init__(self, config: Dict[str, Any], agents: Dict[str, BuiltAgent]):
+    def __init__(self, config: Dict[str, Any], agents: Dict[str, "BuiltAgent"]):
         self.config = config
         self.agents = agents
         self.execution_engine = TeamExecutionEngine(config, agents)
@@ -932,7 +939,7 @@ class BuiltTeam:
         """Get number of team members."""
         return len(self.config.get('members', []))
 
-    def add_agent(self, agent_id: str, agent: BuiltAgent) -> None:
+    def add_agent(self, agent_id: str, agent: "BuiltAgent") -> None:
         """Add agent to team."""
         self.agents[agent_id] = agent
 
@@ -986,17 +993,17 @@ class BuiltTeam:
 
 # === CONVENIENCE FUNCTIONS ===
 
-def create_development_team(team_id: str, leader_id: str, member_ids: List[str], agents: Dict[str, BuiltAgent]) -> BuiltTeam:
+def create_development_team(team_id: str, leader_id: str, member_ids: List[str], agents: Dict[str, "BuiltAgent"]) -> BuiltTeam:
     """Create development team with agents."""
     return TeamBuilder.development_team(team_id, leader_id, member_ids).build(agents)
 
 
-def create_analysis_team(team_id: str, analyst_ids: List[str], agents: Dict[str, BuiltAgent]) -> BuiltTeam:
+def create_analysis_team(team_id: str, analyst_ids: List[str], agents: Dict[str, "BuiltAgent"]) -> BuiltTeam:
     """Create analysis team with agents."""
     return TeamBuilder.analysis_team(team_id, analyst_ids).build(agents)
 
 
-def create_parallel_team(team_id: str, processor_ids: List[str], agents: Dict[str, BuiltAgent]) -> BuiltTeam:
+def create_parallel_team(team_id: str, processor_ids: List[str], agents: Dict[str, "BuiltAgent"]) -> BuiltTeam:
     """Create parallel processing team with agents."""
     return TeamBuilder.parallel_processing_team(team_id, processor_ids).build(agents)
 

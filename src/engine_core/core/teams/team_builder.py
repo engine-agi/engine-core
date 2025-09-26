@@ -1,18 +1,4 @@
 """
-from abc import ABC, abstractmethod
-from typing import Set, Tuple
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Team Builder - Core Team System with Coordination Strategies.
 
 The TeamBuilder provides a fluent interface for creating and configuring
@@ -41,19 +27,19 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
-# Import agent system
+from pydantic import Field
 
 # Type checking imports to avoid circular imports
-# if TYPE_CHECKING:
-#     from ...models.agent import Agent
-#     from ...models.book import Book
-#     from ...models.protocol import Protocol
-#     from ...models.team import Team
-#     from ...models.workflow import Workflow
-
-
+if TYPE_CHECKING:
+    from ...models.agent import Agent
+    from ...models.book import Book
+    from ...models.protocol import Protocol
+    from ...models.team import Team
+    from ...models.workflow import Workflow
+    # Agent system imports for type hints
+    from ...core.agents.agent_builder import BuiltAgent, AgentExecutionContext
 class TeamCoordinationStrategy(Enum):
     """Team coordination strategies."""
     HIERARCHICAL = "hierarchical"
@@ -140,7 +126,8 @@ class TeamTask:
             'created_at': self.created_at.isoformat(),
             'started_at': self.started_at.isoformat() if self.started_at else None,
             'completed_at': self.completed_at.isoformat() if self.completed_at else None,
-            'result': self.result}
+            'result': self.result
+        }
 
 
 @dataclass
@@ -176,7 +163,7 @@ class CoordinationStrategy(ABC):
         self,
         tasks: List[TeamTask],
         members: List[TeamMember],
-        agents: Dict[str, BuiltAgent],
+        agents: Dict[str, Any],
         context: TeamExecutionContext
     ) -> List[TeamTask]:
         """Coordinate team execution for given tasks."""
@@ -199,7 +186,7 @@ class HierarchicalStrategy(CoordinationStrategy):
         self,
         tasks: List[TeamTask],
         members: List[TeamMember],
-        agents: Dict[str, BuiltAgent],
+        agents: Dict[str, Any],
         context: TeamExecutionContext
     ) -> List[TeamTask]:
         """Coordinate execution hierarchically."""
@@ -296,7 +283,7 @@ class HierarchicalStrategy(CoordinationStrategy):
     ) -> Dict[str, List[TeamTask]]:
         """Assign tasks based on member capabilities and priority."""
         assignments = {member.agent_id: []
-                       for member in members if member.role != TeamMemberRole.LEADER}
+            for member in members if member.role != TeamMemberRole.LEADER}
 
         # Sort tasks by dependencies (simple topological sort)
         available_tasks = [t for t in tasks if not t.dependencies]
@@ -332,7 +319,7 @@ class CollaborativeStrategy(CoordinationStrategy):
         self,
         tasks: List[TeamTask],
         members: List[TeamMember],
-        agents: Dict[str, BuiltAgent],
+        agents: Dict[str, Any],
         context: TeamExecutionContext
     ) -> List[TeamTask]:
         """Coordinate execution collaboratively."""
@@ -395,15 +382,16 @@ class CollaborativeStrategy(CoordinationStrategy):
                     user_id=context.user_id,
                     project_id=context.project_id,
                     metadata={
-                        'task_id': task.id,
-                        'coordination_strategy': 'collaborative'})
+    'task_id': task.id,
+     'coordination_strategy': 'collaborative'}
+                )
 
                 result = await agent.execute(task.description, execution_context)
                 task.result = result.content
 
                 # Peer review from other members
                 reviewers = [
-                    m for m in members if m.agent_id != assigned_member.agent_id]
+    m for m in members if m.agent_id != assigned_member.agent_id]
                 reviews = []
 
                 for reviewer in reviewers[:2]:  # Limit to 2 reviewers
@@ -459,7 +447,7 @@ class CollaborativeStrategy(CoordinationStrategy):
             if capable_members:
                 # Assign to member with fewest current tasks
                 member = min(capable_members,
-                             key=lambda m: len(assignments[m.agent_id]))
+     key=lambda m: len(assignments[m.agent_id]))
             else:
                 # Fallback to round-robin
                 member = members[member_index % len(members)]
@@ -478,7 +466,7 @@ class ParallelStrategy(CoordinationStrategy):
         self,
         tasks: List[TeamTask],
         members: List[TeamMember],
-        agents: Dict[str, BuiltAgent],
+        agents: Dict[str, Any],
         context: TeamExecutionContext
     ) -> List[TeamTask]:
         """Coordinate execution in parallel."""
@@ -488,7 +476,7 @@ class ParallelStrategy(CoordinationStrategy):
 
         # Execute all tasks in parallel
         async def execute_agent_tasks(agent_id: str,
-                                      agent_tasks: List[TeamTask]) -> List[TeamTask]:
+     agent_tasks: List[TeamTask]) -> List[TeamTask]:
             agent = agents[agent_id]
             completed = []
 
@@ -508,8 +496,9 @@ class ParallelStrategy(CoordinationStrategy):
                             user_id=context.user_id,
                             project_id=context.project_id,
                             metadata={
-                                'task_id': task.id,
-                                'coordination_strategy': 'parallel'})
+    'task_id': task.id,
+     'coordination_strategy': 'parallel'}
+                        )
 
                         result = await agent.execute(task.description, execution_context)
                         task.result = result.content
@@ -567,7 +556,7 @@ class ParallelStrategy(CoordinationStrategy):
 class TeamExecutionEngine:
     """Team execution engine with coordination strategies."""
 
-    def __init__(self, team_config: Dict[str, Any], agents: Dict[str, BuiltAgent]):
+    def __init__(self, team_config: Dict[str, Any], agents: Dict[str, Any]):
         self.team_config = team_config
         self.agents = agents
         self.state = TeamState.IDLE
@@ -720,7 +709,7 @@ class TeamBuilder:
     # === COORDINATION STRATEGY ===
 
     def with_coordination_strategy(
-            self, strategy: TeamCoordinationStrategy) -> 'TeamBuilder':
+    self, strategy: TeamCoordinationStrategy) -> 'TeamBuilder':
         """Set team coordination strategy."""
         self.config['coordination_strategy'] = strategy.value
         return self
@@ -763,11 +752,11 @@ class TeamBuilder:
     ) -> 'TeamBuilder':
         """Add team leader (convenience method)."""
         return self.add_member(
-            agent_id,
-            TeamMemberRole.LEADER,
-            capabilities,
-            priority=0,
-            metadata=metadata)
+    agent_id,
+    TeamMemberRole.LEADER,
+    capabilities,
+    priority=0,
+     metadata=metadata)
 
     def add_reviewer(
         self,
@@ -777,10 +766,10 @@ class TeamBuilder:
     ) -> 'TeamBuilder':
         """Add team reviewer (convenience method)."""
         return self.add_member(
-            agent_id,
-            TeamMemberRole.REVIEWER,
-            capabilities,
-            metadata=metadata)
+    agent_id,
+    TeamMemberRole.REVIEWER,
+    capabilities,
+     metadata=metadata)
 
     # === METADATA ===
 
@@ -809,7 +798,7 @@ class TeamBuilder:
 
         # Check hierarchical strategy has leader
         if self.config.get(
-                'coordination_strategy') == TeamCoordinationStrategy.HIERARCHICAL.value:
+            'coordination_strategy') == TeamCoordinationStrategy.HIERARCHICAL.value:
             has_leader = any(
                 member['role'] == TeamMemberRole.LEADER.value
                 for member in self.config.get('members', [])
@@ -831,13 +820,13 @@ class TeamBuilder:
 
     # === BUILD METHODS ===
 
-    def build(self, agents: Optional[Dict[str, BuiltAgent]] = None) -> 'BuiltTeam':
+    def build(self, agents: Optional[Dict[str, Any]] = None) -> 'BuiltTeam':
         """Build and return configured team."""
         if not self.validate():
             raise ValueError(
-                f"Team validation failed: {
-                    ', '.join(
-                        self._validation_errors)}")
+    f"Team validation failed: {
+        ', '.join(
+            self._validation_errors)}")
 
         # Create built team
         built_team = BuiltTeam(
@@ -853,16 +842,14 @@ class TeamBuilder:
     def development_team(cls, team_id: str, leader_id: str,
                          member_ids: List[str]) -> 'TeamBuilder':
         """Create development team template."""
-        builder = cls() \
-            .with_id(team_id) \
-            .with_name("Development Team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.HIERARCHICAL) \
+        builder = cls()\
+            .with_id(team_id)\
+            .with_name("Development Team")\
+            .with_coordination_strategy(TeamCoordinationStrategy.HIERARCHICAL)\
             .add_leader(leader_id, ["leadership", "code_review", "architecture"])
 
         for member_id in member_ids:
-            builder.add_member(
-                member_id, TeamMemberRole.MEMBER, [
-                    "programming", "testing"])
+            builder.add_member(member_id, TeamMemberRole.MEMBER, ["programming", "testing"])
 
         return builder
 
@@ -876,19 +863,12 @@ class TeamBuilder:
 
         for i, analyst_id in enumerate(analyst_ids):
             capabilities = ["data_analysis", "statistics", "visualization"]
-            builder.add_member(
-                analyst_id,
-                TeamMemberRole.MEMBER,
-                capabilities,
-                priority=i + 1)
+            builder.add_member(analyst_id, TeamMemberRole.MEMBER, capabilities, priority=i+1)
 
         return builder
 
     @classmethod
-    def parallel_processing_team(
-            cls,
-            team_id: str,
-            processor_ids: List[str]) -> 'TeamBuilder':
+    def parallel_processing_team(cls, team_id: str, processor_ids: List[str]) -> 'TeamBuilder':
         """Create parallel processing team template."""
         builder = cls() \
             .with_id(team_id) \
@@ -898,7 +878,7 @@ class TeamBuilder:
 
         for processor_id in processor_ids:
             builder.add_member(processor_id, TeamMemberRole.MEMBER,
-                               capabilities=["processing"], max_concurrent_tasks=3)
+                             capabilities=["processing"], max_concurrent_tasks=3)
 
         return builder
 
@@ -910,7 +890,7 @@ class BuiltTeam:
     Represents a fully configured team ready for task execution.
     """
 
-    def __init__(self, config: Dict[str, Any], agents: Dict[str, BuiltAgent]):
+    def __init__(self, config: Dict[str, Any], agents: Dict[str, Any]):
         self.config = config
         self.agents = agents
         self.execution_engine = TeamExecutionEngine(config, agents)
@@ -936,7 +916,7 @@ class BuiltTeam:
         """Get number of team members."""
         return len(self.config.get('members', []))
 
-    def add_agent(self, agent_id: str, agent: BuiltAgent) -> None:
+    def add_agent(self, agent_id: str, agent: Any) -> None:
         """Add agent to team."""
         self.agents[agent_id] = agent
 
@@ -990,27 +970,17 @@ class BuiltTeam:
 
 # === CONVENIENCE FUNCTIONS ===
 
-def create_development_team(team_id: str,
-                            leader_id: str,
-                            member_ids: List[str],
-                            agents: Dict[str,
-                                         BuiltAgent]) -> BuiltTeam:
+def create_development_team(team_id: str, leader_id: str, member_ids: List[str], agents: Dict[str, Any]) -> BuiltTeam:
     """Create development team with agents."""
     return TeamBuilder.development_team(team_id, leader_id, member_ids).build(agents)
 
 
-def create_analysis_team(team_id: str,
-                         analyst_ids: List[str],
-                         agents: Dict[str,
-                                      BuiltAgent]) -> BuiltTeam:
+def create_analysis_team(team_id: str, analyst_ids: List[str], agents: Dict[str, Any]) -> BuiltTeam:
     """Create analysis team with agents."""
     return TeamBuilder.analysis_team(team_id, analyst_ids).build(agents)
 
 
-def create_parallel_team(team_id: str,
-                         processor_ids: List[str],
-                         agents: Dict[str,
-                                      BuiltAgent]) -> BuiltTeam:
+def create_parallel_team(team_id: str, processor_ids: List[str], agents: Dict[str, Any]) -> BuiltTeam:
     """Create parallel processing team with agents."""
     return TeamBuilder.parallel_processing_team(team_id, processor_ids).build(agents)
 

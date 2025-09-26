@@ -1,3 +1,13 @@
-# Agents Module
+"""
+Agents Module - Core Agent System
 
-__all__ = ["AgentBuilder", "AgentState", "BuiltAgent", "AgentExecutionContext"]
+This module contains the core agent implementation including:
+- AgentBuilder: Fluent interface for agent creation
+- Exceptions: Agent-specific exceptions
+"""
+
+from .agent_builder import AgentBuilder
+
+__all__ = [
+    "AgentBuilder",
+]

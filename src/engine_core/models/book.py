@@ -1,17 +1,4 @@
 """
-from sqlalchemy import Column
-from typing import Set, Tuple
-from pydantic import BaseModel
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Book models for Engine Framework.
 
 Books implement hierarchical memory system with:
@@ -24,11 +11,22 @@ Books implement hierarchical memory system with:
 Based on Engine Framework data model specification.
 """
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
+
+from pydantic import BaseModel, Field
+from sqlalchemy import (
+    Boolean, Column, Float, ForeignKey, Index, Integer, String, Text,
+    CheckConstraint
+)
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.orm import relationship, validates
+
+from .base import SQLAlchemyBaseModel
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pydantic import BaseModel, Field
-from sqlalchemy import Column
-
+from sqlalchemy import (
     Column, String, Text, Boolean, Integer, Float,
     ForeignKey, Index, CheckConstraint
 )
@@ -48,7 +46,7 @@ class BookStatus:
     SHARED = "shared"
 
 
-class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin):
+class Book(SQLAlchemyBaseModel):
     """
     Book entity - hierarchical memory and knowledge base.
 
@@ -374,7 +372,7 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         }
 
 
-class BookChapter(BaseModel, StringIdentifierMixin, ConfigurationMixin):
+class BookChapter(SQLAlchemyBaseModel):
     """
     Book chapter - organizational unit within a book.
 
@@ -478,7 +476,7 @@ class BookChapter(BaseModel, StringIdentifierMixin, ConfigurationMixin):
         return None
 
 
-class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
+class BookPage(SQLAlchemyBaseModel):
     """
     Book page - content unit within a chapter.
 
@@ -655,7 +653,6 @@ Index('idx_chapter_page_count', BookChapter.page_count)
 Index('idx_page_book_chapter', BookPage.book_id, BookPage.chapter_id)
 Index('idx_page_content_type', BookPage.content_type)
 Index('idx_page_access_count', BookPage.access_count)
-Index('idx_page_word_count', BookPage.word_count)
 
 # Database constraints
 CheckConstraint(

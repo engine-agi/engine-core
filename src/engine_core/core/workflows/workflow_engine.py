@@ -20,52 +20,11 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-"""
-Workflow Engine - Pregel-based Computational Graph Execution.
-
-The WorkflowEngine implements the Pregel computational model for distributed
-graph processing, adapted for AI agent orchestration and workflow execution.
-
-Key Features:
-- Pregel computational model (supersteps, message passing, vertex computation)
-- DAG validation and cycle detection
-- Vertex-based computation with agent assignment
-- Edge-based message passing and data flow
-"""
-import asyncio
-import json
-import logging
-import uuid
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
-
-- Superstep coordination and synchronization
-- Fault tolerance and recovery mechanisms
-- Performance monitoring and optimization
-
-Architecture:
-- Vertices represent computational units (agents, teams, or atomic operations)
-- Edges represent data dependencies and message passing
-- Supersteps coordinate distributed computation phases
-- Global coordinator manages execution state and synchronization
-
-Based on Google's Pregel paper and adapted for Engine Framework.
-"""
-from abc import abstractmethod
-from typing import Set, Tuple
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-import asyncio
-import uuid
-import json
-import logging
+# Type checking imports
+if TYPE_CHECKING:
+    from ...models.agent import Agent
+    from ...models.team import Team
+    from ...models.workflow import Workflow, WorkflowExecution
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
@@ -684,27 +643,6 @@ class WorkflowVertex:
 
 
 class WorkflowEngine:
-    """
-    Pregel-based workflow execution engine.
-
-    Implements the Pregel computational model for distributed graph processing,
-    adapted for AI agent orchestration and workflow execution.
-
-    Key Components:
-    - Vertices: Computational units (agents, teams, operations)
-    - Edges: Data flow and dependencies
-    - Supersteps: Synchronized computation phases
-    - Message passing: Inter-vertex communication
-
-    Execution Flow:
-    1. Graph validation and DAG verification
-    2. Topological sorting and execution planning
-    3. Superstep-based execution with synchronization
-    4. Message passing and state updates
-    5. Termination detection and result collection
-    """
-
-    def __init__(self):
         """Initialize workflow engine."""
         self.vertices: Dict[str, WorkflowVertex] = {}
         self.edges: Dict[str, List[str]] = defaultdict(

@@ -1,18 +1,4 @@
 """
-from abc import abstractmethod
-from typing import Set, Tuple
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Tool System Core - Tool Integration Architecture.
 
 The Tool System provides a comprehensive framework for integrating external tools,
@@ -52,13 +38,13 @@ import os
 import subprocess
 import tempfile
 import uuid
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Type
 
-import httpx
+import aiohttp
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +94,6 @@ class ExecutionEnvironment(Enum):
 
 
 @dataclass
-@dataclass
 class ToolCapability:
     """Defines a tool's capability or function."""
     name: str
@@ -116,11 +101,11 @@ class ToolCapability:
     input_schema: Dict[str, Any]
     output_schema: Dict[str, Any]
     required_permissions: Set[str] = field(default_factory=set)
+    execution_time_estimate: Optional[float] = None
     resource_requirements: Dict[str, Any] = field(default_factory=dict)
     dependencies: List[str] = field(default_factory=list)
     examples: List[Dict[str, Any]] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    execution_time_estimate: Optional[float] = None
 
 
 @dataclass
@@ -232,7 +217,7 @@ class ToolInterface(ABC):
         self,
         capability_name: str,
         parameters: Dict[str, Any],
-        context: Dict[str, Any] = None
+        context: Optional[Dict[str, Any]] = None
     ) -> ToolExecutionResult:
         """Execute a specific capability of the tool."""
         pass
@@ -301,7 +286,7 @@ class APITool(ToolInterface):
         self,
         capability_name: str,
         parameters: Dict[str, Any],
-        context: Dict[str, Any] = None
+        context: Optional[Dict[str, Any]] = None
     ) -> ToolExecutionResult:
         """Execute API capability."""
         execution_id = str(uuid.uuid4())
@@ -328,7 +313,7 @@ class APITool(ToolInterface):
             )
 
             # Execute API call
-            async with self.session.request(
+            async with self.session.request(  # type: ignore
                 method=method,
                 url=url,
                 json=payload if method in ['POST', 'PUT', 'PATCH'] else None,
@@ -390,7 +375,13 @@ class APITool(ToolInterface):
             if not health_url:
                 health_url = self.base_url
 
-            async with self.session.get(health_url) as response:
+            if not health_url:
+                raise ValueError("No URL available for health check")
+
+            if not self.session:
+                await self.initialize()
+
+            async with self.session.get(health_url) as response:  # type: ignore
                 response_time = (datetime.utcnow() - start_time).total_seconds()
 
                 if response.status < 400:
@@ -439,7 +430,7 @@ class APITool(ToolInterface):
         self,
         capability: ToolCapability,
         parameters: Dict[str, Any],
-        context: Dict[str, Any] = None
+        context: Optional[Dict[str, Any]] = None
     ) -> tuple[str, str, Dict[str, Any], Dict[str, str]]:
         """Build API request from capability and parameters."""
 
@@ -448,10 +439,8 @@ class APITool(ToolInterface):
 
         # Build URL
         url = self.base_url
-        if 'endpoint' in capability.metadata:
+        if url and 'endpoint' in capability.metadata:
             url = f"{url.rstrip('/')}/{capability.metadata['endpoint'].lstrip('/')}"
-
-        # Build payload
         payload = parameters.copy()
 
         # Add context if needed
@@ -462,6 +451,9 @@ class APITool(ToolInterface):
         headers = self.config.headers.copy()
         if 'additional_headers' in capability.metadata:
             headers.update(capability.metadata['additional_headers'])
+
+        if not url:
+            raise ValueError("No URL available for API request")
 
         return url, method, payload, headers
 
@@ -513,7 +505,7 @@ class CLITool(ToolInterface):
         self,
         capability_name: str,
         parameters: Dict[str, Any],
-        context: Dict[str, Any] = None
+        context: Optional[Dict[str, Any]] = None
     ) -> ToolExecutionResult:
         """Execute CLI capability."""
         execution_id = str(uuid.uuid4())
@@ -626,7 +618,7 @@ class CLITool(ToolInterface):
         self,
         capability: ToolCapability,
         parameters: Dict[str, Any],
-        context: Dict[str, Any] = None
+        context: Optional[Dict[str, Any]] = None
     ) -> List[str]:
         """Build CLI command from capability and parameters."""
 
@@ -685,7 +677,7 @@ class CLITool(ToolInterface):
 
             return subprocess.CompletedProcess(
                 args=command,
-                returncode=process.returncode,
+                returncode=process.returncode or 0,
                 stdout=stdout.decode('utf-8', errors='replace'),
                 stderr=stderr.decode('utf-8', errors='replace')
             )
@@ -745,7 +737,7 @@ class MCPTool(ToolInterface):
         self,
         capability_name: str,
         parameters: Dict[str, Any],
-        context: Dict[str, Any] = None
+        context: Optional[Dict[str, Any]] = None
     ) -> ToolExecutionResult:
         """Execute MCP capability."""
         execution_id = str(uuid.uuid4())
@@ -754,6 +746,9 @@ class MCPTool(ToolInterface):
         try:
             if not self.server_process or self.server_process.returncode is not None:
                 await self.initialize()
+
+            if not self.server_process:
+                raise RuntimeError("Failed to initialize MCP server process")
 
             # Build MCP request
             mcp_request = {
@@ -764,11 +759,11 @@ class MCPTool(ToolInterface):
 
             # Send request to MCP server
             request_json = json.dumps(mcp_request) + '\n'
-            self.server_process.stdin.write(request_json.encode())
-            await self.server_process.stdin.drain()
+            self.server_process.stdin.write(request_json.encode())  # type: ignore
+            await self.server_process.stdin.drain()  # type: ignore
 
             # Read response
-            response_line = await self.server_process.stdout.readline()
+            response_line = await self.server_process.stdout.readline()  # type: ignore
             response_data = json.loads(response_line.decode())
 
             execution_time = (datetime.utcnow() - start_time).total_seconds()
@@ -822,13 +817,13 @@ class MCPTool(ToolInterface):
             }
 
             request_json = json.dumps(ping_request) + '\n'
-            self.server_process.stdin.write(request_json.encode())
-            await self.server_process.stdin.drain()
+            self.server_process.stdin.write(request_json.encode())  # type: ignore
+            await self.server_process.stdin.drain()  # type: ignore
 
             # Try to read response with timeout
             try:
                 response_line = await asyncio.wait_for(
-                    self.server_process.stdout.readline(),
+                    self.server_process.stdout.readline(),  # type: ignore
                     timeout=5.0
                 )
                 response_time = (datetime.utcnow() - start_time).total_seconds()
@@ -915,7 +910,7 @@ class PluginTool(ToolInterface):
         self,
         capability_name: str,
         parameters: Dict[str, Any],
-        context: Dict[str, Any] = None
+        context: Optional[Dict[str, Any]] = None
     ) -> ToolExecutionResult:
         """Execute plugin capability."""
         execution_id = str(uuid.uuid4())
@@ -966,6 +961,9 @@ class PluginTool(ToolInterface):
         try:
             if not self.plugin_instance:
                 await self.initialize()
+
+            if not self.plugin_instance:
+                raise RuntimeError("Failed to initialize plugin instance")
 
             # Use plugin's health check if available
             if hasattr(self.plugin_instance, 'health_check'):
@@ -1261,9 +1259,8 @@ class ToolBuilder:
 
     def with_mcp_server(self,
                         server_path: str,
-                        args: List[str] = None,
-                        env: Dict[str,
-                                  str] = None):
+                        args: Optional[List[str]] = None,
+                        env: Optional[Dict[str, str]] = None):
         """Set MCP server configuration."""
         self._mcp_server_path = server_path
         self._mcp_args = args or []

@@ -1,13 +1,11 @@
-# Protocols Module
+"""
+Protocols Module - Protocol Management System
 
+This module contains the protocol parsing and management system.
+"""
 
-# Lazy import to avoid database dependencies at import time
-def __getattr__(name):
-    if name == "Protocol":
-        from ...models.protocol import Protocol
+from .protocol_parser import ProtocolParser
 
-        return Protocol
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
-
-
-__all__ = ["ProtocolBuilder"]
+__all__ = [
+    "ProtocolParser",
+]

@@ -1,17 +1,4 @@
 """
-from typing import Set, Tuple
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Tool Executor - Secure and Monitored Tool Execution Engine.
 
 The ToolExecutor provides a secure, monitored environment for executing tools
@@ -50,10 +37,11 @@ import threading
 import time
 import uuid
 import weakref
+from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
 import psutil
 
@@ -213,7 +201,7 @@ class SecurityManager:
                 return False
 
             # Check required permissions
-            user_perms = self.user_permissions.get(context.user_id, set())
+            user_perms = self.user_permissions.get(context.user_id or "", set())
             if not policy.required_permissions.issubset(user_perms):
                 self._log_security_event(
                     "access_denied", context, "insufficient_permissions")
@@ -462,7 +450,7 @@ class CacheManager:
         tool_id: str,
         capability_name: str,
         parameters: Dict[str, Any],
-        context: Dict[str, Any] = None
+        context: Optional[Dict[str, Any]] = None
     ) -> str:
         """Generate cache key for execution."""
         key_data = {
@@ -485,7 +473,7 @@ class CacheManager:
         tool_id: str,
         capability_name: str,
         parameters: Dict[str, Any],
-        context: Dict[str, Any] = None
+        context: Optional[Dict[str, Any]] = None
     ) -> Optional[Any]:
         """Get cached result if available."""
         self.cache_stats['total_requests'] += 1
@@ -526,7 +514,7 @@ class CacheManager:
         parameters: Dict[str, Any],
         result: Any,
         ttl: Optional[int] = None,
-        context: Dict[str, Any] = None
+        context: Optional[Dict[str, Any]] = None
     ) -> None:
         """Cache execution result."""
         cache_key = self._generate_cache_key(
@@ -985,7 +973,7 @@ class ToolExecutor:
             capability_name=context.capability_name,
             status="success",
             result=result,
-            execution_time=0.0 if cached else None,
+            execution_time=0.0,
             metadata={'cached': cached}
         )
 

@@ -1,17 +1,4 @@
 """
-from sqlalchemy import Column
-from typing import Set, Tuple
-from pydantic import BaseModel
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Infrastructure models for Engine Framework.
 
 Infrastructure models provide core system functionality:
@@ -26,11 +13,14 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pydantic import BaseModel, Field
-from sqlalchemy import Column
-
-    Column, String, Text, Boolean, Integer, Float,
-    ForeignKey, Index, CheckConstraint, DateTime
+from sqlalchemy import (
+    Boolean, Column, DateTime, Float, ForeignKey, Index, Integer,
+    String, Text, CheckConstraint
 )
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
+from sqlalchemy.orm import relationship, validates
+
+from .base import SQLAlchemyBaseModel
 import hashlib
 import re
 
@@ -68,7 +58,7 @@ class LogLevel:
     CRITICAL = "critical"
 
 
-class User(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin):
+class User(SQLAlchemyBaseModel):
     """
     User entity for authentication and authorization.
 
@@ -416,7 +406,7 @@ class User(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         }
 
 
-class Session(BaseModel, ValidationMixin):
+class Session(SQLAlchemyBaseModel):
     """
     User session for authentication and activity tracking.
 
@@ -591,7 +581,7 @@ class Session(BaseModel, ValidationMixin):
         self.ended_at = datetime.utcnow().isoformat()
 
 
-class Log(BaseModel, ValidationMixin):
+class Log(SQLAlchemyBaseModel):
     """
     System audit log for tracking operations and events.
 
@@ -882,18 +872,17 @@ CheckConstraint(
 )
 
 CheckConstraint(
-    User.login_count >= 0,
+    "login_count >= 0",
     name='ck_user_login_count_non_negative'
 )
 
 CheckConstraint(
-    User.failed_login_attempts >= 0,
+    "failed_login_attempts >= 0",
     name='ck_user_failed_login_attempts_non_negative'
 )
 
 CheckConstraint(
-    Session.status.in_([SessionStatus.ACTIVE, SessionStatus.EXPIRED,
-                       SessionStatus.TERMINATED, SessionStatus.INVALIDATED]),
+    "status IN ('active', 'expired', 'terminated', 'invalidated')",
     name='ck_session_status_valid'
 )
 

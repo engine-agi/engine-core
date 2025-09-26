@@ -1,32 +1,8 @@
-# Engine Core Framework
-# AI Agent Orchestration System - Core Components
+"""
+Engine Core - AI Agent Orchestration Framework
 
-__version__ = "1.0.0"
-__author__ = "Engine Framework Team"
-__description__ = "Core framework for AI agent orchestration"
+This package provides the core functionality for the Engine Framework,
+including agents, teams, workflows, tools, protocols, and memory systems.
+"""
 
-# Core imports - only import what doesn't require database connections
-
-__all__ = [
-    "AgentBuilder",
-    "TeamBuilder",
-    "WorkflowBuilder",
-    "WorkflowEngine",
-    "ToolBuilder",
-    "ToolExecutor",
-    "BookBuilder",
-    "ProtocolBuilder",
-    "WorkflowState",
-    "ContentType",
-    "AccessLevel",
-    "ContentStatus",
-    "SearchScope",
-    "SearchQuery",
-    "TeamCoordinationStrategy",
-    "TeamMemberRole",
-    "IntentCategory",
-    "CommandType",
-    "ContextScope",
-    "CommandContext",
-    "__version__",
-]
+__version__ = "1.0.1"

@@ -1,19 +1,17 @@
 """
-from pydantic import ValidationError
-from pydantic import ValidationError
 from abc import ABC, abstractmethod
 from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime
 from pydantic import Field
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from typing import Optional, List, Dict, Any
 
 from datetime import datetime
 from pydantic import Field
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from typing import Optional, List, Dict, Any
 
 from datetime import datetime
-from typing import Optional, List, Dict, Any, TYPE_CHECKING
+from typing import Optional, List, Dict, Any
 Agent Service Layer - Business Logic for Agent Management.
 
 The AgentService provides high-level business logic for agent management,
@@ -35,6 +33,7 @@ Architecture:
 - Integration with Core Agent System (AgentBuilder)
 - Event-driven updates and notifications
 """
+
 import asyncio
 import logging
 import uuid
@@ -42,7 +41,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from pydantic import Field, ValidationError
 
@@ -56,46 +55,41 @@ from ..core.agents.agent_builder import (
 )
 
 # Type checking imports to avoid circular imports
-# if TYPE_CHECKING:
-#     from ..models.agent import Agent
-#     from ..models.book import Book
-#     from ..models.infrastructure import User
-#     from ..models.project import Project
-#     from ..models.protocol import Protocol
-#     from ..models.tool import Tool
-#     from ..models.workflow import Workflow
+if TYPE_CHECKING:
+    from ..models.agent import Agent
+    from ..models.book import Book
+    from ..models.infrastructure import User
+    from ..models.project import Project
+    from ..models.protocol import Protocol
+    from ..models.tool import Tool
+    from ..models.workflow import Workflow
 
 logger = logging.getLogger(__name__)
 
 
 class AgentServiceError(Exception):
     """Base exception for agent service errors."""
-
     pass
 
 
 class AgentNotFoundError(AgentServiceError):
     """Agent not found error."""
-
     pass
 
 
 class AgentValidationError(AgentServiceError):
     """Agent validation error."""
-
     pass
 
 
 class AgentExecutionError(AgentServiceError):
     """Agent execution error."""
-
     pass
 
 
 @dataclass
 class AgentCreateRequest:
     """Request model for creating agents."""
-
     id: str
     model: str
     stack: List[str]
@@ -114,7 +108,6 @@ class AgentCreateRequest:
 @dataclass
 class AgentUpdateRequest:
     """Request model for updating agents."""
-
     name: Optional[str] = None
     specialty: Optional[str] = None
     persona: Optional[str] = None
@@ -129,7 +122,6 @@ class AgentUpdateRequest:
 @dataclass
 class AgentExecutionRequest:
     """Request model for agent execution."""
-
     message: str
     context: Optional[Dict[str, Any]] = None
     session_id: Optional[str] = None
@@ -141,7 +133,6 @@ class AgentExecutionRequest:
 @dataclass
 class AgentExecutionResponse:
     """Response model for agent execution."""
-
     request_id: str
     agent_id: str
     message: AgentMessage
@@ -155,29 +146,27 @@ class AgentRepository(ABC):
     """Abstract repository interface for agent data access."""
 
     @abstractmethod
-    async def create(self, agent_data: Dict[str, Any]) -> "Agent":
+    async def create(self, agent_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create new agent in database."""
         pass
 
     @abstractmethod
-    async def get_by_id(self, agent_id: str) -> Optional["Agent"]:
+    async def get_by_id(self, agent_id: str) -> Optional[Dict[str, Any]]:
         """Get agent by ID."""
         pass
 
     @abstractmethod
-    async def get_by_project_id(self, project_id: str) -> List["Agent"]:
+    async def get_by_project_id(self, project_id: str) -> List[Dict[str, Any]]:
         """Get agents by project ID."""
         pass
 
     @abstractmethod
-    async def list_all(self, skip: int = 0, limit: int = 100) -> List["Agent"]:
+    async def list_all(self, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
         """List all agents with pagination."""
         pass
 
     @abstractmethod
-    async def update(
-        self, agent_id: str, update_data: Dict[str, Any]
-    ) -> Optional["Agent"]:
+    async def update(self, agent_id: str, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Update agent."""
         pass
 
@@ -187,7 +176,7 @@ class AgentRepository(ABC):
         pass
 
     @abstractmethod
-    async def search(self, query: str, filters: Dict[str, Any] = None) -> List["Agent"]:
+    async def search(self, query: str, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Search agents by query and filters."""
         pass
 
@@ -200,9 +189,9 @@ class MockAgentRepository(AgentRepository):
 
     async def create(self, agent_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create new agent in mock storage."""
-        agent_id = agent_data["id"]
-        agent_data["created_at"] = datetime.utcnow().isoformat()
-        agent_data["updated_at"] = datetime.utcnow().isoformat()
+        agent_id = agent_data['id']
+        agent_data['created_at'] = datetime.utcnow().isoformat()
+        agent_data['updated_at'] = datetime.utcnow().isoformat()
         self._agents[agent_id] = agent_data
         return agent_data
 
@@ -213,25 +202,22 @@ class MockAgentRepository(AgentRepository):
     async def get_by_project_id(self, project_id: str) -> List[Dict[str, Any]]:
         """Get agents by project ID from mock storage."""
         return [
-            agent
-            for agent in self._agents.values()
-            if agent.get("project_id") == project_id
+            agent for agent in self._agents.values()
+            if agent.get('project_id') == project_id
         ]
 
     async def list_all(self, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
         """List all agents with pagination from mock storage."""
         agents = list(self._agents.values())
-        return agents[skip : skip + limit]
+        return agents[skip:skip + limit]
 
-    async def update(
-        self, agent_id: str, update_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    async def update(self, agent_id: str, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Update agent in mock storage."""
         if agent_id not in self._agents:
             return None
 
         self._agents[agent_id].update(update_data)
-        self._agents[agent_id]["updated_at"] = datetime.utcnow().isoformat()
+        self._agents[agent_id]['updated_at'] = datetime.utcnow().isoformat()
         return self._agents[agent_id]
 
     async def delete(self, agent_id: str) -> bool:
@@ -241,9 +227,7 @@ class MockAgentRepository(AgentRepository):
             return True
         return False
 
-    async def search(
-        self, query: str, filters: Dict[str, Any] = None
-    ) -> List[Dict[str, Any]]:
+    async def search(self, query: str, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Search agents in mock storage."""
         results = []
         for agent in self._agents.values():
@@ -288,10 +272,10 @@ class AgentService:
 
         # Service configuration
         self.config = {
-            "max_active_agents": 100,
-            "default_execution_timeout": 30,
-            "max_conversation_length": 100,
-            "cleanup_interval_minutes": 60,
+            'max_active_agents': 100,
+            'default_execution_timeout': 30,
+            'max_conversation_length': 100,
+            'cleanup_interval_minutes': 60
         }
 
     # === CRUD OPERATIONS ===
@@ -304,35 +288,32 @@ class AgentService:
 
             # Prepare agent data
             agent_data = {
-                "id": request.id,
-                "model": request.model,
-                "stack": request.stack,
-                "name": request.name,
-                "specialty": request.specialty,
-                "persona": request.persona,
-                "tools": request.tools or [],
-                "protocol_id": request.protocol_id,
-                "workflow_id": request.workflow_id,
-                "book_id": request.book_id,
-                "metadata": request.metadata or {},
-                "project_id": request.project_id,
-                "created_by": request.created_by,
-                "status": "active",
-                "execution_count": 0,
-                "last_executed_at": None,
+                'id': request.id,
+                'model': request.model,
+                'stack': request.stack,
+                'name': request.name,
+                'specialty': request.specialty,
+                'persona': request.persona,
+                'tools': request.tools or [],
+                'protocol_id': request.protocol_id,
+                'workflow_id': request.workflow_id,
+                'book_id': request.book_id,
+                'metadata': request.metadata or {},
+                'project_id': request.project_id,
+                'created_by': request.created_by,
+                'status': 'active',
+                'execution_count': 0,
+                'last_executed_at': None
             }
 
             # Create in database
             agent = await self.repository.create(agent_data)
 
-            logger.info(
-                f"Created agent {request.id}",
-                extra={
-                    "agent_id": request.id,
-                    "model": request.model,
-                    "created_by": request.created_by,
-                },
-            )
+            logger.info(f"Created agent {request.id}", extra={
+                'agent_id': request.id,
+                'model': request.model,
+                'created_by': request.created_by
+            })
 
             return agent
 
@@ -359,7 +340,7 @@ class AgentService:
         self,
         agent_id: str,
         request: AgentUpdateRequest,
-        updated_by: Optional[str] = None,
+        updated_by: Optional[str] = None
     ) -> Dict[str, Any]:
         """Update existing agent."""
         try:
@@ -372,37 +353,39 @@ class AgentService:
             update_data = {}
 
             if request.name is not None:
-                update_data["name"] = request.name
+                update_data['name'] = request.name
             if request.specialty is not None:
-                update_data["specialty"] = request.specialty
+                update_data['specialty'] = request.specialty
             if request.persona is not None:
-                update_data["persona"] = request.persona
+                update_data['persona'] = request.persona
             if request.tools is not None:
-                update_data["tools"] = request.tools
+                update_data['tools'] = request.tools
             if request.protocol_id is not None:
-                update_data["protocol_id"] = request.protocol_id
+                update_data['protocol_id'] = request.protocol_id
             if request.workflow_id is not None:
-                update_data["workflow_id"] = request.workflow_id
+                update_data['workflow_id'] = request.workflow_id
             if request.book_id is not None:
-                update_data["book_id"] = request.book_id
+                update_data['book_id'] = request.book_id
             if request.metadata is not None:
-                update_data["metadata"] = request.metadata
+                update_data['metadata'] = request.metadata
             if request.model_config is not None:
-                update_data["model_config"] = request.model_config
+                update_data['model_config'] = request.model_config
 
-            update_data["updated_by"] = updated_by
+            update_data['updated_by'] = updated_by
 
             # Update in database
             updated_agent = await self.repository.update(agent_id, update_data)
+            if updated_agent is None:
+                raise AgentNotFoundError(f"Agent {agent_id} not found")
 
             # Invalidate cached agent if exists
             if agent_id in self._active_agents:
                 del self._active_agents[agent_id]
 
-            logger.info(
-                f"Updated agent {agent_id}",
-                extra={"agent_id": agent_id, "updated_by": updated_by},
-            )
+            logger.info(f"Updated agent {agent_id}", extra={
+                'agent_id': agent_id,
+                'updated_by': updated_by
+            })
 
             return updated_agent
 
@@ -438,13 +421,16 @@ class AgentService:
             raise AgentServiceError(f"Failed to delete agent: {str(e)}")
 
     async def list_agents(
-        self, project_id: Optional[str] = None, skip: int = 0, limit: int = 100
+        self,
+        project_id: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 100
     ) -> List[Dict[str, Any]]:
         """List agents with optional project filter."""
         try:
             if project_id:
                 agents = await self.repository.get_by_project_id(project_id)
-                return agents[skip : skip + limit]
+                return agents[skip:skip + limit]
             else:
                 return await self.repository.list_all(skip, limit)
 
@@ -455,7 +441,9 @@ class AgentService:
     # === AGENT EXECUTION ===
 
     async def execute_agent(
-        self, agent_id: str, request: AgentExecutionRequest
+        self,
+        agent_id: str,
+        request: AgentExecutionRequest
     ) -> AgentExecutionResponse:
         """Execute agent with message."""
         start_time = datetime.utcnow()
@@ -469,17 +457,16 @@ class AgentService:
                 session_id=request.session_id,
                 user_id=request.user_id,
                 project_id=request.project_id,
-                metadata=request.context or {},
+                metadata=request.context or {}
             )
 
             # Execute with timeout
-            timeout = (
-                request.timeout_seconds or self.config["default_execution_timeout"]
-            )
+            timeout = request.timeout_seconds or self.config['default_execution_timeout']
 
             try:
                 response_message = await asyncio.wait_for(
-                    built_agent.execute(request.message, context), timeout=timeout
+                    built_agent.execute(request.message, context),
+                    timeout=timeout
                 )
 
                 # Update execution stats
@@ -493,14 +480,13 @@ class AgentService:
                     message=response_message,
                     context=context,
                     execution_time=execution_time,
-                    status="success",
+                    status="success"
                 )
 
             except asyncio.TimeoutError:
                 await self._update_execution_stats(agent_id, success=False)
                 raise AgentExecutionError(
-                    f"Agent execution timed out after {timeout} seconds"
-                )
+                    f"Agent execution timed out after {timeout} seconds")
 
         except (AgentNotFoundError, AgentExecutionError):
             raise
@@ -514,18 +500,19 @@ class AgentService:
                 request_id=str(uuid.uuid4()),
                 agent_id=agent_id,
                 message=AgentMessage(
-                    content=f"Execution failed: {str(e)}", role="system"
-                ),
+                    content=f"Execution failed: {str(e)}", role="system"),
                 context=AgentExecutionContext(),
                 execution_time=execution_time,
                 status="error",
-                error=str(e),
+                error=str(e)
             )
 
     async def get_agent_stats(self, agent_id: str) -> Dict[str, Any]:
         """Get agent execution statistics."""
         try:
             agent = await self.get_agent(agent_id)
+            if agent is None:
+                raise AgentNotFoundError(f"Agent {agent_id} not found")
 
             # Get built agent stats if active
             built_agent_stats = None
@@ -533,28 +520,25 @@ class AgentService:
                 built_agent_stats = self._active_agents[agent_id].get_stats()
 
             # Get service-level stats
-            service_stats = self._execution_stats.get(
-                agent_id,
-                {
-                    "total_executions": 0,
-                    "successful_executions": 0,
-                    "failed_executions": 0,
-                    "average_execution_time": 0.0,
-                    "last_execution_at": None,
-                },
-            )
+            service_stats = self._execution_stats.get(agent_id, {
+                'total_executions': 0,
+                'successful_executions': 0,
+                'failed_executions': 0,
+                'average_execution_time': 0.0,
+                'last_execution_at': None
+            })
 
             return {
-                "agent_id": agent_id,
-                "agent_info": {
-                    "name": agent.get("name"),
-                    "model": agent.get("model"),
-                    "status": agent.get("status"),
-                    "created_at": agent.get("created_at"),
-                    "last_executed_at": agent.get("last_executed_at"),
+                'agent_id': agent_id,
+                'agent_info': {
+                    'name': agent.get('name'),
+                    'model': agent.get('model'),
+                    'status': agent.get('status'),
+                    'created_at': agent.get('created_at'),
+                    'last_executed_at': agent.get('last_executed_at')
                 },
-                "service_stats": service_stats,
-                "execution_engine_stats": built_agent_stats,
+                'service_stats': service_stats,
+                'execution_engine_stats': built_agent_stats
             }
 
         except Exception as e:
@@ -564,7 +548,9 @@ class AgentService:
     # === SEARCH AND DISCOVERY ===
 
     async def search_agents(
-        self, query: str, filters: Optional[Dict[str, Any]] = None
+        self,
+        query: str,
+        filters: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """Search agents by query and filters."""
         try:
@@ -585,12 +571,10 @@ class AgentService:
 
         # Validate using AgentBuilder
         try:
-            builder = (
-                AgentBuilder()
+            builder = (AgentBuilder()
                 .with_id(request.id)
                 .with_model(request.model)
-                .with_stack(request.stack)
-            )
+                .with_stack(request.stack))
 
             if request.name:
                 builder = builder.with_name(request.name)
@@ -622,32 +606,30 @@ class AgentService:
             raise AgentNotFoundError(f"Agent {agent_id} not found")
 
         # Create built agent using AgentBuilder
-        builder = (
-            AgentBuilder()
-            .with_id(agent_data["id"])
-            .with_model(agent_data["model"])
-            .with_stack(agent_data["stack"])
-        )
+        builder = (AgentBuilder()
+            .with_id(agent_data['id'])
+            .with_model(agent_data['model'])
+            .with_stack(agent_data['stack']))
 
-        if agent_data.get("name"):
-            builder = builder.with_name(agent_data["name"])
-        if agent_data.get("specialty"):
-            builder = builder.with_speciality(agent_data["specialty"])
-        if agent_data.get("persona"):
-            builder.with_persona(agent_data["persona"])
-        if agent_data.get("tools"):
-            builder.with_tools(agent_data["tools"])
-        if agent_data.get("metadata"):
-            builder.with_metadata(agent_data["metadata"])
+        if agent_data.get('name'):
+            builder = builder.with_name(agent_data['name'])
+        if agent_data.get('specialty'):
+            builder = builder.with_speciality(agent_data['specialty'])
+        if agent_data.get('persona'):
+            builder.with_persona(agent_data['persona'])
+        if agent_data.get('tools'):
+            builder.with_tools(agent_data['tools'])
+        if agent_data.get('metadata'):
+            builder.with_metadata(agent_data['metadata'])
 
         # Add model config if exists
-        if agent_data.get("model_config"):
-            builder.with_model_config(**agent_data["model_config"])
+        if agent_data.get('model_config'):
+            builder.with_model_config(**agent_data['model_config'])
 
         built_agent = builder.build()
 
         # Cache agent (with size limit)
-        if len(self._active_agents) >= self.config["max_active_agents"]:
+        if len(self._active_agents) >= self.config['max_active_agents']:
             # Remove oldest agent (simple LRU)
             oldest_id = next(iter(self._active_agents))
             del self._active_agents[oldest_id]
@@ -660,34 +642,30 @@ class AgentService:
         """Update agent execution statistics."""
         if agent_id not in self._execution_stats:
             self._execution_stats[agent_id] = {
-                "total_executions": 0,
-                "successful_executions": 0,
-                "failed_executions": 0,
-                "average_execution_time": 0.0,
-                "last_execution_at": None,
+                'total_executions': 0,
+                'successful_executions': 0,
+                'failed_executions': 0,
+                'average_execution_time': 0.0,
+                'last_execution_at': None
             }
 
         stats = self._execution_stats[agent_id]
-        stats["total_executions"] += 1
-        stats["last_execution_at"] = datetime.utcnow().isoformat()
+        stats['total_executions'] += 1
+        stats['last_execution_at'] = datetime.utcnow().isoformat()
 
         if success:
-            stats["successful_executions"] += 1
+            stats['successful_executions'] += 1
         else:
-            stats["failed_executions"] += 1
+            stats['failed_executions'] += 1
 
         # Update agent in database
-        await self.repository.update(
-            agent_id,
-            {
-                "execution_count": stats["total_executions"],
-                "last_executed_at": stats["last_execution_at"],
-            },
-        )
+        await self.repository.update(agent_id, {
+            'execution_count': stats['total_executions'],
+            'last_executed_at': stats['last_execution_at']
+        })
 
 
 # === CONVENIENCE FUNCTIONS ===
-
 
 def create_agent_service(repository: Optional[AgentRepository] = None) -> AgentService:
     """Create agent service with optional custom repository."""
@@ -695,7 +673,6 @@ def create_agent_service(repository: Optional[AgentRepository] = None) -> AgentS
 
 
 # === EXAMPLE USAGE ===
-
 
 async def example_usage():
     """Example usage of AgentService."""
@@ -709,7 +686,7 @@ async def example_usage():
         model="gpt-3.5-turbo",
         stack=["python"],
         name="Example Agent",
-        specialty="General Assistant",
+        specialty="General Assistant"
     )
 
     agent = await service.create_agent(create_request)
@@ -717,19 +694,19 @@ async def example_usage():
 
     # Execute agent
     execution_request = AgentExecutionRequest(
-        message="Hello, can you help me with Python?", user_id="user123"
+        message="Hello, can you help me with Python?",
+        user_id="user123"
     )
 
-    response = await service.execute_agent(agent["id"], execution_request)
+    response = await service.execute_agent(agent['id'], execution_request)
     print(f"Agent response: {response.message.content}")
 
     # Get stats
-    stats = await service.get_agent_stats(agent["id"])
+    stats = await service.get_agent_stats(agent['id'])
     print(f"Agent stats: {stats}")
 
 
 if __name__ == "__main__":
     # Run example usage
     import asyncio
-
     asyncio.run(example_usage())

@@ -1,17 +1,4 @@
 """
-from sqlalchemy import Column
-from typing import Set, Tuple
-from pydantic import BaseModel
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Team model for Engine Framework.
 
 A team coordinates multiple agents to work together on complex tasks.
@@ -26,14 +13,17 @@ Team coordination strategies:
 Based on Engine Framework data model specification.
 """
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
-from sqlalchemy import Column
-
-    Column, String, Text, Boolean, Integer,
-    ForeignKey, Table, Index, CheckConstraint
+from sqlalchemy import (
+    Boolean, CheckConstraint, Column, ForeignKey, Index, Integer,
+    String, Table, Text, MetaData
 )
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship, validates
+
+from .base import SQLAlchemyBaseModel, metadata
 import re
 
 # Type checking imports to avoid circular imports
@@ -60,7 +50,7 @@ team_agents = Table(
 )
 
 
-class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin, TimestampMixin):
+class Team(SQLAlchemyBaseModel):
     """
     Team entity - coordinates multiple agents for collaborative work.
 

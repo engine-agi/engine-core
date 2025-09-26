@@ -1,16 +1,4 @@
 """
-from sqlalchemy import Column
-from typing import Set, Tuple
-from pydantic import BaseModel
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from typing import Optional, List, Dict, Any
 Protocol model for Engine Framework.
 
 Protocols define command structures and semantic behavior patterns
@@ -23,14 +11,17 @@ for agents and teams. They specify:
 Based on Engine Framework data model specification.
 """
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from pydantic import BaseModel, Field
-from sqlalchemy import Column
-
-    Column, String, Text, Boolean, Integer,
-    ForeignKey, Index, CheckConstraint
+from sqlalchemy import (
+    Boolean, CheckConstraint, Column, ForeignKey, Index, Integer,
+    String, Text
 )
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import validates
+
+from .base import SQLAlchemyBaseModel
 import re
 
 # Type checking imports to avoid circular imports
@@ -39,7 +30,7 @@ if TYPE_CHECKING:
     from .team import Team
 
 
-class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin):
+class Protocol(SQLAlchemyBaseModel):
     """
     Protocol entity - defines command structure and behavior patterns.
 
