@@ -1,31 +1,20 @@
 """
-from pathlib import Path
-from typing import Set, Tuple
-from fastapi import Depends
-from fastapi import HTTPException
-from pydantic import BaseModel
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Observability API Router
 Handles project observability including structured logs and real-time metrics.
 
 This router provides endpoints for monitoring project activities through comprehensive
 logging and metrics collection across all engine components.
 """
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
+
+from src.api.dependencies import get_current_user
+from src.core.project_service import ProjectService
+from src.engine_core.api.schemas.enums import LogLevel
+from src.engine_core.engine_types import EngineError
 
 
 class LogEntry(BaseModel):
@@ -96,7 +85,7 @@ router = APIRouter(
 
 @router.get("/logs", response_model=LogsResponse)
 async def get_project_logs(
-    project_id: str = Path(..., description="Project ID"),
+    project_id: str,
     level: Optional[str] = Query(None, description="Log level filter"),
     entity_type: Optional[str] = Query(None, description="Filter by entity type"),
     entity_id: Optional[str] = Query(None, description="Filter by specific entity"),
@@ -105,9 +94,9 @@ async def get_project_logs(
     limit: int = Query(default=100, ge=1, le=1000, description="Maximum results"),
     offset: int = Query(default=0, ge=0, description="Pagination offset"),
     current_user: dict = Depends(get_current_user),
-    observability_service: ObservabilityService = Depends(),
+    observability_service=Depends(),
     project_service: ProjectService = Depends(),
-):
+) -> LogsResponse:
     """
     Get logs for a project.
 
@@ -187,15 +176,15 @@ async def get_project_logs(
         raise
     except EngineError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception as _:  # noqa: F841
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/metrics", response_model=MetricsResponse)
 async def get_project_metrics(
-    project_id: str = Path(..., description="Project ID"),
+    project_id: str,
     current_user: dict = Depends(get_current_user),
-    observability_service: ObservabilityService = Depends(),
+    observability_service=Depends(),
     project_service: ProjectService = Depends(),
 ):
     """
@@ -265,15 +254,15 @@ async def get_project_metrics(
         raise
     except EngineError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception as _:  # noqa: F841
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @router.get("/health")
 async def project_health(
-    project_id: str = Path(..., description="Project ID"),
+    project_id: str,
     current_user: dict = Depends(get_current_user),
-    observability_service: ObservabilityService = Depends(),
+    observability_service=Depends(),
     project_service: ProjectService = Depends(),
 ):
     """
@@ -326,16 +315,16 @@ async def project_health(
         raise
     except EngineError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception as _:  # noqa: F841
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # Stream real-time metrics endpoint
 @router.get("/metrics/stream")
 async def stream_project_metrics(
-    project_id: str = Path(..., description="Project ID"),
+    project_id: str,
     current_user: dict = Depends(get_current_user),
-    observability_service: ObservabilityService = Depends(),
+    observability_service=Depends(),
     project_service: ProjectService = Depends(),
 ):
     """
@@ -367,7 +356,7 @@ async def stream_project_metrics(
         raise
     except EngineError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
+    except Exception as _:  # noqa: F841
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
