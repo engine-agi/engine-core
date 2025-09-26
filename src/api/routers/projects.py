@@ -1,18 +1,4 @@
 """
-from fastapi import Depends
-from fastapi import HTTPException
-from pydantic import BaseModel
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
 Projects API Router
 Handles project lifecycle management including creation and listing.
 
@@ -24,8 +10,13 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+
+from src.api.dependencies import get_current_user, get_event_broadcaster
+from src.api.websocket import EventType
+from src.core.project_service import ProjectService, ProjectLimits
+from src.engine_core.engine_types import EngineError
 
 
 class ProjectSummary(BaseModel):
