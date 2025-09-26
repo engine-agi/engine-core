@@ -2,35 +2,32 @@
 Unit tests for TeamBuilder - Complete Team System
 """
 
-import pytest
-import asyncio
-from unittest.mock import Mock, AsyncMock
-import pytest
-import asyncio
-from typing import List, Dict, Any
-from unittest.mock import AsyncMock, MagicMock
+import os
 
 # Import the classes we need to test
 import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+from unittest.mock import MagicMock
+
+import pytest
 
 from engine_core.core.teams.team_builder import (
+    BuiltTeam,
+    CollaborativeStrategy,
+    CoordinationStrategy,
+    HierarchicalStrategy,
+    ParallelStrategy,
     TeamBuilder,
     TeamCoordinationStrategy,
-    TeamMemberRole,
-    TeamExecutionMode,
-    TeamState,
-    TeamMember,
-    TeamTask,
     TeamExecutionContext,
-    BuiltTeam,
     TeamExecutionEngine,
-    HierarchicalStrategy,
-    CollaborativeStrategy,
-    ParallelStrategy,
-    CoordinationStrategy
+    TeamExecutionMode,
+    TeamMember,
+    TeamMemberRole,
+    TeamState,
+    TeamTask,
 )
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
 # Import agent classes for integration (optional)
 # from engine_core.core.agents.agent_builder import (
@@ -54,27 +51,33 @@ class TestTeamBuilderMinimal:
 
     def test_minimal_team_build(self):
         """Test building a team with minimal required fields"""
-        team = TeamBuilder() \
-            .with_id("test_team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-            .add_member("agent1") \
+        team = (
+            TeamBuilder()
+            .with_id("test_team")
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+            .add_member("agent1")
             .build()
+        )
 
         assert team is not None
         assert isinstance(team, BuiltTeam)
         assert team.id == "test_team"
         assert team.name is None  # Name defaults to None when not specified
-        assert team.coordination_strategy == TeamCoordinationStrategy.COLLABORATIVE.value
+        assert (
+            team.coordination_strategy == TeamCoordinationStrategy.COLLABORATIVE.value
+        )
         assert team.member_count == 1
 
     def test_team_with_name(self):
         """Test team with custom name"""
-        team = TeamBuilder() \
-            .with_id("test_team") \
-            .with_name("My Test Team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-            .add_member("agent1") \
+        team = (
+            TeamBuilder()
+            .with_id("test_team")
+            .with_name("My Test Team")
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+            .add_member("agent1")
             .build()
+        )
 
         assert team.name == "My Test Team"
 
@@ -100,31 +103,39 @@ class TestTeamBuilderConfiguration:
         """Test all coordination strategies"""
         strategies = [
             TeamCoordinationStrategy.COLLABORATIVE,
-            TeamCoordinationStrategy.PARALLEL
+            TeamCoordinationStrategy.PARALLEL,
         ]
 
         for strategy in strategies:
-            team = TeamBuilder() \
-                .with_id(f"team_{strategy.value}") \
-                .with_coordination_strategy(strategy) \
-                .add_member("agent1") \
+            team = (
+                TeamBuilder()
+                .with_id(f"team_{strategy.value}")
+                .with_coordination_strategy(strategy)
+                .add_member("agent1")
                 .build()
+            )
 
             assert team.coordination_strategy == strategy.value
 
     def test_execution_modes(self):
         """Test execution modes"""
-        modes = [TeamExecutionMode.SYNCHRONOUS, TeamExecutionMode.ASYNCHRONOUS, TeamExecutionMode.MIXED]
+        modes = [
+            TeamExecutionMode.SYNCHRONOUS,
+            TeamExecutionMode.ASYNCHRONOUS,
+            TeamExecutionMode.MIXED,
+        ]
 
         for mode in modes:
-            team = TeamBuilder() \
-                .with_id(f"team_{mode.value}") \
-                .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-                .with_execution_mode(mode) \
-                .add_member("agent1") \
+            team = (
+                TeamBuilder()
+                .with_id(f"team_{mode.value}")
+                .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+                .with_execution_mode(mode)
+                .add_member("agent1")
                 .build()
+            )
 
-            assert team.config['execution_mode'] == mode.value
+            assert team.config["execution_mode"] == mode.value
 
     def test_member_roles(self):
         """Test member roles"""
@@ -133,56 +144,64 @@ class TestTeamBuilderConfiguration:
             TeamMemberRole.MEMBER,
             TeamMemberRole.REVIEWER,
             TeamMemberRole.COORDINATOR,
-            TeamMemberRole.SPECIALIST
+            TeamMemberRole.SPECIALIST,
         ]
 
         for role in roles:
-            team = TeamBuilder() \
-                .with_id(f"team_{role.value}") \
-                .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-                .add_member("agent1", role=role) \
+            team = (
+                TeamBuilder()
+                .with_id(f"team_{role.value}")
+                .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+                .add_member("agent1", role=role)
                 .build()
+            )
 
-            members = team.config['members']
+            members = team.config["members"]
             assert len(members) == 1
-            assert members[0]['role'] == role.value
+            assert members[0]["role"] == role.value
 
     def test_member_capabilities(self):
         """Test member capabilities"""
         capabilities = ["python", "javascript", "testing"]
 
-        team = TeamBuilder() \
-            .with_id("capability_team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-            .add_member("agent1", capabilities=capabilities) \
+        team = (
+            TeamBuilder()
+            .with_id("capability_team")
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+            .add_member("agent1", capabilities=capabilities)
             .build()
+        )
 
-        members = team.config['members']
-        assert members[0]['capabilities'] == capabilities
+        members = team.config["members"]
+        assert members[0]["capabilities"] == capabilities
 
     def test_member_priority(self):
         """Test member priority"""
-        team = TeamBuilder() \
-            .with_id("priority_team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-            .add_member("agent1", priority=5) \
-            .add_member("agent2", priority=1) \
+        team = (
+            TeamBuilder()
+            .with_id("priority_team")
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+            .add_member("agent1", priority=5)
+            .add_member("agent2", priority=1)
             .build()
+        )
 
-        members = team.config['members']
-        assert members[0]['priority'] == 5
-        assert members[1]['priority'] == 1
+        members = team.config["members"]
+        assert members[0]["priority"] == 5
+        assert members[1]["priority"] == 1
 
     def test_max_concurrent_tasks(self):
         """Test max concurrent tasks"""
-        team = TeamBuilder() \
-            .with_id("concurrent_team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-            .add_member("agent1", max_concurrent_tasks=3) \
+        team = (
+            TeamBuilder()
+            .with_id("concurrent_team")
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+            .add_member("agent1", max_concurrent_tasks=3)
             .build()
+        )
 
-        members = team.config['members']
-        assert members[0]['max_concurrent_tasks'] == 3
+        members = team.config["members"]
+        assert members[0]["max_concurrent_tasks"] == 3
 
 
 class TestTeamBuilderValidation:
@@ -190,32 +209,40 @@ class TestTeamBuilderValidation:
 
     def test_hierarchical_requires_leader(self):
         """Test that hierarchical strategy requires a leader"""
-        builder = TeamBuilder() \
-            .with_id("hierarchical_team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.HIERARCHICAL) \
-            .add_member("agent1", role=TeamMemberRole.MEMBER) \
+        builder = (
+            TeamBuilder()
+            .with_id("hierarchical_team")
+            .with_coordination_strategy(TeamCoordinationStrategy.HIERARCHICAL)
+            .add_member("agent1", role=TeamMemberRole.MEMBER)
             .add_member("agent2", role=TeamMemberRole.MEMBER)
+        )
 
-        with pytest.raises(ValueError, match="Hierarchical strategy requires a team leader"):
+        with pytest.raises(
+            ValueError, match="Hierarchical strategy requires a team leader"
+        ):
             builder.build()
 
     def test_hierarchical_with_leader_valid(self):
         """Test that hierarchical strategy with leader is valid"""
-        team = TeamBuilder() \
-            .with_id("hierarchical_team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.HIERARCHICAL) \
-            .add_leader("leader_agent") \
-            .add_member("agent1") \
+        team = (
+            TeamBuilder()
+            .with_id("hierarchical_team")
+            .with_coordination_strategy(TeamCoordinationStrategy.HIERARCHICAL)
+            .add_leader("leader_agent")
+            .add_member("agent1")
             .build()
+        )
 
         assert team is not None
 
     def test_unique_agent_ids(self):
         """Test that agent IDs must be unique"""
-        builder = TeamBuilder() \
-            .with_id("duplicate_team") \
-            .add_member("agent1") \
-            .add_member("agent1")  # Duplicate
+        builder = (
+            TeamBuilder()
+            .with_id("duplicate_team")
+            .add_member("agent1")
+            .add_member("agent1")
+        )  # Duplicate
 
         with pytest.raises(ValueError, match="Agent IDs must be unique within team"):
             builder.build()
@@ -237,27 +264,28 @@ class TestTeamBuilderConvenienceMethods:
 
     def test_add_leader_convenience(self):
         """Test add_leader convenience method"""
-        team = TeamBuilder() \
-            .with_id("convenience_team") \
-            .add_leader("leader_agent") \
-            .build()
+        team = (
+            TeamBuilder().with_id("convenience_team").add_leader("leader_agent").build()
+        )
 
-        members = team.config['members']
+        members = team.config["members"]
         assert len(members) == 1
-        assert members[0]['role'] == TeamMemberRole.LEADER.value
-        assert members[0]['priority'] == 0  # Leader gets highest priority
+        assert members[0]["role"] == TeamMemberRole.LEADER.value
+        assert members[0]["priority"] == 0  # Leader gets highest priority
 
     def test_add_reviewer_convenience(self):
         """Test add_reviewer convenience method"""
-        team = TeamBuilder() \
-            .with_id("reviewer_team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-            .add_reviewer("reviewer_agent") \
+        team = (
+            TeamBuilder()
+            .with_id("reviewer_team")
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+            .add_reviewer("reviewer_agent")
             .build()
+        )
 
-        members = team.config['members']
+        members = team.config["members"]
         assert len(members) == 1
-        assert members[0]['role'] == TeamMemberRole.REVIEWER.value
+        assert members[0]["role"] == TeamMemberRole.REVIEWER.value
 
 
 class TestTeamBuilderFactoryMethods:
@@ -266,9 +294,7 @@ class TestTeamBuilderFactoryMethods:
     def test_development_team_factory(self):
         """Test development team factory"""
         builder = TeamBuilder.development_team(
-            team_id="dev_team",
-            leader_id="lead_dev",
-            member_ids=["dev1", "dev2"]
+            team_id="dev_team", leader_id="lead_dev", member_ids=["dev1", "dev2"]
         )
 
         team = builder.build()
@@ -277,44 +303,44 @@ class TestTeamBuilderFactoryMethods:
         assert team.name == "Development Team"
         assert team.coordination_strategy == TeamCoordinationStrategy.HIERARCHICAL.value
 
-        members = team.config['members']
+        members = team.config["members"]
         assert len(members) == 3
 
         # Check leader
-        leader = next(m for m in members if m['agent_id'] == "lead_dev")
-        assert leader['role'] == TeamMemberRole.LEADER.value
-        assert "leadership" in leader['capabilities']
+        leader = next(m for m in members if m["agent_id"] == "lead_dev")
+        assert leader["role"] == TeamMemberRole.LEADER.value
+        assert "leadership" in leader["capabilities"]
 
         # Check members
-        member1 = next(m for m in members if m['agent_id'] == "dev1")
-        assert member1['role'] == TeamMemberRole.MEMBER.value
-        assert "programming" in member1['capabilities']
+        member1 = next(m for m in members if m["agent_id"] == "dev1")
+        assert member1["role"] == TeamMemberRole.MEMBER.value
+        assert "programming" in member1["capabilities"]
 
     def test_analysis_team_factory(self):
         """Test analysis team factory"""
         builder = TeamBuilder.analysis_team(
-            team_id="analysis_team",
-            analyst_ids=["analyst1", "analyst2"]
+            team_id="analysis_team", analyst_ids=["analyst1", "analyst2"]
         )
 
         team = builder.build()
 
         assert team.id == "analysis_team"
         assert team.name == "Analysis Team"
-        assert team.coordination_strategy == TeamCoordinationStrategy.COLLABORATIVE.value
+        assert (
+            team.coordination_strategy == TeamCoordinationStrategy.COLLABORATIVE.value
+        )
 
-        members = team.config['members']
+        members = team.config["members"]
         assert len(members) == 2
 
         for member in members:
-            assert member['role'] == TeamMemberRole.MEMBER.value
-            assert "data_analysis" in member['capabilities']
+            assert member["role"] == TeamMemberRole.MEMBER.value
+            assert "data_analysis" in member["capabilities"]
 
     def test_parallel_processing_team_factory(self):
         """Test parallel processing team factory"""
         builder = TeamBuilder.parallel_processing_team(
-            team_id="parallel_team",
-            processor_ids=["proc1", "proc2"]
+            team_id="parallel_team", processor_ids=["proc1", "proc2"]
         )
 
         team = builder.build()
@@ -322,14 +348,14 @@ class TestTeamBuilderFactoryMethods:
         assert team.id == "parallel_team"
         assert team.name == "Parallel Processing Team"
         assert team.coordination_strategy == TeamCoordinationStrategy.PARALLEL.value
-        assert team.config['execution_mode'] == TeamExecutionMode.ASYNCHRONOUS.value
+        assert team.config["execution_mode"] == TeamExecutionMode.ASYNCHRONOUS.value
 
-        members = team.config['members']
+        members = team.config["members"]
         assert len(members) == 2
 
         for member in members:
-            assert member['role'] == TeamMemberRole.MEMBER.value
-            assert member['max_concurrent_tasks'] == 3
+            assert member["role"] == TeamMemberRole.MEMBER.value
+            assert member["max_concurrent_tasks"] == 3
 
 
 class TestBuiltTeam:
@@ -337,12 +363,14 @@ class TestBuiltTeam:
 
     def test_built_team_properties(self):
         """Test BuiltTeam property access"""
-        team = TeamBuilder() \
-            .with_id("built_team") \
-            .with_name("Built Team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-            .add_member("agent1") \
+        team = (
+            TeamBuilder()
+            .with_id("built_team")
+            .with_name("Built Team")
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+            .add_member("agent1")
             .build()
+        )
 
         assert team.id == "built_team"
         assert team.name == "Built Team"
@@ -350,45 +378,54 @@ class TestBuiltTeam:
 
     def test_built_team_stats(self):
         """Test BuiltTeam statistics"""
-        team = TeamBuilder() \
-            .with_id("stats_team") \
-            .with_name("Stats Team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-            .add_member("agent1") \
-            .add_member("agent2") \
+        team = (
+            TeamBuilder()
+            .with_id("stats_team")
+            .with_name("Stats Team")
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+            .add_member("agent1")
+            .add_member("agent2")
             .build()
+        )
 
         stats = team.get_stats()
 
-        assert stats['team_id'] == "stats_team"
-        assert stats['team_name'] == "Stats Team"
-        assert stats['coordination_strategy'] == TeamCoordinationStrategy.COLLABORATIVE.value
-        assert stats['member_count'] == 2
-        assert 'created_at' in stats
-        assert 'execution_stats' in stats
+        assert stats["team_id"] == "stats_team"
+        assert stats["team_name"] == "Stats Team"
+        assert (
+            stats["coordination_strategy"]
+            == TeamCoordinationStrategy.COLLABORATIVE.value
+        )
+        assert stats["member_count"] == 2
+        assert "created_at" in stats
+        assert "execution_stats" in stats
 
     def test_built_team_to_dict(self):
         """Test BuiltTeam serialization"""
-        team = TeamBuilder() \
-            .with_id("dict_team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-            .add_member("agent1") \
+        team = (
+            TeamBuilder()
+            .with_id("dict_team")
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+            .add_member("agent1")
             .build()
+        )
 
         team_dict = team.to_dict()
 
-        assert 'config' in team_dict
-        assert 'agent_ids' in team_dict
-        assert 'stats' in team_dict
-        assert 'created_at' in team_dict
+        assert "config" in team_dict
+        assert "agent_ids" in team_dict
+        assert "stats" in team_dict
+        assert "created_at" in team_dict
 
     def test_add_agent_to_team(self):
         """Test adding agents to built team"""
-        team = TeamBuilder() \
-            .with_id("add_agent_team") \
-            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE) \
-            .add_member("agent1") \
+        team = (
+            TeamBuilder()
+            .with_id("add_agent_team")
+            .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
+            .add_member("agent1")
             .build()
+        )
 
         # Create mock agent
         mock_agent = MagicMock(spec=BuiltAgent)
@@ -406,9 +443,9 @@ class TestTeamExecutionEngine:
     def test_execution_engine_creation(self):
         """Test TeamExecutionEngine instantiation"""
         config = {
-            'id': 'engine_team',
-            'coordination_strategy': TeamCoordinationStrategy.HIERARCHICAL.value,
-            'members': [{'agent_id': 'agent1', 'role': 'leader'}]
+            "id": "engine_team",
+            "coordination_strategy": TeamCoordinationStrategy.HIERARCHICAL.value,
+            "members": [{"agent_id": "agent1", "role": "leader"}],
         }
 
         agents = {}
@@ -422,22 +459,22 @@ class TestTeamExecutionEngine:
     def test_execution_engine_member_loading(self):
         """Test loading team members"""
         config = {
-            'id': 'member_team',
-            'coordination_strategy': TeamCoordinationStrategy.HIERARCHICAL.value,
-            'members': [
+            "id": "member_team",
+            "coordination_strategy": TeamCoordinationStrategy.HIERARCHICAL.value,
+            "members": [
                 {
-                    'agent_id': 'leader_agent',
-                    'role': 'leader',
-                    'capabilities': ['leadership'],
-                    'priority': 0
+                    "agent_id": "leader_agent",
+                    "role": "leader",
+                    "capabilities": ["leadership"],
+                    "priority": 0,
                 },
                 {
-                    'agent_id': 'member_agent',
-                    'role': 'member',
-                    'capabilities': ['coding'],
-                    'priority': 1
-                }
-            ]
+                    "agent_id": "member_agent",
+                    "role": "member",
+                    "capabilities": ["coding"],
+                    "priority": 1,
+                },
+            ],
         }
 
         agents = {}
@@ -445,27 +482,27 @@ class TestTeamExecutionEngine:
 
         assert len(engine.members) == 2
 
-        leader = next(m for m in engine.members if m.agent_id == 'leader_agent')
+        leader = next(m for m in engine.members if m.agent_id == "leader_agent")
         assert leader.role == TeamMemberRole.LEADER
-        assert 'leadership' in leader.capabilities
+        assert "leadership" in leader.capabilities
 
-        member = next(m for m in engine.members if m.agent_id == 'member_agent')
+        member = next(m for m in engine.members if m.agent_id == "member_agent")
         assert member.role == TeamMemberRole.MEMBER
-        assert 'coding' in member.capabilities
+        assert "coding" in member.capabilities
 
     def test_strategy_selection(self):
         """Test coordination strategy selection"""
         strategies = {
-            'hierarchical': HierarchicalStrategy,
-            'collaborative': CollaborativeStrategy,
-            'parallel': ParallelStrategy
+            "hierarchical": HierarchicalStrategy,
+            "collaborative": CollaborativeStrategy,
+            "parallel": ParallelStrategy,
         }
 
         for strategy_name, strategy_class in strategies.items():
             config = {
-                'id': f'{strategy_name}_team',
-                'coordination_strategy': strategy_name,
-                'members': [{'agent_id': 'agent1', 'role': 'member'}]
+                "id": f"{strategy_name}_team",
+                "coordination_strategy": strategy_name,
+                "members": [{"agent_id": "agent1", "role": "member"}],
             }
 
             engine = TeamExecutionEngine(config, {})
@@ -474,20 +511,20 @@ class TestTeamExecutionEngine:
     def test_team_stats(self):
         """Test team statistics"""
         config = {
-            'id': 'stats_team',
-            'coordination_strategy': 'hierarchical',
-            'members': [{'agent_id': 'agent1', 'role': 'member'}]
+            "id": "stats_team",
+            "coordination_strategy": "hierarchical",
+            "members": [{"agent_id": "agent1", "role": "member"}],
         }
 
         engine = TeamExecutionEngine(config, {})
 
         stats = engine.get_team_stats()
 
-        assert stats['team_id'] == 'stats_team'
-        assert stats['current_state'] == TeamState.IDLE.value
-        assert stats['member_count'] == 1
-        assert stats['coordination_strategy'] == 'hierarchical'
-        assert stats['execution_history'] == []
+        assert stats["team_id"] == "stats_team"
+        assert stats["current_state"] == TeamState.IDLE.value
+        assert stats["member_count"] == 1
+        assert stats["coordination_strategy"] == "hierarchical"
+        assert stats["execution_history"] == []
 
 
 class TestTeamDataClasses:
@@ -500,7 +537,7 @@ class TestTeamDataClasses:
             role=TeamMemberRole.LEADER,
             capabilities=["leadership", "coding"],
             priority=0,
-            max_concurrent_tasks=2
+            max_concurrent_tasks=2,
         )
 
         assert member.agent_id == "test_agent"
@@ -512,30 +549,27 @@ class TestTeamDataClasses:
     def test_team_member_to_dict(self):
         """Test TeamMember serialization"""
         member = TeamMember(
-            agent_id="test_agent",
-            role=TeamMemberRole.MEMBER,
-            capabilities=["python"]
+            agent_id="test_agent", role=TeamMemberRole.MEMBER, capabilities=["python"]
         )
 
         member_dict = member.to_dict()
 
-        assert member_dict['agent_id'] == "test_agent"
-        assert member_dict['role'] == "member"
-        assert member_dict['capabilities'] == ["python"]
-        assert member_dict['priority'] == 1  # default
-        assert member_dict['max_concurrent_tasks'] == 1  # default
+        assert member_dict["agent_id"] == "test_agent"
+        assert member_dict["role"] == "member"
+        assert member_dict["capabilities"] == ["python"]
+        assert member_dict["priority"] == 1  # default
+        assert member_dict["max_concurrent_tasks"] == 1  # default
 
     def test_team_task_creation(self):
         """Test TeamTask creation"""
         from datetime import datetime
-        import uuid
 
         task = TeamTask(
             id="task_123",
             description="Test task",
             requirements=["python", "testing"],
             assigned_to="agent1",
-            dependencies=["task_456"]
+            dependencies=["task_456"],
         )
 
         assert task.id == "task_123"
@@ -551,9 +585,7 @@ class TestTeamDataClasses:
         from datetime import datetime
 
         context = TeamExecutionContext(
-            execution_id="exec_123",
-            project_id="proj_123",
-            user_id="user_123"
+            execution_id="exec_123", project_id="proj_123", user_id="user_123"
         )
 
         assert context.execution_id == "exec_123"
@@ -563,16 +595,13 @@ class TestTeamDataClasses:
 
     def test_team_execution_context_to_dict(self):
         """Test TeamExecutionContext serialization"""
-        context = TeamExecutionContext(
-            execution_id="exec_123",
-            project_id="proj_123"
-        )
+        context = TeamExecutionContext(execution_id="exec_123", project_id="proj_123")
 
         context_dict = context.to_dict()
 
-        assert context_dict['execution_id'] == "exec_123"
-        assert context_dict['project_id'] == "proj_123"
-        assert 'started_at' in context_dict
+        assert context_dict["execution_id"] == "exec_123"
+        assert context_dict["project_id"] == "proj_123"
+        assert "started_at" in context_dict
 
 
 class TestCoordinationStrategies:
@@ -600,13 +629,19 @@ class TestCoordinationStrategies:
         """Test task assignment in hierarchical strategy"""
         members = [
             TeamMember(agent_id="leader", role=TeamMemberRole.LEADER),
-            TeamMember(agent_id="member1", role=TeamMemberRole.MEMBER, capabilities=["python"]),
-            TeamMember(agent_id="member2", role=TeamMemberRole.MEMBER, capabilities=["javascript"])
+            TeamMember(
+                agent_id="member1", role=TeamMemberRole.MEMBER, capabilities=["python"]
+            ),
+            TeamMember(
+                agent_id="member2",
+                role=TeamMemberRole.MEMBER,
+                capabilities=["javascript"],
+            ),
         ]
 
         tasks = [
             TeamTask(id="task1", description="Python task", requirements=["python"]),
-            TeamTask(id="task2", description="JS task", requirements=["javascript"])
+            TeamTask(id="task2", description="JS task", requirements=["javascript"]),
         ]
 
         strategy = HierarchicalStrategy()
@@ -622,12 +657,12 @@ class TestCoordinationStrategies:
         """Test task assignment in collaborative strategy"""
         members = [
             TeamMember(agent_id="member1", role=TeamMemberRole.MEMBER),
-            TeamMember(agent_id="member2", role=TeamMemberRole.MEMBER)
+            TeamMember(agent_id="member2", role=TeamMemberRole.MEMBER),
         ]
 
         tasks = [
             TeamTask(id="task1", description="Task 1"),
-            TeamTask(id="task2", description="Task 2")
+            TeamTask(id="task2", description="Task 2"),
         ]
 
         strategy = CollaborativeStrategy()
@@ -641,14 +676,14 @@ class TestCoordinationStrategies:
         """Test task assignment in parallel strategy"""
         members = [
             TeamMember(agent_id="member1", role=TeamMemberRole.MEMBER),
-            TeamMember(agent_id="member2", role=TeamMemberRole.MEMBER)
+            TeamMember(agent_id="member2", role=TeamMemberRole.MEMBER),
         ]
 
         tasks = [
             TeamTask(id="task1", description="Task 1"),
             TeamTask(id="task2", description="Task 2"),
             TeamTask(id="task3", description="Task 3"),
-            TeamTask(id="task4", description="Task 4")
+            TeamTask(id="task4", description="Task 4"),
         ]
 
         strategy = ParallelStrategy()

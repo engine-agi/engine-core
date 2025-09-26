@@ -10,26 +10,25 @@ Tests cover:
 - Contract testing for protocol interfaces
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from typing import List, Dict, Any
 import time
+from unittest.mock import Mock
 
+import pytest
+
+from engine_core.core.protocols.protocol import (
+    CommandContext,
+    CommandIntent,
+    CommandType,
+    ContextScope,
+    ExecutionPlan,
+    IntentCategory,
+    ParsedCommand,
+    ProtocolParser,
+)
 from engine_core.core.protocols.protocol_builder import (
     ProtocolBuilder,
-    BuiltProtocol,
-    ProtocolConfiguration
-)
-from engine_core.core.protocols.protocol import (
-    ProtocolParser,
-    CommandContext,
-    ParsedCommand,
-    ExecutionPlan,
-    CommandIntent,
-    IntentCategory,
-    CommandType,
-    ContextScope
+    ProtocolConfiguration,
 )
 
 
@@ -65,7 +64,7 @@ class TestProtocolExecutionWorkflows:
         context = CommandContext(
             project_id="test_project",
             agent_id="analyzer_agent",
-            scope=ContextScope.PROJECT
+            scope=ContextScope.PROJECT,
         )
 
         # Create execution plan
@@ -90,13 +89,16 @@ class TestProtocolExecutionWorkflows:
         assert command.intent.category == IntentCategory.GENERATE
         assert command.command_type == CommandType.GENERATION
         assert "unit tests" in command.intent.target.lower()
-        assert "api" in command.intent.target.lower() or "endpoint" in command.intent.target.lower()
+        assert (
+            "api" in command.intent.target.lower()
+            or "endpoint" in command.intent.target.lower()
+        )
 
         # Create execution context
         context = CommandContext(
             project_id="api_project",
             workflow_id="test_generation_workflow",
-            scope=ContextScope.WORKFLOW
+            scope=ContextScope.WORKFLOW,
         )
 
         # Create execution plan
@@ -112,24 +114,17 @@ class TestProtocolExecutionWorkflows:
         """Test coordination workflow with multiple agents."""
         protocol = ProtocolBuilder.create_coordination_protocol("coordination_test")
 
-        context = CommandContext(
-            team_id="dev_team",
-            scope=ContextScope.TEAM
-        )
+        context = CommandContext(team_id="dev_team", scope=ContextScope.TEAM)
 
         command = await protocol.parse_command(
-            "coordinate the development team to implement user authentication",
-            context
+            "coordinate the development team to implement user authentication", context
         )
 
         assert command.is_valid
         assert command.intent.category == IntentCategory.COORDINATE
         assert command.command_type == CommandType.COORDINATION
 
-        context = CommandContext(
-            team_id="dev_team",
-            scope=ContextScope.TEAM
-        )
+        context = CommandContext(team_id="dev_team", scope=ContextScope.TEAM)
 
         plan = await protocol.create_execution_plan(command, context)
         assert plan.command_id == command.id
@@ -148,8 +143,7 @@ class TestProtocolExecutionWorkflows:
         # The parser might break this into multiple intents or handle as complex command
 
         context = CommandContext(
-            project_id="complex_project",
-            scope=ContextScope.PROJECT
+            project_id="complex_project", scope=ContextScope.PROJECT
         )
 
         plan = await protocol.create_execution_plan(command, context)
@@ -222,11 +216,15 @@ class TestAgentToolIntegration:
         generation_agent.capabilities = ["code_generation", "documentation"]
 
         # Test analysis command
-        analysis_command = await protocol.parse_command("analyze this code for security issues")
+        analysis_command = await protocol.parse_command(
+            "analyze this code for security issues"
+        )
         context = CommandContext()
 
         analysis_plan = await protocol.create_execution_plan(
-            analysis_command, context, available_agents=[analysis_agent, generation_agent]
+            analysis_command,
+            context,
+            available_agents=[analysis_agent, generation_agent],
         )
 
         assert analysis_plan.command_id == analysis_command.id
@@ -234,7 +232,9 @@ class TestAgentToolIntegration:
         # Test generation command
         generation_command = await protocol.parse_command("generate unit tests")
         generation_plan = await protocol.create_execution_plan(
-            generation_command, context, available_agents=[analysis_agent, generation_agent]
+            generation_command,
+            context,
+            available_agents=[analysis_agent, generation_agent],
         )
 
         assert generation_plan.command_id == generation_command.id
@@ -266,9 +266,13 @@ class TestErrorHandlingAndRecovery:
         command = await protocol.parse_command("analyze project files")
         context = CommandContext()  # No project_id
 
-        validated_command = await protocol.parser.command_validator.validate_command(command, context)
+        validated_command = await protocol.parser.command_validator.validate_command(
+            command, context
+        )
         # Should have validation errors or suggestions
-        assert len(validated_command.validation_errors) >= 0  # May or may not have errors
+        assert (
+            len(validated_command.validation_errors) >= 0
+        )  # May or may not have errors
 
     @pytest.mark.asyncio
     async def test_execution_plan_error_recovery(self):
@@ -289,10 +293,12 @@ class TestErrorHandlingAndRecovery:
     @pytest.mark.asyncio
     async def test_fallback_plan_generation(self):
         """Test generation of fallback plans for failed executions."""
-        protocol = (ProtocolBuilder()
+        protocol = (
+            ProtocolBuilder()
             .with_id("fallback_test")
             .with_fallbacks_enabled(True)
-            .build())
+            .build()
+        )
 
         command = await protocol.parse_command("execute critical operation")
         context = CommandContext()
@@ -315,7 +321,7 @@ class TestPerformanceAndScalability:
             "generate documentation",
             "create unit tests",
             "validate configuration",
-            "coordinate team tasks"
+            "coordinate team tasks",
         ]
 
         # Process commands concurrently
@@ -345,8 +351,7 @@ class TestPerformanceAndScalability:
         ]
 
         context = CommandContext(
-            history=large_history,
-            variables={"large_var": "x" * 1000}  # Large variable
+            history=large_history, variables={"large_var": "x" * 1000}  # Large variable
         )
 
         command = await protocol.parse_command("analyze based on history", context)
@@ -362,8 +367,6 @@ class TestPerformanceAndScalability:
         assert "parser_stats" in initial_stats
         assert "total_commands_parsed" in initial_stats["parser_stats"]
 
-        initial_count = initial_stats["parser_stats"]["total_commands_parsed"]
-
         # Note: In real usage, stats would be updated after parsing
         # This test verifies the stats structure is correct
 
@@ -376,10 +379,10 @@ class TestProtocolContractCompliance:
         builder = ProtocolBuilder()
 
         # Test all expected methods exist
-        assert hasattr(builder, 'with_id')
-        assert hasattr(builder, 'with_name')
-        assert hasattr(builder, 'with_description')
-        assert hasattr(builder, 'build')
+        assert hasattr(builder, "with_id")
+        assert hasattr(builder, "with_name")
+        assert hasattr(builder, "with_description")
+        assert hasattr(builder, "build")
 
         # Test method chaining
         result = builder.with_id("test").with_name("Test")
@@ -390,25 +393,25 @@ class TestProtocolContractCompliance:
         protocol = ProtocolBuilder().with_id("interface_test").build()
 
         # Test all expected attributes
-        assert hasattr(protocol, 'id')
-        assert hasattr(protocol, 'configuration')
-        assert hasattr(protocol, 'parser')
-        assert hasattr(protocol, 'statistics')
+        assert hasattr(protocol, "id")
+        assert hasattr(protocol, "configuration")
+        assert hasattr(protocol, "parser")
+        assert hasattr(protocol, "statistics")
 
         # Test all expected methods
-        assert hasattr(protocol, 'parse_command')
-        assert hasattr(protocol, 'create_execution_plan')
-        assert hasattr(protocol, 'get_statistics')
-        assert hasattr(protocol, 'update_statistics')
+        assert hasattr(protocol, "parse_command")
+        assert hasattr(protocol, "create_execution_plan")
+        assert hasattr(protocol, "get_statistics")
+        assert hasattr(protocol, "update_statistics")
 
     def test_protocol_parser_interface(self):
         """Test that ProtocolParser implements expected interface."""
         parser = ProtocolParser()
 
         # Test expected methods
-        assert hasattr(parser, 'parse_command')
-        assert hasattr(parser, 'create_execution_plan')
-        assert hasattr(parser, 'get_parser_statistics')
+        assert hasattr(parser, "parse_command")
+        assert hasattr(parser, "create_execution_plan")
+        assert hasattr(parser, "get_parser_statistics")
 
     def test_command_intent_structure(self):
         """Test that CommandIntent has expected structure."""
@@ -416,7 +419,7 @@ class TestProtocolContractCompliance:
             category=IntentCategory.ANALYZE,
             action="analyze",
             target="code",
-            confidence=0.8
+            confidence=0.8,
         )
 
         assert intent.category == IntentCategory.ANALYZE
@@ -429,8 +432,7 @@ class TestProtocolContractCompliance:
     def test_parsed_command_structure(self):
         """Test that ParsedCommand has expected structure."""
         command = ParsedCommand(
-            original_text="test command",
-            normalized_text="test command"
+            original_text="test command", normalized_text="test command"
         )
 
         assert command.original_text == "test command"

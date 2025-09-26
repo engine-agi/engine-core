@@ -1,4 +1,8 @@
 """
+
+
+
+
 API Router Package - Engine Framework REST API Routers.
 
 This package contains all API routers for the Engine Framework, organized by
@@ -25,6 +29,7 @@ Each router follows consistent patterns:
 - Real-time WebSocket integration
 """
 
+
 # This file makes the routers directory a Python package
 # Individual routers will be created in subsequent tasks
 
@@ -33,7 +38,7 @@ __version__ = "1.0.0"
 # Note: __all__ will be populated as routers are created
 # __all__ = [
 #     "projects",
-#     "agents", 
+#     "agents",
 #     "teams",
 #     "workflows",
 #     "protocols",

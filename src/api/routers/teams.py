@@ -1,24 +1,32 @@
 """
+from pathlib import Path
+from fastapi import Depends
+from fastapi import HTTPException
+from pydantic import BaseModel
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
 Teams API Router
 Handles team management and coordination within projects including team creation and project execution.
 
 This router provides endpoints for managing teams of agents within projects. Teams enable
 coordinated execution of complex projects through different coordination strategies.
 """
-
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Body
-from pydantic import BaseModel, Field
-from datetime import datetime
 import uuid
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..websocket import get_event_broadcaster, EventType
-from ...shared_types.engine_types import EngineError, TeamStatus, CoordinationStrategy, AgentStatus
-from ...core.teams.team_builder import TeamCoordinationStrategy
-from ...services.team_service import TeamService, TeamCreateRequest, TaskExecutionRequest
-from ...core.project_service import ProjectService
-from ...services.agent_service import AgentService
-from ...auth.auth_service import get_current_user
+from fastapi import Depends, HTTPException
+from pydantic import BaseModel, Field
 
 
 class TeamSummary(BaseModel):
@@ -33,11 +41,15 @@ class TeamSummary(BaseModel):
 
 class TeamCreate(BaseModel):
     """Team creation request model"""
-    id: str = Field(..., min_length=1, max_length=50, description="Unique team identifier")
-    name: str = Field(..., min_length=1, max_length=100, description="Human-readable team name")
+    id: str = Field(..., min_length=1, max_length=50,
+                    description="Unique team identifier")
+    name: str = Field(..., min_length=1, max_length=100,
+                      description="Human-readable team name")
     agent_ids: List[str] = Field()
-    lead_agent_id: Optional[str] = Field(None, description="Lead agent ID (must be in agent_ids)")
-    coordination_strategy: str = Field("hierarchical", description="Team coordination strategy")
+    lead_agent_id: Optional[str] = Field(
+        None, description="Lead agent ID (must be in agent_ids)")
+    coordination_strategy: str = Field(
+        "hierarchical", description="Team coordination strategy")
     workflow_id: Optional[str] = Field(None, description="Associated workflow")
     protocol_id: Optional[str] = Field(None, description="Team behavior protocol")
 
@@ -65,11 +77,18 @@ class TeamListResponse(BaseModel):
 
 class ProjectExecution(BaseModel):
     """Project execution request model"""
-    project_description: str = Field(..., min_length=10, max_length=2000, description="Project description")
+    project_description: str = Field(...,
+                                     min_length=10,
+                                     max_length=2000,
+                                     description="Project description")
     requirements: List[str] = Field()
-    timeline: Optional[str] = Field(None, max_length=100, description="Project timeline")
-    parameters: Optional[Dict[str, Any]] = Field(None, description="Additional execution parameters")
-    priority: str = Field("normal", description="Execution priority (low, normal, high)")
+    timeline: Optional[str] = Field(
+        None, max_length=100, description="Project timeline")
+    parameters: Optional[Dict[str, Any]] = Field(
+        None, description="Additional execution parameters")
+    priority: str = Field(
+        "normal",
+        description="Execution priority (low, normal, high)")
 
 
 class ProjectExecutionResponse(BaseModel):
@@ -96,23 +115,24 @@ router = APIRouter(
 
 
 @router.get("/", response_model=TeamListResponse)
-async def list_teams(
-    project_id: str = Path(..., description="Project ID"),
-    status: Optional[str] = Query(None, description="Filter by team status"),
-    coordination_strategy: Optional[str] = Query(None, description="Filter by coordination strategy"),
-    current_user: dict = Depends(get_current_user),
-    team_service: TeamService = Depends(),
-    project_service: ProjectService = Depends()
-):
+async def list_teams(project_id: str = Path(...,
+                                            description="Project ID"),
+                     status: Optional[str] = Query(None,
+                                                   description="Filter by team status"),
+                     coordination_strategy: Optional[str] = Query(None,
+                                                                  description="Filter by coordination strategy"),
+                     current_user: dict = Depends(get_current_user),
+                     team_service: TeamService = Depends(),
+                     project_service: ProjectService = Depends()):
     """
     List all teams in a project.
-    
+
     Returns all teams associated with the specified project. Supports
     filtering by status and coordination strategy.
-    
+
     Path Parameters:
     - project_id: The ID of the project
-    
+
     Query Parameters:
     - status: Filter teams by status (optional)
     - coordination_strategy: Filter by coordination strategy (optional)
@@ -122,12 +142,12 @@ async def list_teams(
         project = await project_service.get_project(project_id, current_user["id"])
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         # Get teams for the project
         teams_data = await team_service.list_teams(
             project_id=project_id
         )
-        
+
         # Convert to response format
         teams = [
             TeamSummary(
@@ -140,12 +160,12 @@ async def list_teams(
             )
             for team in teams_data
         ]
-        
+
         return TeamListResponse(
             teams=teams,
             total=len(teams)
         )
-        
+
     except HTTPException:
         raise
     except EngineError as e:
@@ -161,18 +181,18 @@ async def create_team(
     team_service: TeamService = Depends(),
     project_service: ProjectService = Depends(),
     agent_service: AgentService = Depends(),
-    event_broadcaster = Depends(get_event_broadcaster),
+    event_broadcaster=Depends(get_event_broadcaster),
     team_data: TeamCreate = Body(...)
 ):
     """
     Create a new team in a project.
-    
+
     Creates a new team with the specified agents and coordination strategy.
     All agents must exist in the project before they can be added to a team.
-    
+
     Path Parameters:
     - project_id: The ID of the project
-    
+
     Body Parameters:
     - id: Unique team identifier (required)
     - name: Human-readable name (required)
@@ -187,7 +207,7 @@ async def create_team(
         project = await project_service.get_project(project_id, current_user["id"])
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         # Check if team ID already exists in project
         existing_team = await team_service.get_team(team_data.id)
         if existing_team:
@@ -195,7 +215,7 @@ async def create_team(
                 status_code=400,
                 detail=f"Team with ID '{team_data.id}' already exists in project"
             )
-        
+
         # Verify all agents exist in the project
         for agent_id in team_data.agent_ids:
             agent = await agent_service.get_agent(agent_id)
@@ -204,7 +224,7 @@ async def create_team(
                     status_code=400,
                     detail=f"Agent '{agent_id}' not found in project"
                 )
-        
+
         # Validate lead agent if specified
         if team_data.lead_agent_id:
             if team_data.lead_agent_id not in team_data.agent_ids:
@@ -212,16 +232,17 @@ async def create_team(
                     status_code=400,
                     detail="Lead agent must be included in agent_ids list"
                 )
-        
+
         # Validate coordination strategy
         try:
-            coordination_strategy = TeamCoordinationStrategy(team_data.coordination_strategy)
+            coordination_strategy = TeamCoordinationStrategy(
+                team_data.coordination_strategy)
         except ValueError:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid coordination strategy: {team_data.coordination_strategy}"
-            )
-        
+                detail=f"Invalid coordination strategy: {
+                    team_data.coordination_strategy}")
+
         # Create the team
         request = TeamCreateRequest(
             id=team_data.id,
@@ -233,9 +254,9 @@ async def create_team(
             protocol_id=team_data.protocol_id,
             created_by=current_user["id"]
         )
-        
+
         team = await team_service.create_team(request)
-        
+
         # Prepare response
         response = TeamResponse(
             id=team['id'],
@@ -250,7 +271,7 @@ async def create_team(
             updated_at=team.get('updated_at'),
             agent_count=len(team.get('members', []))
         )
-        
+
         # Broadcast team creation event
         await event_broadcaster.broadcast_event(
             event_type=EventType.TEAM_CREATED,
@@ -263,9 +284,9 @@ async def create_team(
             },
             user_id=current_user["id"]
         )
-        
+
         return response
-        
+
     except HTTPException:
         raise
     except EngineError as e:
@@ -282,20 +303,20 @@ async def execute_project(
     team_service: TeamService = Depends(),
     project_service: ProjectService = Depends(),
     agent_service: AgentService = Depends(),
-    event_broadcaster = Depends(get_event_broadcaster),
+    event_broadcaster=Depends(get_event_broadcaster),
     execution_data: ProjectExecution = Body(...)
 ):
     """
     Execute a project with a team.
-    
+
     Submits a complex project for execution by the specified team. The team
     will coordinate agent activities based on its coordination strategy to
     complete all requirements.
-    
+
     Path Parameters:
     - project_id: The ID of the project
     - team_id: The ID of the team to execute the project
-    
+
     Body Parameters:
     - project_description: Detailed project description (required)
     - requirements: List of project requirements (required, minimum 1)
@@ -308,18 +329,18 @@ async def execute_project(
         project = await project_service.get_project(project_id, current_user["id"])
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         # Verify team exists and is active
         team = await team_service.get_team(team_id)
         if not team:
             raise HTTPException(status_code=404, detail="Team not found")
-        
+
         if team['status'] != 'active':
             raise HTTPException(
                 status_code=400,
                 detail=f"Team is not active (status: {team['status']})"
             )
-        
+
         # Verify all team agents are still active
         agent_ids = [member['agent_id'] for member in team.get('members', [])]
         for agent_id in agent_ids:
@@ -329,10 +350,10 @@ async def execute_project(
                     status_code=400,
                     detail=f"Agent '{agent_id}' is not active or not found"
                 )
-        
+
         # Generate execution ID
         execution_id = f"exec_team_{uuid.uuid4().hex[:12]}"
-        
+
         # Start project execution
         request = TaskExecutionRequest(
             tasks=[{
@@ -354,9 +375,9 @@ async def execute_project(
             workflow_id=None,
             timeout_seconds=300
         )
-        
+
         execution = await team_service.execute_tasks(team_id, request)
-        
+
         # Prepare response
         response = ProjectExecutionResponse(
             execution_id=execution.execution_id,
@@ -366,7 +387,7 @@ async def execute_project(
             estimated_completion=None,  # TODO: calculate based on tasks
             assigned_agents=agent_ids
         )
-        
+
         # Broadcast execution started event
         await event_broadcaster.broadcast_event(
             event_type=EventType.TEAM_EXECUTION_STARTED,
@@ -380,9 +401,9 @@ async def execute_project(
             },
             user_id=current_user["id"]
         )
-        
+
         return response
-        
+
     except HTTPException:
         raise
     except EngineError as e:

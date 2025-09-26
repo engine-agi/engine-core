@@ -3,13 +3,14 @@
 Test script for WorkflowBuilder functionality.
 """
 
-import sys
 import os
+import sys
 
 # Add the src directory to the path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.join(current_dir, 'src')
+src_dir = os.path.join(current_dir, "src")
 sys.path.insert(0, src_dir)
+
 
 async def test_workflow_builder():
     """Test WorkflowBuilder basic functionality."""
@@ -40,10 +41,13 @@ async def test_workflow_builder():
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
+
 if __name__ == "__main__":
     import asyncio
+
     success = asyncio.run(test_workflow_builder())
     sys.exit(0 if success else 1)

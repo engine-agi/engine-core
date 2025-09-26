@@ -1,13 +1,30 @@
 """
+from pathlib import Path
+from sqlalchemy import Column
+from typing import Set, Tuple
+from pydantic import BaseModel
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Base model configuration for Engine Framework.
 
 Simplified version to avoid import-time database connections.
 """
-
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional, List, Union, AsyncGenerator
-from sqlalchemy import (
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+from pydantic import BaseModel, Field
+from sqlalchemy import Column
+
     Column,
     String,
     DateTime,
@@ -16,8 +33,6 @@ from sqlalchemy import (
     Integer,
     event
 )
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 # Database configuration - lazy initialization
 DATABASE_URL = "postgresql+asyncpg://engine:engine@localhost:5432/engine_db"
@@ -57,25 +72,26 @@ class Base(DeclarativeBase):
 # Mixin classes
 class StringIdentifierMixin:
     """Mixin for models with string-based identifiers."""
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
 
 class ConfigurationMixin:
     """Mixin for configurable models."""
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    config: Mapped[Optional[Dict[str, Any]]] = mapped_column(String, nullable=True)  # JSON as string
+    config: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        String, nullable=True)  # JSON as string
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
 class ValidationMixin:
     """Mixin for models with validation."""
     is_valid: Mapped[bool] = mapped_column(Boolean, default=True)
-    validation_errors: Mapped[Optional[List[str]]] = mapped_column(String, nullable=True)  # JSON as string
+    validation_errors: Mapped[Optional[List[str]]] = mapped_column(
+        String, nullable=True)  # JSON as string
     last_validated: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 import uuid
-from datetime import datetime
-from typing import Any, Dict, Optional, List, Union
-from sqlalchemy import (
+
     Column,
     String,
     DateTime,
@@ -85,8 +101,6 @@ from sqlalchemy import (
     MetaData,
     text
 )
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 import os
 
 # Database configuration - lazy initialization to avoid import-time connections
@@ -149,31 +163,34 @@ class Base(DeclarativeBase):
     metadata = MetaData()
 
     # Common fields
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 class StringIdentifierMixin:
     """Mixin for models with string-based identifiers."""
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
 
 class ConfigurationMixin:
     """Mixin for configurable models."""
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    config: Mapped[Optional[Dict[str, Any]]] = mapped_column(Text, nullable=True)  # JSON stored as text
+    config: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        Text, nullable=True)  # JSON stored as text
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
 
 class ValidationMixin:
     """Mixin for models with validation."""
     is_valid: Mapped[bool] = mapped_column(Boolean, default=True)
-    validation_errors: Mapped[Optional[List[str]]] = mapped_column(Text, nullable=True)  # JSON stored as text
+    validation_errors: Mapped[Optional[List[str]]] = mapped_column(
+        Text, nullable=True)  # JSON stored as text
     last_validated: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 import uuid
-from datetime import datetime
-from typing import Any, Dict, Optional, List, Union
-from sqlalchemy import (
+
     Column,
     String,
     DateTime,
@@ -184,8 +201,6 @@ from sqlalchemy import (
     text,
     create_engine as sa_create_engine
 )
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 import os
 
 # Database configuration - lazy initialization to avoid import-time connections
@@ -270,14 +285,8 @@ engine = LazyEngine()
 test_engine = LazyTestEngine()
 AsyncSessionLocal = get_AsyncSessionLocal
 TestAsyncSessionLocal = get_TestAsyncSessionLocal
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.sql import func, text
-from sqlalchemy.types import TypeDecorator, String as SQLString
 import json
 import os
-from pathlib import Path
 
 # Database Configuration
 DATABASE_URL = os.getenv(
@@ -286,7 +295,7 @@ DATABASE_URL = os.getenv(
 )
 
 TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL", 
+    "TEST_DATABASE_URL",
     "postgresql+asyncpg://engine:engine@localhost:5432/engine_test_db"
 )
 
@@ -375,7 +384,7 @@ metadata = MetaData(naming_convention=convention)
 
 class JSONType(TypeDecorator):
     """Custom JSON type that handles serialization properly."""
-    
+
     impl = Text
     cache_ok = True
 
@@ -400,27 +409,27 @@ Base = declarative_base(metadata=metadata)
 class BaseModel(Base):
     """
     Abstract base model with common fields and functionality.
-    
+
     All Engine Framework entities inherit from this base class.
     Provides:
     - id: Primary key (UUID)
     - created_at: Creation timestamp
-    - updated_at: Last update timestamp  
+    - updated_at: Last update timestamp
     - is_active: Soft deletion flag
     - metadata: Additional metadata storage
     """
-    
+
     __abstract__ = True
 
     # Primary key as UUID
     id = Column(
-        UUID(as_uuid=True), 
-        primary_key=True, 
+        UUID(as_uuid=True),
+        primary_key=True,
         default=uuid.uuid4,
         index=True,
         comment="Unique identifier for the entity"
     )
-    
+
     # Audit fields
     created_at = Column(
         DateTime(timezone=True),
@@ -429,7 +438,7 @@ class BaseModel(Base):
         index=True,
         comment="Entity creation timestamp"
     )
-    
+
     updated_at = Column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -438,7 +447,7 @@ class BaseModel(Base):
         index=True,
         comment="Entity last update timestamp"
     )
-    
+
     # Soft deletion
     is_active = Column(
         Boolean,
@@ -447,7 +456,7 @@ class BaseModel(Base):
         index=True,
         comment="Flag for soft deletion (True = active, False = deleted)"
     )
-    
+
     # Flexible metadata storage
     metadata = Column(
         JSONB,
@@ -463,7 +472,7 @@ class BaseModel(Base):
         """Convert model instance to dictionary."""
         exclude = exclude or []
         result = {}
-        
+
         for column in self.__table__.columns:
             if column.name not in exclude:
                 value = getattr(self, column.name)
@@ -473,7 +482,7 @@ class BaseModel(Base):
                 elif isinstance(value, datetime):
                     value = value.isoformat()
                 result[column.name] = value
-        
+
         return result
 
     @classmethod
@@ -481,20 +490,20 @@ class BaseModel(Base):
         """Create model instance from dictionary."""
         # Remove None values
         filtered_data = {k: v for k, v in data.items() if v is not None}
-        
+
         # Handle UUID fields
         if "id" in filtered_data and isinstance(filtered_data["id"], str):
             try:
                 filtered_data["id"] = uuid.UUID(filtered_data["id"])
             except ValueError:
                 pass  # Keep as string if invalid UUID
-        
+
         return cls(**filtered_data)
 
     def update_from_dict(self, data: Dict[str, Any], exclude: Optional[List[str]] = None) -> None:
         """Update model instance from dictionary."""
         exclude = exclude or ["id", "created_at"]  # Don't update immutable fields
-        
+
         for key, value in data.items():
             if key not in exclude and hasattr(self, key):
                 setattr(self, key, value)
@@ -503,11 +512,11 @@ class BaseModel(Base):
 class StringIdentifierMixin:
     """
     Mixin for models that use string identifiers instead of UUID.
-    
+
     Used for entities like agents, projects, workflows where users
     provide meaningful string IDs.
     """
-    
+
     id = Column(
         String(255),
         primary_key=True,
@@ -521,15 +530,15 @@ class StringIdentifierMixin:
 
 class TimestampMixin:
     """Mixin for additional timestamp fields."""
-    
+
     last_accessed_at = Column(
         DateTime(timezone=True),
         nullable=True,
         comment="Last access timestamp"
     )
-    
+
     last_executed_at = Column(
-        DateTime(timezone=True), 
+        DateTime(timezone=True),
         nullable=True,
         comment="Last execution timestamp"
     )
@@ -537,7 +546,7 @@ class TimestampMixin:
 
 class ConfigurationMixin:
     """Mixin for configuration storage."""
-    
+
     config = Column(
         JSONB,
         nullable=True,
@@ -573,7 +582,7 @@ class ConfigurationMixin:
 
 class ValidationMixin:
     """Mixin for model validation."""
-    
+
     @classmethod
     def validate_data(cls, data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate input data before creating/updating model."""
@@ -633,19 +642,20 @@ async def drop_test_tables():
 def get_alembic_config():
     """Get Alembic configuration for migrations."""
     from alembic.config import Config
-    
+
     # Path to alembic.ini file
-    alembic_cfg = Config(str(Path(__file__).parent.parent.parent.parent / "engine-infra" / "config" / "alembic.ini"))
-    
+    alembic_cfg = Config(str(Path(__file__).parent.parent.parent.parent / \
+                         "engine-infra" / "config" / "alembic.ini"))
+
     # Set script location
     alembic_cfg.set_main_option(
-        "script_location", 
+        "script_location",
         str(Path(__file__).parent.parent.parent.parent / "engine-infra" / "alembic")
     )
-    
+
     # Set database URL
     alembic_cfg.set_main_option("sqlalchemy.url", DATABASE_URL.replace("+asyncpg", ""))
-    
+
     return alembic_cfg
 
 
@@ -663,7 +673,7 @@ async def check_database_health() -> Dict[str, Any]:
         async with AsyncSessionLocal() as session:
             result = await session.execute(text("SELECT 1"))
             await session.commit()
-            
+
         return {
             "status": "healthy",
             "database": "connected",
@@ -674,7 +684,7 @@ async def check_database_health() -> Dict[str, Any]:
         }
     except Exception as e:
         return {
-            "status": "unhealthy", 
+            "status": "unhealthy",
             "error": str(e),
             "database": "disconnected"
         }
@@ -683,16 +693,16 @@ async def check_database_health() -> Dict[str, Any]:
 # Export commonly used items
 __all__ = [
     "Base",
-    "BaseModel", 
+    "BaseModel",
     "StringIdentifierMixin",
     "TimestampMixin",
-    "ConfigurationMixin", 
+    "ConfigurationMixin",
     "ValidationMixin",
     "JSONType",
     "AsyncSessionLocal",
     "TestAsyncSessionLocal",
     "get_async_session",
-    "get_test_async_session", 
+    "get_test_async_session",
     "create_tables",
     "drop_tables",
     "create_test_tables",

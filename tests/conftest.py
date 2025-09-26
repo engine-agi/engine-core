@@ -1,14 +1,15 @@
 """Shared pytest fixtures and configuration for engine-core."""
 
-import pytest
 import asyncio
-import sys
 import os
-from typing import Generator, AsyncGenerator
+import sys
+from typing import AsyncGenerator, Generator
+
+import pytest
 
 # Add src to path
 project_root = os.path.dirname(os.path.dirname(__file__))
-src_path = os.path.join(project_root, 'src')
+src_path = os.path.join(project_root, "src")
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
@@ -45,7 +46,7 @@ def sample_agent_config() -> dict:
         "tools": ["github", "vscode"],
         "protocol": "analysis_first",
         "workflow": "tdd_workflow",
-        "book": "test_memory"
+        "book": "test_memory",
     }
 
 
@@ -57,7 +58,7 @@ def sample_team_config() -> dict:
         "name": "Test Team",
         "agents": ["agent1", "agent2"],
         "coordination_strategy": "hierarchical",
-        "protocol": "team_protocol"
+        "protocol": "team_protocol",
     }
 
 
@@ -68,9 +69,7 @@ def sample_workflow_config() -> dict:
         "id": "test-workflow",
         "vertices": [
             {"id": "analysis", "agent": "analyst"},
-            {"id": "implementation", "agent": "developer"}
+            {"id": "implementation", "agent": "developer"},
         ],
-        "edges": [
-            {"from": "analysis", "to": "implementation"}
-        ]
+        "edges": [{"from": "analysis", "to": "implementation"}],
     }

@@ -1,4 +1,15 @@
 """
+from pydantic import ValidationError
+from pydantic import ValidationError
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from typing import Optional, List, Dict, Any
 Engine Framework Exceptions - Custom exceptions for the Engine Framework.
 
 This module defines all custom exceptions used throughout the Engine Framework
@@ -7,9 +18,11 @@ and include detailed error messages and context.
 
 Based on Engine Framework error handling patterns and best practices.
 """
-
-from typing import Dict, Any, Optional, List
 import json
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import ValidationError
 
 
 class EngineException(Exception):
@@ -25,7 +38,7 @@ class EngineException(Exception):
         error_code: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
         component: Optional[str] = None,
-        recoverable: bool = False
+        recoverable: bool = False,
     ):
         """
         Initialize Engine exception.
@@ -52,7 +65,7 @@ class EngineException(Exception):
             "component": self.component,
             "details": self.details,
             "recoverable": self.recoverable,
-            "exception_type": self.__class__.__name__
+            "exception_type": self.__class__.__name__,
         }
 
     def __str__(self) -> str:
@@ -63,6 +76,7 @@ class EngineException(Exception):
 # Agent-related exceptions
 class AgentException(EngineException):
     """Base exception for agent-related errors."""
+
     pass
 
 
@@ -74,17 +88,13 @@ class AgentConfigurationError(AgentException):
         message: str,
         field: Optional[str] = None,
         value: Optional[Any] = None,
-        suggestions: Optional[List[str]] = None
+        suggestions: Optional[List[str]] = None,
     ):
         super().__init__(
             message=message,
             error_code="AGENT_CONFIG_ERROR",
             component="agent",
-            details={
-                "field": field,
-                "value": value,
-                "suggestions": suggestions or []
-            }
+            details={"field": field, "value": value, "suggestions": suggestions or []},
         )
 
 
@@ -96,7 +106,7 @@ class AgentExecutionError(AgentException):
         message: str,
         task: Optional[str] = None,
         execution_time: Optional[float] = None,
-        retry_count: Optional[int] = None
+        retry_count: Optional[int] = None,
     ):
         super().__init__(
             message=message,
@@ -105,8 +115,8 @@ class AgentExecutionError(AgentException):
             details={
                 "task": task,
                 "execution_time": execution_time,
-                "retry_count": retry_count
-            }
+                "retry_count": retry_count,
+            },
         )
 
 
@@ -118,10 +128,7 @@ class AgentNotFoundError(AgentException):
             message=f"Agent '{agent_id}' not found",
             error_code="AGENT_NOT_FOUND",
             component="agent",
-            details={
-                "agent_id": agent_id,
-                "project_id": project_id
-            }
+            details={"agent_id": agent_id, "project_id": project_id},
         )
 
 
@@ -133,7 +140,7 @@ class AgentStateError(AgentException):
         agent_id: str,
         current_state: str,
         required_state: Optional[str] = None,
-        operation: Optional[str] = None
+        operation: Optional[str] = None,
     ):
         super().__init__(
             message=f"Agent '{agent_id}' is in invalid state for operation",
@@ -143,14 +150,15 @@ class AgentStateError(AgentException):
                 "agent_id": agent_id,
                 "current_state": current_state,
                 "required_state": required_state,
-                "operation": operation
-            }
+                "operation": operation,
+            },
         )
 
 
 # Builder-related exceptions
 class BuilderException(EngineException):
     """Base exception for builder-related errors."""
+
     pass
 
 
@@ -162,7 +170,7 @@ class BuilderConfigurationError(BuilderException):
         message: str,
         builder_type: str,
         missing_fields: Optional[List[str]] = None,
-        invalid_fields: Optional[Dict[str, str]] = None
+        invalid_fields: Optional[Dict[str, str]] = None,
     ):
         super().__init__(
             message=message,
@@ -171,8 +179,8 @@ class BuilderConfigurationError(BuilderException):
             details={
                 "builder_type": builder_type,
                 "missing_fields": missing_fields or [],
-                "invalid_fields": invalid_fields or {}
-            }
+                "invalid_fields": invalid_fields or {},
+            },
         )
 
 
@@ -183,7 +191,7 @@ class BuilderValidationError(BuilderException):
         self,
         message: str,
         builder_type: str,
-        validation_errors: Optional[List[str]] = None
+        validation_errors: Optional[List[str]] = None,
     ):
         super().__init__(
             message=message,
@@ -191,14 +199,15 @@ class BuilderValidationError(BuilderException):
             component="builder",
             details={
                 "builder_type": builder_type,
-                "validation_errors": validation_errors or []
-            }
+                "validation_errors": validation_errors or [],
+            },
         )
 
 
 # Protocol-related exceptions
 class ProtocolException(EngineException):
     """Base exception for protocol-related errors."""
+
     pass
 
 
@@ -210,7 +219,7 @@ class ProtocolNotFoundError(ProtocolException):
             message=f"Protocol '{protocol_id}' not found",
             error_code="PROTOCOL_NOT_FOUND",
             component="protocol",
-            details={"protocol_id": protocol_id}
+            details={"protocol_id": protocol_id},
         )
 
 
@@ -222,7 +231,7 @@ class ProtocolExecutionError(ProtocolException):
         message: str,
         protocol_id: str,
         command: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None
+        context: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
             message=message,
@@ -231,8 +240,8 @@ class ProtocolExecutionError(ProtocolException):
             details={
                 "protocol_id": protocol_id,
                 "command": command,
-                "context": context
-            }
+                "context": context,
+            },
         )
 
 
@@ -243,7 +252,7 @@ class ProtocolValidationError(ProtocolException):
         self,
         message: str,
         protocol_id: str,
-        validation_errors: Optional[List[str]] = None
+        validation_errors: Optional[List[str]] = None,
     ):
         super().__init__(
             message=message,
@@ -251,14 +260,15 @@ class ProtocolValidationError(ProtocolException):
             component="protocol",
             details={
                 "protocol_id": protocol_id,
-                "validation_errors": validation_errors or []
-            }
+                "validation_errors": validation_errors or [],
+            },
         )
 
 
 # Workflow-related exceptions
 class WorkflowException(EngineException):
     """Base exception for workflow-related errors."""
+
     pass
 
 
@@ -270,7 +280,7 @@ class WorkflowNotFoundError(WorkflowException):
             message=f"Workflow '{workflow_id}' not found",
             error_code="WORKFLOW_NOT_FOUND",
             component="workflow",
-            details={"workflow_id": workflow_id}
+            details={"workflow_id": workflow_id},
         )
 
 
@@ -283,7 +293,7 @@ class WorkflowExecutionError(WorkflowException):
         workflow_id: str,
         vertex_id: Optional[str] = None,
         edge_id: Optional[str] = None,
-        execution_state: Optional[Dict[str, Any]] = None
+        execution_state: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
             message=message,
@@ -293,8 +303,8 @@ class WorkflowExecutionError(WorkflowException):
                 "workflow_id": workflow_id,
                 "vertex_id": vertex_id,
                 "edge_id": edge_id,
-                "execution_state": execution_state
-            }
+                "execution_state": execution_state,
+            },
         )
 
 
@@ -305,7 +315,7 @@ class WorkflowValidationError(WorkflowException):
         self,
         message: str,
         workflow_id: str,
-        validation_errors: Optional[List[str]] = None
+        validation_errors: Optional[List[str]] = None,
     ):
         super().__init__(
             message=message,
@@ -313,14 +323,15 @@ class WorkflowValidationError(WorkflowException):
             component="workflow",
             details={
                 "workflow_id": workflow_id,
-                "validation_errors": validation_errors or []
-            }
+                "validation_errors": validation_errors or [],
+            },
         )
 
 
 # Tool-related exceptions
 class ToolException(EngineException):
     """Base exception for tool-related errors."""
+
     pass
 
 
@@ -332,7 +343,7 @@ class ToolNotFoundError(ToolException):
             message=f"Tool '{tool_id}' not found",
             error_code="TOOL_NOT_FOUND",
             component="tool",
-            details={"tool_id": tool_id}
+            details={"tool_id": tool_id},
         )
 
 
@@ -345,7 +356,7 @@ class ToolExecutionError(ToolException):
         tool_id: str,
         command: Optional[str] = None,
         exit_code: Optional[int] = None,
-        stderr: Optional[str] = None
+        stderr: Optional[str] = None,
     ):
         super().__init__(
             message=message,
@@ -355,8 +366,8 @@ class ToolExecutionError(ToolException):
                 "tool_id": tool_id,
                 "command": command,
                 "exit_code": exit_code,
-                "stderr": stderr
-            }
+                "stderr": stderr,
+            },
         )
 
 
@@ -368,7 +379,7 @@ class ToolConfigurationError(ToolException):
         message: str,
         tool_id: str,
         config_field: Optional[str] = None,
-        config_value: Optional[Any] = None
+        config_value: Optional[Any] = None,
     ):
         super().__init__(
             message=message,
@@ -377,14 +388,15 @@ class ToolConfigurationError(ToolException):
             details={
                 "tool_id": tool_id,
                 "config_field": config_field,
-                "config_value": config_value
-            }
+                "config_value": config_value,
+            },
         )
 
 
 # Book/Memory-related exceptions
 class BookException(EngineException):
     """Base exception for book/memory-related errors."""
+
     pass
 
 
@@ -396,7 +408,7 @@ class BookNotFoundError(BookException):
             message=f"Book '{book_id}' not found",
             error_code="BOOK_NOT_FOUND",
             component="book",
-            details={"book_id": book_id}
+            details={"book_id": book_id},
         )
 
 
@@ -409,7 +421,7 @@ class BookOperationError(BookException):
         book_id: str,
         operation: str,
         chapter_id: Optional[str] = None,
-        page_id: Optional[str] = None
+        page_id: Optional[str] = None,
     ):
         super().__init__(
             message=message,
@@ -419,14 +431,15 @@ class BookOperationError(BookException):
                 "book_id": book_id,
                 "operation": operation,
                 "chapter_id": chapter_id,
-                "page_id": page_id
-            }
+                "page_id": page_id,
+            },
         )
 
 
 # Team-related exceptions
 class TeamException(EngineException):
     """Base exception for team-related errors."""
+
     pass
 
 
@@ -438,7 +451,7 @@ class TeamNotFoundError(TeamException):
             message=f"Team '{team_id}' not found",
             error_code="TEAM_NOT_FOUND",
             component="team",
-            details={"team_id": team_id}
+            details={"team_id": team_id},
         )
 
 
@@ -450,7 +463,7 @@ class TeamCoordinationError(TeamException):
         message: str,
         team_id: str,
         agent_id: Optional[str] = None,
-        coordination_strategy: Optional[str] = None
+        coordination_strategy: Optional[str] = None,
     ):
         super().__init__(
             message=message,
@@ -459,14 +472,15 @@ class TeamCoordinationError(TeamException):
             details={
                 "team_id": team_id,
                 "agent_id": agent_id,
-                "coordination_strategy": coordination_strategy
-            }
+                "coordination_strategy": coordination_strategy,
+            },
         )
 
 
 # Project-related exceptions
 class ProjectException(EngineException):
     """Base exception for project-related errors."""
+
     pass
 
 
@@ -478,7 +492,7 @@ class ProjectNotFoundError(ProjectException):
             message=f"Project '{project_id}' not found",
             error_code="PROJECT_NOT_FOUND",
             component="project",
-            details={"project_id": project_id}
+            details={"project_id": project_id},
         )
 
 
@@ -490,7 +504,7 @@ class ProjectOperationError(ProjectException):
         message: str,
         project_id: str,
         operation: str,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(
             message=message,
@@ -499,14 +513,15 @@ class ProjectOperationError(ProjectException):
             details={
                 "project_id": project_id,
                 "operation": operation,
-                **(details or {})
-            }
+                **(details or {}),
+            },
         )
 
 
 # Configuration and validation exceptions
 class ConfigurationException(EngineException):
     """Base exception for configuration-related errors."""
+
     pass
 
 
@@ -518,17 +533,13 @@ class ValidationError(ConfigurationException):
         message: str,
         field: Optional[str] = None,
         value: Optional[Any] = None,
-        expected_type: Optional[str] = None
+        expected_type: Optional[str] = None,
     ):
         super().__init__(
             message=message,
             error_code="VALIDATION_ERROR",
             component="validation",
-            details={
-                "field": field,
-                "value": value,
-                "expected_type": expected_type
-            }
+            details={"field": field, "value": value, "expected_type": expected_type},
         )
 
 
@@ -539,22 +550,20 @@ class ConfigurationLoadError(ConfigurationException):
         self,
         message: str,
         config_path: Optional[str] = None,
-        config_format: Optional[str] = None
+        config_format: Optional[str] = None,
     ):
         super().__init__(
             message=message,
             error_code="CONFIG_LOAD_ERROR",
             component="configuration",
-            details={
-                "config_path": config_path,
-                "config_format": config_format
-            }
+            details={"config_path": config_path, "config_format": config_format},
         )
 
 
 # AI/Model-related exceptions
 class ModelException(EngineException):
     """Base exception for AI model-related errors."""
+
     pass
 
 
@@ -568,8 +577,8 @@ class ModelNotFoundError(ModelException):
             component="model",
             details={
                 "model_name": model_name,
-                "available_models": available_models or []
-            }
+                "available_models": available_models or [],
+            },
         )
 
 
@@ -582,7 +591,7 @@ class ModelExecutionError(ModelException):
         model_name: str,
         input_tokens: Optional[int] = None,
         output_tokens: Optional[int] = None,
-        api_error: Optional[str] = None
+        api_error: Optional[str] = None,
     ):
         super().__init__(
             message=message,
@@ -592,8 +601,8 @@ class ModelExecutionError(ModelException):
                 "model_name": model_name,
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
-                "api_error": api_error
-            }
+                "api_error": api_error,
+            },
         )
 
 
@@ -601,20 +610,14 @@ class ModelRateLimitError(ModelException):
     """Raised when AI model rate limit is exceeded."""
 
     def __init__(
-        self,
-        message: str,
-        model_name: str,
-        retry_after: Optional[int] = None
+        self, message: str, model_name: str, retry_after: Optional[int] = None
     ):
         super().__init__(
             message=message,
             error_code="MODEL_RATE_LIMIT",
             component="model",
             recoverable=True,
-            details={
-                "model_name": model_name,
-                "retry_after": retry_after
-            }
+            details={"model_name": model_name, "retry_after": retry_after},
         )
 
 
@@ -638,7 +641,9 @@ def format_error_chain(exc: Exception) -> str:
         else:
             errors.append(f"{current.__class__.__name__}: {str(current)}")
 
-        current = getattr(current, '__cause__', None) or getattr(current, '__context__', None)
+        current = getattr(current, "__cause__", None) or getattr(
+            current, "__context__", None
+        )
 
     return " | ".join(errors)
 
@@ -657,7 +662,7 @@ def create_error_response(exc: Exception) -> Dict[str, Any]:
         return {
             "success": False,
             "error": exc.to_dict(),
-            "timestamp": json.dumps(None)  # Will be set by response handler
+            "timestamp": json.dumps(None),  # Will be set by response handler
         }
 
     return {
@@ -667,7 +672,7 @@ def create_error_response(exc: Exception) -> Dict[str, Any]:
             "message": str(exc),
             "component": "unknown",
             "details": {},
-            "exception_type": exc.__class__.__name__
+            "exception_type": exc.__class__.__name__,
         },
-        "timestamp": json.dumps(None)
+        "timestamp": json.dumps(None),
     }

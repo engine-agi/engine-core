@@ -1,31 +1,45 @@
 """
+from pathlib import Path
+from fastapi import Depends
+from fastapi import HTTPException
+from pydantic import BaseModel
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
 Protocols API Router
 Handles protocol management within projects including semantic command definitions.
 
 This router provides endpoints for managing behavior protocols that define
 semantic commands for agent and team coordination patterns.
 """
-
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Body
-from pydantic import BaseModel, Field
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..websocket import get_event_broadcaster, EventType
-from ...shared_types.engine_types import EngineError, ProtocolStatus
-from ...services.protocol_service import ProtocolService
-from ...core.project_service import ProjectService
-from ...auth.auth_service import get_current_user
+from fastapi import Depends, HTTPException
+from pydantic import BaseModel, Field
 
 
 class ProtocolCommand(BaseModel):
     """Protocol semantic command definition"""
     name: str = Field(..., min_length=1, max_length=50, description="Command name")
-    definition: str = Field(..., min_length=1, max_length=500, description="Semantic command definition")
+    definition: str = Field(..., min_length=1, max_length=500,
+                            description="Semantic command definition")
     priority: int = Field(default=1, ge=1, description="Command priority")
     required: bool = Field(default=False, description="Whether command is required")
-    context_keywords: List[str] = Field(default_factory=list, description="Context keywords for command activation")
-    parameters: Optional[Dict[str, Any]] = Field(default=None, description="Additional command parameters")
+    context_keywords: List[str] = Field(
+        default_factory=list,
+        description="Context keywords for command activation")
+    parameters: Optional[Dict[str, Any]] = Field(
+        default=None, description="Additional command parameters")
 
 
 class ProtocolSummary(BaseModel):
@@ -40,11 +54,19 @@ class ProtocolSummary(BaseModel):
 
 class ProtocolCreate(BaseModel):
     """Protocol creation request model"""
-    id: str = Field(..., min_length=1, max_length=50, description="Unique protocol identifier")
-    name: str = Field(..., min_length=1, max_length=100, description="Human-readable protocol name")
-    description: Optional[str] = Field(default=None, max_length=500, description="Protocol description")
-    commands: List[ProtocolCommand] = Field(..., description="List of semantic commands")
-    execution_order: List[str] = Field(default_factory=list, description="Command execution order")
+    id: str = Field(..., min_length=1, max_length=50,
+                    description="Unique protocol identifier")
+    name: str = Field(..., min_length=1, max_length=100,
+                      description="Human-readable protocol name")
+    description: Optional[str] = Field(
+        default=None,
+        max_length=500,
+        description="Protocol description")
+    commands: List[ProtocolCommand] = Field(...,
+                                            description="List of semantic commands")
+    execution_order: List[str] = Field(
+        default_factory=list,
+        description="Command execution order")
 
 
 class ProtocolUpdate(BaseModel):
@@ -101,13 +123,13 @@ async def list_protocols(
         project = await project_service.get_project(project_id, current_user["id"])
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         # Get protocols for the project
         protocols_data = await protocol_service.list_protocols(
             project_id=project_id,
             status_filter=status
         )
-        
+
         # Convert to response format
         protocols = [
             ProtocolSummary(
@@ -120,12 +142,12 @@ async def list_protocols(
             )
             for protocol in protocols_data
         ]
-        
+
         return ProtocolListResponse(
             protocols=protocols,
             total=len(protocols)
         )
-        
+
     except HTTPException:
         raise
     except EngineError as e:
@@ -140,7 +162,7 @@ async def create_protocol(
     current_user: dict = Depends(get_current_user),
     protocol_service: ProtocolService = Depends(),
     project_service: ProjectService = Depends(),
-    event_broadcaster = Depends(get_event_broadcaster),
+    event_broadcaster=Depends(get_event_broadcaster),
     protocol_data: ProtocolCreate = Body(...)
 ):
     """Create a new protocol in a project."""
@@ -149,24 +171,22 @@ async def create_protocol(
         project = await project_service.get_project(project_id, current_user["id"])
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         # Check if protocol ID already exists in project
         existing_protocol = await protocol_service.get_protocol(project_id, protocol_data.id)
         if existing_protocol:
             raise HTTPException(
-                status_code=400,
-                detail=f"Protocol with ID '{protocol_data.id}' already exists in project"
-            )
-        
+                status_code=400, detail=f"Protocol with ID '{
+                    protocol_data.id}' already exists in project")
+
         # Validate execution order
         command_names = {cmd.name for cmd in protocol_data.commands}
         for order_name in protocol_data.execution_order:
             if order_name not in command_names:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Execution order command '{order_name}' not found in commands"
-                )
-        
+                    detail=f"Execution order command '{order_name}' not found in commands")
+
         # Create the protocol
         protocol = await protocol_service.create_protocol(
             project_id=project_id,
@@ -176,7 +196,7 @@ async def create_protocol(
             commands=protocol_data.commands,
             execution_order=protocol_data.execution_order
         )
-        
+
         # Prepare response
         response = ProtocolResponse(
             id=protocol.get('id', ''),
@@ -189,7 +209,7 @@ async def create_protocol(
             updated_at=protocol.get('updated_at'),
             command_count=len(protocol_data.commands)
         )
-        
+
         # Broadcast protocol creation event
         await event_broadcaster.broadcast_event(
             event_type=EventType.PROTOCOL_CREATED,
@@ -201,9 +221,9 @@ async def create_protocol(
             },
             user_id=current_user["id"]
         )
-        
+
         return response
-        
+
     except HTTPException:
         raise
     except EngineError as e:
@@ -219,7 +239,7 @@ async def update_protocol(
     current_user: dict = Depends(get_current_user),
     protocol_service: ProtocolService = Depends(),
     project_service: ProjectService = Depends(),
-    event_broadcaster = Depends(get_event_broadcaster),
+    event_broadcaster=Depends(get_event_broadcaster),
     protocol_data: ProtocolUpdate = Body(...)
 ):
     """Update an existing protocol."""
@@ -228,12 +248,12 @@ async def update_protocol(
         project = await project_service.get_project(project_id, current_user["id"])
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         # Verify protocol exists
         protocol = await protocol_service.get_protocol(project_id, protocol_id)
         if not protocol:
             raise HTTPException(status_code=404, detail="Protocol not found")
-        
+
         # Update the protocol
         update_data = protocol_data.model_dump(exclude_unset=True)
         updated_protocol = await protocol_service.update_protocol(
@@ -241,7 +261,7 @@ async def update_protocol(
             protocol_id=protocol_id,
             **update_data
         )
-        
+
         # Prepare response
         response = ProtocolResponse(
             id=updated_protocol.get('id', ''),
@@ -254,7 +274,7 @@ async def update_protocol(
             updated_at=updated_protocol.get('updated_at'),
             command_count=len(updated_protocol.get('commands', []))
         )
-        
+
         # Broadcast protocol update event
         await event_broadcaster.broadcast_event(
             event_type=EventType.PROTOCOL_UPDATED,
@@ -265,9 +285,9 @@ async def update_protocol(
             },
             user_id=current_user["id"]
         )
-        
+
         return response
-        
+
     except HTTPException:
         raise
     except EngineError as e:
@@ -283,7 +303,7 @@ async def delete_protocol(
     current_user: dict = Depends(get_current_user),
     protocol_service: ProtocolService = Depends(),
     project_service: ProjectService = Depends(),
-    event_broadcaster = Depends(get_event_broadcaster)
+    event_broadcaster=Depends(get_event_broadcaster)
 ):
     """Delete a protocol."""
     try:
@@ -291,22 +311,22 @@ async def delete_protocol(
         project = await project_service.get_project(project_id, current_user["id"])
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         # Verify protocol exists
         protocol = await protocol_service.get_protocol(project_id, protocol_id)
         if not protocol:
             raise HTTPException(status_code=404, detail="Protocol not found")
-        
+
         # Check if protocol is being used by agents or teams
         if await protocol_service.is_protocol_in_use(project_id, protocol_id):
             raise HTTPException(
                 status_code=400,
                 detail="Cannot delete protocol that is being used by agents or teams"
             )
-        
+
         # Delete the protocol
         await protocol_service.delete_protocol(project_id, protocol_id)
-        
+
         # Broadcast protocol deletion event
         await event_broadcaster.broadcast_event(
             event_type=EventType.PROTOCOL_DELETED,
@@ -317,9 +337,9 @@ async def delete_protocol(
             },
             user_id=current_user["id"]
         )
-        
+
         return {"success": True, "message": "Protocol deleted successfully"}
-        
+
     except HTTPException:
         raise
     except EngineError as e:

@@ -1,4 +1,16 @@
 """
+from enum import Enum
+from dataclasses import dataclass
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Agent Core - Main Agent class for Engine Framework.
 
 This module implements the core Agent class with:
@@ -10,27 +22,23 @@ This module implements the core Agent class with:
 
 Based on Engine Framework Agent architecture supporting all 11 modules.
 """
-
-from typing import Dict, Any, List, Optional, Union, Callable, TYPE_CHECKING
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from enum import Enum
 import asyncio
-import uuid
-from datetime import datetime
 import json
 import logging
+import uuid
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Local imports
-from .agent_config import AgentConfig, AgentStatus, AgentModel, AgentExecutionConfig
-from .agent_builder import AgentBuilder
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
-    from ...models.protocol import Protocol
-    from ...models.workflow import Workflow
     from ...models.book import Book
+    from ...models.protocol import Protocol
     from ...models.tool import Tool
+    from ...models.workflow import Workflow
 
 logger = logging.getLogger(__name__)
 
@@ -200,7 +208,8 @@ class Agent:
             self.logger.info(f"Executing task: {task}")
 
             # Prepare execution context
-            execution_context = self._prepare_execution_context(task, context or {}, **kwargs)
+            execution_context = self._prepare_execution_context(
+                task, context or {}, **kwargs)
 
             # Apply protocol if available
             if self._protocol:
@@ -377,4 +386,7 @@ class Agent:
         self.logger.info(f"Agent {self.id} shutdown complete")
 
     def __repr__(self) -> str:
-        return f"Agent(id='{self.id}', model='{self.config.model}', state='{self.state.value}')"
+        return f"Agent(id='{
+            self.id}', model='{
+            self.config.model}', state='{
+            self.state.value}')"

@@ -1,26 +1,36 @@
 """
+from pathlib import Path
+from typing import Set, Tuple
+from fastapi import Depends
+from fastapi import HTTPException
+from pydantic import BaseModel
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Observability API Router
 Handles project observability including structured logs and real-time metrics.
 
 This router provides endpoints for monitoring project activities through comprehensive
 logging and metrics collection across all engine components.
 """
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from typing import List, Optional, Dict, Any, Union
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
-from pydantic import BaseModel, Field
-from datetime import datetime, timedelta
-from enum import Enum
-
-from ..websocket import get_event_broadcaster, EventType
-from ...shared_types.engine_types import EngineError, LogLevel
-from ...services.observability_service import ObservabilityService
-from ...core.project_service import ProjectService
-from ...auth.auth_service import get_current_user
+from fastapi import Depends, HTTPException
+from pydantic import BaseModel
 
 
 class LogEntry(BaseModel):
     """Log entry model"""
+
     id: str
     level: str
     message: str
@@ -34,6 +44,7 @@ class LogEntry(BaseModel):
 
 class ProjectMetrics(BaseModel):
     """Project metrics summary"""
+
     agents: Dict[str, int]
     teams: Dict[str, int]
     workflows: Dict[str, int]
@@ -46,6 +57,7 @@ class ProjectMetrics(BaseModel):
 
 class PerformanceMetrics(BaseModel):
     """Performance metrics model"""
+
     cpu_usage: float
     memory_usage: float
     active_connections: int
@@ -55,6 +67,7 @@ class PerformanceMetrics(BaseModel):
 
 class LogsResponse(BaseModel):
     """Logs response model"""
+
     logs: List[LogEntry]
     total: int
     page: int
@@ -63,6 +76,7 @@ class LogsResponse(BaseModel):
 
 class MetricsResponse(BaseModel):
     """Metrics response model"""
+
     project_metrics: ProjectMetrics
     performance_metrics: PerformanceMetrics
 
@@ -76,7 +90,7 @@ router = APIRouter(
         400: {"description": "Invalid request data"},
         401: {"description": "Authentication required"},
         403: {"description": "Insufficient permissions"},
-    }
+    },
 )
 
 
@@ -92,14 +106,14 @@ async def get_project_logs(
     offset: int = Query(default=0, ge=0, description="Pagination offset"),
     current_user: dict = Depends(get_current_user),
     observability_service: ObservabilityService = Depends(),
-    project_service: ProjectService = Depends()
+    project_service: ProjectService = Depends(),
 ):
     """
     Get logs for a project.
-    
+
     Returns structured logs for all activities within the project, with support
     for filtering by level, entity, time range, and pagination.
-    
+
     Query Parameters:
     - level: Filter by log level (debug, info, warning, error, critical)
     - entity_type: Filter by entity type (agent, team, workflow, tool, etc.)
@@ -114,30 +128,28 @@ async def get_project_logs(
         project = await project_service.get_project(project_id, current_user["id"])
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         # Validate log level if provided
         if level:
             try:
                 LogLevel(level.upper())
             except ValueError:
                 raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid log level: {level}"
+                    status_code=400, detail=f"Invalid log level: {level}"
                 )
-        
+
         # Set default time range if not provided (last 24 hours)
         if not start_time:
             start_time = datetime.utcnow() - timedelta(hours=24)
         if not end_time:
             end_time = datetime.utcnow()
-        
+
         # Validate time range
         if start_time > end_time:
             raise HTTPException(
-                status_code=400,
-                detail="start_time cannot be after end_time"
+                status_code=400, detail="start_time cannot be after end_time"
             )
-        
+
         # Get logs with filters
         logs_result = await observability_service.get_logs(
             project_id=project_id,
@@ -147,35 +159,30 @@ async def get_project_logs(
             start_time=start_time,
             end_time=end_time,
             limit=limit,
-            offset=offset
+            offset=offset,
         )
-        
+
         # Convert to response format
         logs = [
             LogEntry(
-                id=log.get('id', ''),
-                level=log.get('level', 'info').lower(),
-                message=log.get('message', ''),
-                entity_type=log.get('entity_type', ''),
-                entity_id=log.get('entity_id', ''),
-                action=log.get('action', ''),
-                timestamp=log.get('timestamp', ''),
-                duration_ms=log.get('duration_ms'),
-                additional_data=log.get('additional_data', {})
+                id=log.get("id", ""),
+                level=log.get("level", "info").lower(),
+                message=log.get("message", ""),
+                entity_type=log.get("entity_type", ""),
+                entity_id=log.get("entity_id", ""),
+                action=log.get("action", ""),
+                timestamp=log.get("timestamp", ""),
+                duration_ms=log.get("duration_ms"),
+                additional_data=log.get("additional_data", {}),
             )
             for log in logs_result.logs
         ]
-        
+
         # Calculate page number
         page = (offset // limit) + 1
-        
-        return LogsResponse(
-            logs=logs,
-            total=logs_result.total,
-            page=page,
-            limit=limit
-        )
-        
+
+        return LogsResponse(logs=logs, total=logs_result.total, page=page, limit=limit)
+
     except HTTPException:
         raise
     except EngineError as e:
@@ -189,11 +196,11 @@ async def get_project_metrics(
     project_id: str = Path(..., description="Project ID"),
     current_user: dict = Depends(get_current_user),
     observability_service: ObservabilityService = Depends(),
-    project_service: ProjectService = Depends()
+    project_service: ProjectService = Depends(),
 ):
     """
     Get real-time metrics for a project.
-    
+
     Returns comprehensive metrics including agent status, team activities,
     workflow executions, success rates, and performance indicators.
     """
@@ -202,13 +209,17 @@ async def get_project_metrics(
         project = await project_service.get_project(project_id, current_user["id"])
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         # Get project metrics
-        project_metrics_data = await observability_service.get_project_metrics(project_id)
-        
+        project_metrics_data = await observability_service.get_project_metrics(
+            project_id
+        )
+
         # Get performance metrics
-        performance_metrics_data = await observability_service.get_performance_metrics(project_id)
-        
+        performance_metrics_data = await observability_service.get_performance_metrics(
+            project_id
+        )
+
         # Prepare response
         project_metrics = ProjectMetrics(
             agents={
@@ -216,41 +227,40 @@ async def get_project_metrics(
                 "active": project_metrics_data.agents.active,
                 "idle": project_metrics_data.agents.idle,
                 "processing": project_metrics_data.agents.processing,
-                "error": project_metrics_data.agents.error
+                "error": project_metrics_data.agents.error,
             },
             teams={
                 "total": project_metrics_data.teams.total,
                 "active": project_metrics_data.teams.active,
                 "executing": project_metrics_data.teams.executing,
-                "disbanded": project_metrics_data.teams.disbanded
+                "disbanded": project_metrics_data.teams.disbanded,
             },
             workflows={
                 "total": project_metrics_data.workflows.total,
                 "running": project_metrics_data.workflows.running,
                 "completed": project_metrics_data.workflows.completed,
                 "failed": project_metrics_data.workflows.failed,
-                "paused": project_metrics_data.workflows.paused
+                "paused": project_metrics_data.workflows.paused,
             },
             success_rate=project_metrics_data.success_rate,
             average_response_time=project_metrics_data.average_response_time,
             total_requests=project_metrics_data.total_requests,
             error_count=project_metrics_data.error_count,
-            last_updated=project_metrics_data.last_updated or datetime.utcnow()
+            last_updated=project_metrics_data.last_updated or datetime.utcnow(),
         )
-        
+
         performance_metrics = PerformanceMetrics(
             cpu_usage=performance_metrics_data.cpu_usage,
             memory_usage=performance_metrics_data.memory_usage,
             active_connections=performance_metrics_data.active_connections,
             requests_per_second=performance_metrics_data.requests_per_second,
-            average_latency_ms=performance_metrics_data.average_latency_ms
+            average_latency_ms=performance_metrics_data.average_latency_ms,
         )
-        
+
         return MetricsResponse(
-            project_metrics=project_metrics,
-            performance_metrics=performance_metrics
+            project_metrics=project_metrics, performance_metrics=performance_metrics
         )
-        
+
     except HTTPException:
         raise
     except EngineError as e:
@@ -264,11 +274,11 @@ async def project_health(
     project_id: str = Path(..., description="Project ID"),
     current_user: dict = Depends(get_current_user),
     observability_service: ObservabilityService = Depends(),
-    project_service: ProjectService = Depends()
+    project_service: ProjectService = Depends(),
 ):
     """
     Get project health status.
-    
+
     Returns overall health status of the project including component status,
     error rates, and system availability.
     """
@@ -277,10 +287,10 @@ async def project_health(
         project = await project_service.get_project(project_id, current_user["id"])
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         # Get health status
         health_data = await observability_service.get_project_health(project_id)
-        
+
         return {
             "project_id": project_id,
             "status": health_data.status,
@@ -288,30 +298,30 @@ async def project_health(
                 "agents": {
                     "status": health_data.components.agents.status,
                     "healthy_count": health_data.components.agents.healthy_count,
-                    "total_count": health_data.components.agents.total_count
+                    "total_count": health_data.components.agents.total_count,
                 },
                 "teams": {
                     "status": health_data.components.teams.status,
                     "healthy_count": health_data.components.teams.healthy_count,
-                    "total_count": health_data.components.teams.total_count
+                    "total_count": health_data.components.teams.total_count,
                 },
                 "workflows": {
                     "status": health_data.components.workflows.status,
                     "healthy_count": health_data.components.workflows.healthy_count,
-                    "total_count": health_data.components.workflows.total_count
+                    "total_count": health_data.components.workflows.total_count,
                 },
                 "tools": {
                     "status": health_data.components.tools.status,
                     "healthy_count": health_data.components.tools.healthy_count,
-                    "total_count": health_data.components.tools.total_count
-                }
+                    "total_count": health_data.components.tools.total_count,
+                },
             },
             "error_rate": health_data.error_rate,
             "availability": health_data.availability,
             "last_updated": health_data.last_updated,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
-        
+
     except HTTPException:
         raise
     except EngineError as e:
@@ -326,11 +336,11 @@ async def stream_project_metrics(
     project_id: str = Path(..., description="Project ID"),
     current_user: dict = Depends(get_current_user),
     observability_service: ObservabilityService = Depends(),
-    project_service: ProjectService = Depends()
+    project_service: ProjectService = Depends(),
 ):
     """
     Stream real-time project metrics.
-    
+
     Provides a streaming endpoint for real-time metrics updates.
     Clients should use WebSocket connections for live updates.
     """
@@ -339,7 +349,7 @@ async def stream_project_metrics(
         project = await project_service.get_project(project_id, current_user["id"])
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        
+
         # Return streaming connection info
         return {
             "message": "Use WebSocket connection for real-time metrics streaming",
@@ -348,11 +358,11 @@ async def stream_project_metrics(
                 "AGENT_STATUS_CHANGED",
                 "TEAM_EXECUTION_STARTED",
                 "WORKFLOW_COMPLETED",
-                "METRICS_UPDATED"
+                "METRICS_UPDATED",
             ],
-            "instructions": "Subscribe to 'metrics' event type for real-time updates"
+            "instructions": "Subscribe to 'metrics' event type for real-time updates",
         }
-        
+
     except HTTPException:
         raise
     except EngineError as e:
@@ -374,6 +384,6 @@ async def observability_health():
             "real_time_metrics",
             "performance_monitoring",
             "health_checks",
-            "websocket_streaming"
-        ]
+            "websocket_streaming",
+        ],
     }

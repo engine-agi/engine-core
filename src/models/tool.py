@@ -1,29 +1,40 @@
 """
+from sqlalchemy import Column
+from typing import Set, Tuple
+from pydantic import BaseModel
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Tool model for Engine Framework.
 
 Tools provide external integrations for agents and teams, including:
 - API integrations (REST, GraphQL)
 - CLI tool executions
-- MCP (Model Context Protocol) servers  
+- MCP (Model Context Protocol) servers
 - Database connections
 - File system operations
 - Custom plugin integrations
 
 Based on Engine Framework data model specification.
 """
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from typing import Dict, Any, List, Optional, Union, TYPE_CHECKING
-from sqlalchemy import (
+from pydantic import BaseModel, Field
+from sqlalchemy import Column
+
     Column, String, Text, Boolean, Integer,
     Index, CheckConstraint
 )
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy.orm import relationship, validates
-from datetime import datetime
-import re
 import json
-
-from .base import BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
+import re
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
@@ -34,7 +45,7 @@ if TYPE_CHECKING:
 class ToolType:
     """Tool integration types."""
     API = "api"
-    CLI = "cli" 
+    CLI = "cli"
     MCP = "mcp"
     DATABASE = "database"
     FILESYSTEM = "filesystem"
@@ -53,11 +64,11 @@ class ToolStatus:
 class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin):
     """
     Tool entity - external integrations and capabilities for agents.
-    
+
     Tools extend agent capabilities by providing interfaces to external
     systems, APIs, command-line utilities, and custom integrations.
     They support plugin architecture and capability discovery.
-    
+
     Key features:
     - Multiple integration types (API, CLI, MCP, custom)
     - Dynamic capability discovery and validation
@@ -65,7 +76,7 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
     - Command mapping and parameter validation
     - Health monitoring and error handling
     """
-    
+
     __tablename__ = "tools"
 
     # Basic tool information
@@ -75,13 +86,13 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Human-readable tool name"
     )
-    
+
     description = Column(
         Text,
         nullable=True,
         comment="Tool purpose, capabilities, and usage instructions"
     )
-    
+
     # Tool classification
     type = Column(
         String(50),
@@ -89,20 +100,20 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Tool integration type (api, cli, mcp, database, filesystem, custom)"
     )
-    
+
     category = Column(
         String(100),
         nullable=True,
         index=True,
         comment="Tool category (e.g., 'development', 'communication', 'data', 'analysis')"
     )
-    
+
     version = Column(
         String(50),
         nullable=True,
         comment="Tool version information"
     )
-    
+
     # Tool status and health
     status = Column(
         String(50),
@@ -111,47 +122,47 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Tool operational status"
     )
-    
+
     # Tool configuration and connection
     connection_config = Column(
         JSONB,
         nullable=False,
         comment="Connection configuration (URLs, paths, credentials)"
     )
-    
+
     authentication = Column(
         JSONB,
         nullable=True,
         comment="Authentication configuration and credentials"
     )
-    
+
     # Tool capabilities and commands
     capabilities = Column(
         JSONB,
         nullable=True,
         comment="Tool capabilities and supported operations"
     )
-    
+
     commands = Column(
         JSONB,
         nullable=True,
         comment="Available commands with parameters and mappings"
     )
-    
+
     # Rate limiting and quotas
     rate_limits = Column(
         JSONB,
         nullable=True,
         comment="Rate limiting configuration and current usage"
     )
-    
+
     # Tool validation and testing
     health_check = Column(
         JSONB,
         nullable=True,
         comment="Health check configuration and last results"
     )
-    
+
     # Usage statistics
     usage_count = Column(
         Integer,
@@ -159,20 +170,20 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         nullable=False,
         comment="Total number of tool invocations"
     )
-    
+
     success_count = Column(
         Integer,
         default=0,
         nullable=False,
         comment="Number of successful tool invocations"
     )
-    
+
     last_used_at = Column(
         String(50),
         nullable=True,
         comment="Timestamp of last tool usage"
     )
-    
+
     # Error tracking
     error_count = Column(
         Integer,
@@ -180,7 +191,7 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         nullable=False,
         comment="Number of tool errors"
     )
-    
+
     last_error = Column(
         JSONB,
         nullable=True,
@@ -208,7 +219,7 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
             kwargs['success_count'] = 0
         if 'error_count' not in kwargs:
             kwargs['error_count'] = 0
-            
+
         super().__init__(**kwargs)
 
     def __repr__(self) -> str:
@@ -221,14 +232,14 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Validate tool ID format."""
         if not value:
             raise ValueError("Tool ID is required")
-        
+
         # Must be alphanumeric with underscores, 2-100 characters
         if not re.match(r'^[a-zA-Z0-9_]{2,100}$', value):
             raise ValueError(
                 "Tool ID must be 2-100 characters, containing only "
                 "letters, numbers, and underscores"
             )
-        
+
         return value.lower()
 
     @validates('name')
@@ -236,21 +247,21 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Validate tool name."""
         if not value or not value.strip():
             raise ValueError("Tool name is required")
-        
+
         if len(value.strip()) > 255:
             raise ValueError("Tool name cannot exceed 255 characters")
-        
+
         return value.strip()
 
     @validates('type')
     def validate_type(self, key: str, value: str) -> str:
         """Validate tool type."""
-        valid_types = [ToolType.API, ToolType.CLI, ToolType.MCP, 
+        valid_types = [ToolType.API, ToolType.CLI, ToolType.MCP,
                       ToolType.DATABASE, ToolType.FILESYSTEM, ToolType.CUSTOM]
-        
+
         if value not in valid_types:
             raise ValueError(f"Tool type must be one of: {', '.join(valid_types)}")
-        
+
         return value
 
     @validates('status')
@@ -258,10 +269,10 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Validate tool status."""
         valid_statuses = [ToolStatus.ACTIVE, ToolStatus.INACTIVE, ToolStatus.ERROR,
                          ToolStatus.TESTING, ToolStatus.DEPRECATED]
-        
+
         if value not in valid_statuses:
             raise ValueError(f"Status must be one of: {', '.join(valid_statuses)}")
-        
+
         return value
 
     @validates('connection_config')
@@ -269,57 +280,60 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Validate connection configuration."""
         if not isinstance(value, dict):
             raise ValueError("Connection config must be a dictionary")
-        
+
         # Type-specific validations
         tool_type = getattr(self, 'type')
         if tool_type == ToolType.API:
             if 'base_url' not in value:
                 raise ValueError("API tools must have 'base_url' in connection config")
-        
+
         elif tool_type == ToolType.CLI:
             if 'executable_path' not in value and 'command' not in value:
-                raise ValueError("CLI tools must have 'executable_path' or 'command' in connection config")
-        
+                raise ValueError(
+                    "CLI tools must have 'executable_path' or 'command' in connection config")
+
         elif tool_type == ToolType.MCP:
             if 'server_path' not in value:
-                raise ValueError("MCP tools must have 'server_path' in connection config")
-        
+                raise ValueError(
+                    "MCP tools must have 'server_path' in connection config")
+
         elif tool_type == ToolType.DATABASE:
             if 'connection_string' not in value:
-                raise ValueError("Database tools must have 'connection_string' in connection config")
-        
+                raise ValueError(
+                    "Database tools must have 'connection_string' in connection config")
+
         return value
 
     @classmethod
     def validate_data(cls, data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate tool data before creating/updating."""
         validated = data.copy()
-        
+
         # Required fields
         if 'id' not in validated or not validated['id']:
             raise ValueError("Tool ID is required")
-        
+
         if 'name' not in validated or not validated['name']:
             raise ValueError("Tool name is required")
-        
+
         if 'type' not in validated or not validated['type']:
             raise ValueError("Tool type is required")
-        
+
         if 'connection_config' not in validated or not validated['connection_config']:
             raise ValueError("Tool connection config is required")
-        
+
         # Validate commands structure if present
         if 'commands' in validated and validated['commands']:
             if not isinstance(validated['commands'], list):
                 raise ValueError("Commands must be a list")
-            
+
             for i, command in enumerate(validated['commands']):
                 if not isinstance(command, dict):
                     raise ValueError(f"Command {i} must be a dictionary")
-                
+
                 if 'name' not in command:
                     raise ValueError(f"Command {i} must have a name")
-        
+
         return validated
 
     # === TOOL CAPABILITY MANAGEMENT ===
@@ -329,7 +343,7 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         capabilities = getattr(self, 'capabilities') or {}
         if not capabilities:
             capabilities = {}
-        
+
         capabilities[name] = {
             'description': description,
             'added_at': datetime.utcnow().isoformat(),
@@ -367,19 +381,19 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         commands = getattr(self, 'commands') or []
         if not commands:
             commands = []
-        
+
         # Check for duplicate command names
         existing_names = [cmd['name'] for cmd in commands if isinstance(cmd, dict)]
         if name in existing_names:
             raise ValueError(f"Command '{name}' already exists")
-        
+
         command = {
             'name': name,
             'description': description,
             'parameters': parameters or [],
             **kwargs
         }
-        
+
         commands.append(command)
         setattr(self, 'commands', commands)
 
@@ -387,7 +401,7 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Remove command from tool."""
         commands = getattr(self, 'commands') or []
         if commands:
-            commands = [cmd for cmd in commands 
+            commands = [cmd for cmd in commands
                        if not (isinstance(cmd, dict) and cmd.get('name') == name)]
             setattr(self, 'commands', commands)
 
@@ -415,7 +429,7 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
             'previous_status': getattr(self, 'health_check', {}).get('status') if getattr(self, 'health_check') else None
         }
         setattr(self, 'health_check', health_check)
-        
+
         # Update tool status based on health check
         if status == 'healthy':
             setattr(self, 'status', ToolStatus.ACTIVE)
@@ -429,7 +443,7 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         health_check = getattr(self, 'health_check')
         if not health_check:
             return getattr(self, 'status') == ToolStatus.ACTIVE
-        
+
         return health_check.get('status') == 'healthy'
 
     def get_success_rate(self) -> Optional[float]:
@@ -445,7 +459,7 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
     def record_usage(self, success: bool = True, error_details: Optional[Dict[str, Any]] = None) -> None:
         """Record tool usage statistics."""
         self.usage_count += 1
-        
+
         if success:
             self.success_count += 1
         else:
@@ -455,7 +469,7 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
                     'details': error_details,
                     'timestamp': datetime.utcnow().isoformat()
                 }
-        
+
         self.last_used_at = datetime.utcnow().isoformat()
 
     def reset_statistics(self) -> None:
@@ -472,7 +486,7 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         rate_limits = getattr(self, 'rate_limits') or {}
         if not rate_limits:
             rate_limits = {}
-        
+
         rate_limits.update({
             'requests_per_minute': requests_per_minute,
             'requests_per_hour': requests_per_hour,
@@ -490,19 +504,19 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         rate_limits = getattr(self, 'rate_limits')
         if not rate_limits:
             return True, None
-        
+
         # Simplified rate limiting check
         # In real implementation, this would use proper time-window tracking
         current_usage = rate_limits.get('current_usage', {})
-        
+
         minute_limit = rate_limits.get('requests_per_minute')
         if minute_limit and current_usage.get('minute', 0) >= minute_limit:
             return False, "Rate limit exceeded: requests per minute"
-        
+
         hour_limit = rate_limits.get('requests_per_hour')
         if hour_limit and current_usage.get('hour', 0) >= hour_limit:
             return False, "Rate limit exceeded: requests per hour"
-        
+
         return True, None
 
     # === TOOL SUMMARY AND INFORMATION ===
@@ -514,7 +528,7 @@ class Tool(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         rate_limits = getattr(self, 'rate_limits')
         created_at = getattr(self, 'created_at')
         updated_at = getattr(self, 'updated_at')
-        
+
         return {
             'id': self.id,
             'name': self.name,
@@ -650,7 +664,7 @@ Index('idx_tool_success_rate', Tool.success_count, Tool.usage_count)
 
 # Database constraints
 CheckConstraint(
-    Tool.type.in_([ToolType.API, ToolType.CLI, ToolType.MCP, 
+    Tool.type.in_([ToolType.API, ToolType.CLI, ToolType.MCP,
                    ToolType.DATABASE, ToolType.FILESYSTEM, ToolType.CUSTOM]),
     name='ck_tool_type_valid'
 )

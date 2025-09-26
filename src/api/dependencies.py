@@ -1,15 +1,25 @@
 """
+from fastapi import HTTPException
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from typing import Optional, List, Dict, Any
 WebSocket Dependencies - FastAPI dependency injection for WebSocket services.
 
 This module provides dependency injection functions for WebSocket services,
 enabling clean integration with FastAPI routers and proper service lifecycle management.
 """
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from typing import Optional
-from fastapi import Depends, HTTPException
+from fastapi import HTTPException
 
-from .websocket import WebSocketManager, EventBroadcaster, EventType
-
+from .websocket import EventBroadcaster, WebSocketManager
 
 # Global instances (would be managed by dependency injection container in production)
 _websocket_manager: Optional[WebSocketManager] = None
@@ -67,7 +77,7 @@ def get_current_user():
         "id": "user_123",
         "username": "developer",
         "email": "dev@example.com",
-        "role": "admin"
+        "role": "admin",
     }
 
 

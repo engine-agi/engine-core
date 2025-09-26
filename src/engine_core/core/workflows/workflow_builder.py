@@ -1,4 +1,17 @@
 """
+from typing import Set, Tuple
+from enum import Enum
+from dataclasses import dataclass, field
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Workflow Builder - Fluent Interface for Pregel-based Workflows.
 
 The WorkflowBuilder provides a fluent interface for creating and configuring
@@ -32,14 +45,15 @@ Usage:
         .add_edge("data_process", "data_export") \\
         .build()
 """
-
-from typing import Dict, Any, List, Optional, Union, Callable, TYPE_CHECKING
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
-import uuid
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
+
+from pydantic import Field
 
 # Import workflow engine components
-from .workflow_engine import (
     WorkflowEngine,
     VertexComputation,
     AgentVertexComputation,
@@ -270,16 +284,19 @@ class WorkflowBuilder:
         to_exists = any(v.vertex_id == to_vertex for v in self.vertices)
 
         if not from_exists:
-            self._validation_errors.append(f"Source vertex '{from_vertex}' does not exist")
+            self._validation_errors.append(
+                f"Source vertex '{from_vertex}' does not exist")
             return self
 
         if not to_exists:
-            self._validation_errors.append(f"Target vertex '{to_vertex}' does not exist")
+            self._validation_errors.append(
+                f"Target vertex '{to_vertex}' does not exist")
             return self
 
         # Check for duplicate edges
         if any(e.from_vertex == from_vertex and e.to_vertex == to_vertex for e in self.edges):
-            self._validation_errors.append(f"Edge from '{from_vertex}' to '{to_vertex}' already exists")
+            self._validation_errors.append(
+                f"Edge from '{from_vertex}' to '{to_vertex}' already exists")
             return self
 
         edge = WorkflowEdgeConfig(
@@ -315,12 +332,14 @@ class WorkflowBuilder:
 
         # Check for edges (optional, but warn if no edges)
         if not self.edges and len(self.vertices) > 1:
-            self._validation_errors.append("Workflow with multiple vertices should have edges")
+            self._validation_errors.append(
+                "Workflow with multiple vertices should have edges")
 
         # Validate vertex configurations
         for vertex in self.vertices:
             if not vertex.computation.validate_config(vertex.config):
-                self._validation_errors.append(f"Invalid configuration for vertex '{vertex.vertex_id}'")
+                self._validation_errors.append(
+                    f"Invalid configuration for vertex '{vertex.vertex_id}'")
 
         # Check for cycles (would be validated by WorkflowEngine)
         # This is a basic check - full DAG validation happens in WorkflowEngine
@@ -336,7 +355,8 @@ class WorkflowBuilder:
     def build(self) -> 'BuiltWorkflow':
         """Build and return configured workflow."""
         if not self.validate():
-            raise ValueError(f"Workflow validation failed: {', '.join(self._validation_errors)}")
+            raise ValueError(
+                f"Workflow validation failed: {', '.join(self._validation_errors)}")
 
         # Create workflow engine
         engine = WorkflowEngine()
@@ -370,8 +390,10 @@ class WorkflowBuilder:
         """Create data processing pipeline template."""
 
         processing_tasks = [
-            {"description": "Clean and validate data", "requirements": ["data_processing"]},
-            {"description": "Transform data format", "requirements": ["data_transformation"]},
+            {"description": "Clean and validate data",
+                "requirements": ["data_processing"]},
+            {"description": "Transform data format",
+                "requirements": ["data_transformation"]},
             {"description": "Aggregate results", "requirements": ["aggregation"]}
         ]
 
@@ -410,8 +432,10 @@ class WorkflowBuilder:
         """Create ML training pipeline template."""
 
         prep_tasks = [
-            {"description": "Prepare training data", "requirements": ["data_preparation"]},
-            {"description": "Feature engineering", "requirements": ["feature_engineering"]}
+            {"description": "Prepare training data",
+                "requirements": ["data_preparation"]},
+            {"description": "Feature engineering",
+                "requirements": ["feature_engineering"]}
         ]
 
         builder = cls() \
@@ -627,7 +651,8 @@ async def example_usage():
 
         # Get stats
         stats = workflow.get_stats()
-        print(f"   Stats: {stats['vertex_count']} vertices, {stats['edge_count']} edges")
+        print(
+            f"   Stats: {stats['vertex_count']} vertices, {stats['edge_count']} edges")
 
     except Exception as e:
         print(f"❌ Error: {e}")

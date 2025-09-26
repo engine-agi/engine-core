@@ -1,15 +1,28 @@
 """
+from pathlib import Path
+from fastapi import HTTPException
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Books API Router - Engine Framework Book Management.
 
 This router provides comprehensive book management endpoints including CRUD operations,
 hierarchical content management, and semantic search capabilities.
 """
-
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Body
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..schemas.book_schemas import (
+from fastapi import HTTPException
+from pydantic import Field
+
     BookCreateSchema,
     BookUpdateSchema,
     BookResponseSchema,
@@ -25,8 +38,6 @@ from ..schemas.book_schemas import (
     PageSchema,
     SectionSchema
 )
-from ..schemas.base_schemas import BaseResponseSchema, ErrorResponseSchema
-from ...core.book import BookBuilder, Book
 
 # Create router instance
 router = APIRouter(
@@ -76,7 +87,8 @@ async def create_book(book_data: BookCreateSchema = Body(...)):
 
         # Initialize search engine if semantic search is enabled
         if book_data.semantic_search_enabled:
-            _search_engines[book.book_id] = SemanticSearchEngine(enable_embeddings=False)
+            _search_engines[book.book_id] = SemanticSearchEngine(
+                enable_embeddings=False)
 
         return BookResponseSchema(
             id=book.book_id,
@@ -99,7 +111,8 @@ async def create_book(book_data: BookCreateSchema = Body(...)):
 @router.get("/", response_model=BookListResponseSchema)
 async def list_books(
     skip: int = Query(0, ge=0, description="Number of books to skip"),
-    limit: int = Query(10, ge=1, le=100, description="Maximum number of books to return")
+    limit: int = Query(
+        10, ge=1, le=100, description="Maximum number of books to return")
 ):
     """List all books."""
     try:
@@ -246,7 +259,8 @@ async def create_chapter(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create chapter: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to create chapter: {str(e)}")
 
 
 @router.post("/{book_id}/chapters/{chapter_id}/pages", response_model=PageSchema)
@@ -261,7 +275,8 @@ async def create_page(
         chapter = book.get_chapter(chapter_id)
 
         if not chapter:
-            raise HTTPException(status_code=404, detail=f"Chapter {chapter_id} not found")
+            raise HTTPException(
+                status_code=404, detail=f"Chapter {chapter_id} not found")
 
         page = chapter.add_page(page_data.title, page_data.content)
 
@@ -304,13 +319,15 @@ async def search_book(
         book = get_book_or_404(book_id)
 
         if not book.enable_search:
-            raise HTTPException(status_code=400, detail="Search not enabled for this book")
+            raise HTTPException(
+                status_code=400, detail="Search not enabled for this book")
 
         search_engine = get_search_engine(book_id)
 
         # Perform search
         from ...core.book.book_builder import SearchQuery
-        search_query = SearchQuery(query_text=query, semantic_search=False, max_results=limit)
+        search_query = SearchQuery(
+            query_text=query, semantic_search=False, max_results=limit)
         results = search_engine.search(search_query, book)
 
         # Convert to response schema
@@ -319,7 +336,8 @@ async def search_book(
             response_results.append(BookSearchResultSchema(
                 content_id=result.content_id,
                 title=result.title,
-                content_snippet=result.content_snippet[:200] + "..." if len(result.content_snippet) > 200 else result.content_snippet,
+                content_snippet=result.content_snippet[:200] + "..." if len(
+                    result.content_snippet) > 200 else result.content_snippet,
                 similarity_score=result.relevance_score,
                 content_type=result.content_type,
                 highlighted_content=result.content_snippet

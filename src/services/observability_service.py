@@ -1,4 +1,17 @@
 """
+from abc import abstractmethod
+from enum import Enum
+from dataclasses import dataclass
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Observability Service Layer - Business Logic for Monitoring and Logging.
 
 The ObservabilityService provides high-level business logic for project observability,
@@ -20,15 +33,14 @@ Architecture:
 - Event-driven metrics collection
 - Configurable retention policies
 """
-
-from typing import Dict, Any, List, Optional, Union, TYPE_CHECKING
-from datetime import datetime, timedelta
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from enum import Enum
 import asyncio
 import logging
 import uuid
+from abc import abstractmethod
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
@@ -194,7 +206,11 @@ class ObservabilityRepository(ABC):
         pass
 
     @abstractmethod
-    async def update_metrics(self, project_id: str, metrics_type: str, data: Dict[str, Any]) -> None:
+    async def update_metrics(self,
+                             project_id: str,
+                             metrics_type: str,
+                             data: Dict[str,
+                                        Any]) -> None:
         """Update metrics data."""
         pass
 
@@ -231,9 +247,11 @@ class MockObservabilityRepository(ObservabilityRepository):
         for log in logs:
             if filter_criteria.level and log.get('level') != filter_criteria.level:
                 continue
-            if filter_criteria.entity_type and log.get('entity_type') != filter_criteria.entity_type:
+            if filter_criteria.entity_type and log.get(
+                    'entity_type') != filter_criteria.entity_type:
                 continue
-            if filter_criteria.entity_id and log.get('entity_id') != filter_criteria.entity_id:
+            if filter_criteria.entity_id and log.get(
+                    'entity_id') != filter_criteria.entity_id:
                 continue
 
             timestamp_str = log.get('timestamp')
@@ -287,16 +305,34 @@ class MockObservabilityRepository(ObservabilityRepository):
         return ProjectHealthData(
             status="healthy",
             components=ComponentsHealth(
-                agents=ComponentHealth(status="healthy", healthy_count=4, total_count=5, error_rate=0.05),
-                teams=ComponentHealth(status="healthy", healthy_count=2, total_count=2, error_rate=0.0),
-                workflows=ComponentHealth(status="degraded", healthy_count=8, total_count=10, error_rate=0.15),
-                tools=ComponentHealth(status="healthy", healthy_count=15, total_count=15, error_rate=0.02)
-            ),
+                agents=ComponentHealth(
+                    status="healthy",
+                    healthy_count=4,
+                    total_count=5,
+                    error_rate=0.05),
+                teams=ComponentHealth(
+                    status="healthy",
+                    healthy_count=2,
+                    total_count=2,
+                    error_rate=0.0),
+                workflows=ComponentHealth(
+                    status="degraded",
+                    healthy_count=8,
+                    total_count=10,
+                    error_rate=0.15),
+                tools=ComponentHealth(
+                    status="healthy",
+                    healthy_count=15,
+                    total_count=15,
+                    error_rate=0.02)),
             error_rate=0.08,
-            availability=0.95
-        )
+            availability=0.95)
 
-    async def update_metrics(self, project_id: str, metrics_type: str, data: Dict[str, Any]) -> None:
+    async def update_metrics(self,
+                             project_id: str,
+                             metrics_type: str,
+                             data: Dict[str,
+                                        Any]) -> None:
         """Update mock metrics data."""
         if project_id not in self._metrics:
             self._metrics[project_id] = {}
@@ -445,7 +481,9 @@ class ObservabilityService:
             return await self.repository.get_project_metrics(project_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to get project metrics for {project_id}: {str(e)}")
+            self.logger.error(
+                f"Failed to get project metrics for {project_id}: {
+                    str(e)}")
             raise MetricsCollectionError(f"Failed to get project metrics: {str(e)}")
 
     async def get_performance_metrics(self, project_id: str) -> PerformanceMetricsData:
@@ -462,7 +500,9 @@ class ObservabilityService:
             return await self.repository.get_performance_metrics(project_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to get performance metrics for {project_id}: {str(e)}")
+            self.logger.error(
+                f"Failed to get performance metrics for {project_id}: {
+                    str(e)}")
             raise MetricsCollectionError(f"Failed to get performance metrics: {str(e)}")
 
     async def get_project_health(self, project_id: str) -> ProjectHealthData:
@@ -479,7 +519,9 @@ class ObservabilityService:
             return await self.repository.get_project_health(project_id)
 
         except Exception as e:
-            self.logger.error(f"Failed to get project health for {project_id}: {str(e)}")
+            self.logger.error(
+                f"Failed to get project health for {project_id}: {
+                    str(e)}")
             raise ObservabilityServiceError(f"Failed to get project health: {str(e)}")
 
     async def update_component_metrics(
@@ -503,8 +545,11 @@ class ObservabilityService:
             await self.repository.update_metrics(project_id, metrics_key, metrics_data)
 
         except Exception as e:
-            self.logger.error(f"Failed to update metrics for {component_type}:{component_id}: {str(e)}")
-            raise MetricsCollectionError(f"Failed to update component metrics: {str(e)}")
+            self.logger.error(
+                f"Failed to update metrics for {component_type}:{component_id}: {
+                    str(e)}")
+            raise MetricsCollectionError(
+                f"Failed to update component metrics: {str(e)}")
 
     async def get_component_logs(
         self,
@@ -535,7 +580,9 @@ class ObservabilityService:
             return result.logs
 
         except Exception as e:
-            self.logger.error(f"Failed to get component logs for {component_type}:{component_id}: {str(e)}")
+            self.logger.error(
+                f"Failed to get component logs for {component_type}:{component_id}: {
+                    str(e)}")
             raise ObservabilityServiceError(f"Failed to get component logs: {str(e)}")
 
     async def get_error_summary(
@@ -571,7 +618,8 @@ class ObservabilityService:
 
             for log in error_logs.logs:
                 component_key = f"{log['entity_type']}:{log['entity_id']}"
-                error_by_component[component_key] = error_by_component.get(component_key, 0) + 1
+                error_by_component[component_key] = error_by_component.get(
+                    component_key, 0) + 1
 
                 error_type = log.get('additional_data', {}).get('error_type', 'unknown')
                 error_by_type[error_type] = error_by_type.get(error_type, 0) + 1
@@ -587,5 +635,7 @@ class ObservabilityService:
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to get error summary for project {project_id}: {str(e)}")
+            self.logger.error(
+                f"Failed to get error summary for project {project_id}: {
+                    str(e)}")
             raise ObservabilityServiceError(f"Failed to get error summary: {str(e)}")

@@ -1,4 +1,17 @@
 """
+from typing import Set, Tuple
+from enum import Enum
+from dataclasses import dataclass, field
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Protocol Builder - Builder Pattern for Protocol Creation.
 
 Provides a fluent interface for creating and configuring protocols
@@ -7,30 +20,29 @@ with semantic command processing capabilities in the Engine Framework.
 Following the builder pattern established in the framework for consistency
 and ease of use across all core components.
 """
-
-from typing import Dict, Any, List, Optional, Union, Set, Callable, TYPE_CHECKING
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-import logging
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 # Lazy imports to avoid database dependencies at import time
 if TYPE_CHECKING:
-    from .protocol import (
-        ProtocolParser,
-        IntentRecognizer,
-        PatternBasedIntentRecognizer,
-        CommandType,
-        IntentCategory,
-        ContextScope,
-        CommandPriority,
-        CommandContext,
-        ParsedCommand,
-        ExecutionPlan
-    )
     from ..agents.agent_builder import BuiltAgent
+    from .protocol import (
+        CommandContext,
+        CommandPriority,
+        CommandType,
+        ContextScope,
+        ExecutionPlan,
+        IntentCategory,
+        IntentRecognizer,
+        ParsedCommand,
+        ProtocolParser,
+    )
 
 # Initialize logger only when needed
 logger = None
+
 
 def get_logger():
     global logger
@@ -51,8 +63,10 @@ class ProtocolConfiguration:
 
     # Parser configuration
     intent_recognizer: Optional[Any] = None  # IntentRecognizer
-    supported_intents: List[Any] = field(default_factory=lambda: [])  # List[IntentCategory]
-    supported_command_types: List[Any] = field(default_factory=lambda: [])  # List[CommandType]
+    supported_intents: List[Any] = field(
+        default_factory=lambda: [])  # List[IntentCategory]
+    supported_command_types: List[Any] = field(
+        default_factory=lambda: [])  # List[CommandType]
 
     # Context configuration
     default_scope: Any = "SESSION"  # ContextScope.SESSION
@@ -77,7 +91,8 @@ class ProtocolConfiguration:
     # Custom extensions
     custom_validators: List[Callable] = field(default_factory=list)
     custom_transformers: List[Callable] = field(default_factory=list)
-    custom_recognizers: List[Any] = field(default_factory=list)  # List[IntentRecognizer]
+    custom_recognizers: List[Any] = field(
+        default_factory=list)  # List[IntentRecognizer]
 
     # Metadata
     created_at: datetime = field(default_factory=datetime.utcnow)
@@ -199,12 +214,15 @@ class ProtocolBuilder:
         self._config.tags = tags
         return self
 
-    def with_supported_intents(self, intents: List[Any]) -> 'ProtocolBuilder':  # List[IntentCategory]
+    # List[IntentCategory]
+    def with_supported_intents(self, intents: List[Any]) -> 'ProtocolBuilder':
         """Set supported intent categories."""
         self._config.supported_intents = intents
         return self
 
-    def with_supported_command_types(self, command_types: List[Any]) -> 'ProtocolBuilder':  # List[CommandType]
+    # List[CommandType]
+    def with_supported_command_types(
+            self, command_types: List[Any]) -> 'ProtocolBuilder':
         """Set supported command types."""
         self._config.supported_command_types = command_types
         return self
@@ -283,7 +301,8 @@ class ProtocolBuilder:
         self._config.confidence_threshold = threshold
         return self
 
-    def with_custom_intent_recognizer(self, recognizer: Any) -> 'ProtocolBuilder':  # IntentRecognizer
+    # IntentRecognizer
+    def with_custom_intent_recognizer(self, recognizer: Any) -> 'ProtocolBuilder':
         """Add custom intent recognizer."""
         self._custom_recognizers.append(recognizer)
         return self
@@ -309,7 +328,7 @@ class ProtocolBuilder:
             raise ValueError("Protocol ID is required")
 
         # Lazy imports to avoid database dependencies
-        from .protocol import ProtocolParser, PatternBasedIntentRecognizer, IntentCategory, CommandType
+        from .protocol import CommandType, IntentCategory, ProtocolParser
 
         # Set defaults if not specified
         if not self._config.supported_intents:
@@ -333,7 +352,11 @@ class ProtocolBuilder:
             parser=parser
         )
 
-        get_logger().info(f"Built protocol '{built_protocol.id}' with {len(self._config.supported_intents)} supported intents")
+        get_logger().info(
+            f"Built protocol '{
+                built_protocol.id}' with {
+                len(
+                    self._config.supported_intents)} supported intents")
         return built_protocol
 
     def _create_intent_recognizer(self):
@@ -355,55 +378,58 @@ class ProtocolBuilder:
         pass
 
     @classmethod
-    def create_basic_protocol(cls, protocol_id: str, name: Optional[str] = None) -> BuiltProtocol:
+    def create_basic_protocol(
+            cls,
+            protocol_id: str,
+            name: Optional[str] = None) -> BuiltProtocol:
         """Create a basic protocol with default settings."""
         return (cls()
-            .with_id(protocol_id)
-            .with_name(name or f"Basic Protocol {protocol_id}")
-            .build())
+                .with_id(protocol_id)
+                .with_name(name or f"Basic Protocol {protocol_id}")
+                .build())
 
     @classmethod
     def create_analysis_protocol(cls, protocol_id: str) -> BuiltProtocol:
         """Create a protocol optimized for analysis commands."""
         return (cls()
-            .with_id(protocol_id)
-            .with_name(f"Analysis Protocol {protocol_id}")
-            .with_supported_intents([
-                IntentCategory.ANALYZE,
-                IntentCategory.QUERY,
-                IntentCategory.READ
-            ])
-            .with_default_scope(ContextScope.PROJECT)
-            .with_strict_validation(True)
-            .build())
+                .with_id(protocol_id)
+                .with_name(f"Analysis Protocol {protocol_id}")
+                .with_supported_intents([
+                    IntentCategory.ANALYZE,
+                    IntentCategory.QUERY,
+                    IntentCategory.READ
+                ])
+                .with_default_scope(ContextScope.PROJECT)
+                .with_strict_validation(True)
+                .build())
 
     @classmethod
     def create_generation_protocol(cls, protocol_id: str) -> BuiltProtocol:
         """Create a protocol optimized for generation commands."""
         return (cls()
-            .with_id(protocol_id)
-            .with_name(f"Generation Protocol {protocol_id}")
-            .with_supported_intents([
-                IntentCategory.GENERATE,
-                IntentCategory.CREATE,
-                IntentCategory.TRANSFORM
-            ])
-            .with_default_scope(ContextScope.WORKFLOW)
-            .with_learning_enabled(True)
-            .build())
+                .with_id(protocol_id)
+                .with_name(f"Generation Protocol {protocol_id}")
+                .with_supported_intents([
+                    IntentCategory.GENERATE,
+                    IntentCategory.CREATE,
+                    IntentCategory.TRANSFORM
+                ])
+                .with_default_scope(ContextScope.WORKFLOW)
+                .with_learning_enabled(True)
+                .build())
 
     @classmethod
     def create_coordination_protocol(cls, protocol_id: str) -> BuiltProtocol:
         """Create a protocol optimized for coordination commands."""
         return (cls()
-            .with_id(protocol_id)
-            .with_name(f"Coordination Protocol {protocol_id}")
-            .with_supported_intents([
-                IntentCategory.COORDINATE,
-                IntentCategory.EXECUTE,
-                IntentCategory.CONTROL
-            ])
-            .with_default_scope(ContextScope.TEAM)
-            .with_max_execution_time(600)  # 10 minutes
-            .with_retry_attempts(5)
-            .build())
+                .with_id(protocol_id)
+                .with_name(f"Coordination Protocol {protocol_id}")
+                .with_supported_intents([
+                    IntentCategory.COORDINATE,
+                    IntentCategory.EXECUTE,
+                    IntentCategory.CONTROL
+                ])
+                .with_default_scope(ContextScope.TEAM)
+                .with_max_execution_time(600)  # 10 minutes
+                .with_retry_attempts(5)
+                .build())

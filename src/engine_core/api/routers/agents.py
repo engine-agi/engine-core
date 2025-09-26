@@ -1,15 +1,28 @@
 """
+from pathlib import Path
+from fastapi import HTTPException
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Agents API Router - Engine Framework Agent Management.
 
 This router provides comprehensive agent management endpoints including CRUD operations,
 configuration management, and execution capabilities.
 """
-
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, Body
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from ..schemas.agent_schemas import (
+from fastapi import HTTPException
+from pydantic import Field
+
     AgentCreateSchema,
     AgentUpdateSchema,
     AgentResponseSchema,
@@ -17,8 +30,6 @@ from ..schemas.agent_schemas import (
     AgentHealthSchema,
     AgentMetricsSchema
 )
-from ..schemas.base_schemas import BaseResponseSchema, ErrorResponseSchema
-from ...core.agents import AgentBuilder, Agent
 
 # Create router instance
 router = APIRouter(
@@ -83,7 +94,8 @@ async def create_agent(agent_data: AgentCreateSchema = Body(...)):
 @router.get("/", response_model=AgentListResponseSchema)
 async def list_agents(
     skip: int = Query(0, ge=0, description="Number of agents to skip"),
-    limit: int = Query(10, ge=1, le=100, description="Maximum number of agents to return")
+    limit: int = Query(
+        10, ge=1, le=100, description="Maximum number of agents to return")
 ):
     """List all agents."""
     try:
@@ -237,7 +249,8 @@ async def get_agent_health(agent_id: str = Path(..., description="Agent ID")):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get agent health: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get agent health: {str(e)}")
 
 
 @router.get("/health")

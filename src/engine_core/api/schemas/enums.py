@@ -2,11 +2,11 @@
 # This module contains all enumeration types used in the API schemas
 
 from enum import Enum
-from typing import List
 
 
 class AgentStatus(str, Enum):
     """Agent status enumeration."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
@@ -15,6 +15,7 @@ class AgentStatus(str, Enum):
 
 class TeamCoordinationStrategy(str, Enum):
     """Team coordination strategy enumeration."""
+
     HIERARCHICAL = "hierarchical"
     COLLABORATIVE = "collaborative"
     PARALLEL = "parallel"
@@ -23,6 +24,7 @@ class TeamCoordinationStrategy(str, Enum):
 
 class WorkflowStatus(str, Enum):
     """Workflow status enumeration."""
+
     CREATED = "created"
     RUNNING = "running"
     PAUSED = "paused"
@@ -33,6 +35,7 @@ class WorkflowStatus(str, Enum):
 
 class ToolType(str, Enum):
     """Tool type enumeration."""
+
     API = "api"
     CLI = "cli"
     MCP = "mcp"
@@ -41,6 +44,7 @@ class ToolType(str, Enum):
 
 class ProtocolType(str, Enum):
     """Protocol type enumeration."""
+
     SEMANTIC = "semantic"
     WORKFLOW = "workflow"
     COMMAND = "command"
@@ -49,6 +53,7 @@ class ProtocolType(str, Enum):
 
 class BookLanguage(str, Enum):
     """Book language enumeration."""
+
     EN = "en"
     PT = "pt"
     ES = "es"
@@ -58,6 +63,7 @@ class BookLanguage(str, Enum):
 
 class LogLevel(str, Enum):
     """Log level enumeration."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -67,6 +73,7 @@ class LogLevel(str, Enum):
 
 class AuthenticationType(str, Enum):
     """Authentication type enumeration."""
+
     NONE = "none"
     BASIC = "basic"
     BEARER_TOKEN = "bearer_token"
@@ -76,6 +83,7 @@ class AuthenticationType(str, Enum):
 
 class ContentType(str, Enum):
     """Content type enumeration."""
+
     TEXT = "text"
     MARKDOWN = "markdown"
     HTML = "html"
@@ -85,6 +93,7 @@ class ContentType(str, Enum):
 
 class ProficiencyLevel(str, Enum):
     """Proficiency level enumeration."""
+
     BEGINNER = "beginner"
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
@@ -93,6 +102,7 @@ class ProficiencyLevel(str, Enum):
 
 class RelationshipType(str, Enum):
     """Relationship type enumeration."""
+
     REPORTS_TO = "reports_to"
     COLLABORATES_WITH = "collaborates_with"
     LEADS = "leads"

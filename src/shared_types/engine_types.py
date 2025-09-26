@@ -1,4 +1,16 @@
 """
+from enum import Enum
+from dataclasses import dataclass
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Engine Types - Common types and enumerations for the Engine Framework.
 
 This module defines shared types, enumerations, and base classes used across
@@ -11,15 +23,16 @@ Key Components:
 - Common data types
 - Type aliases and constants
 """
-
-from typing import Dict, Any, Optional, List, Union
-from enum import Enum
+from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 # Status Enumerations
 class AgentStatus(str, Enum):
     """Agent execution and lifecycle status."""
+
     IDLE = "idle"
     ACTIVE = "active"
     PROCESSING = "processing"
@@ -29,6 +42,7 @@ class AgentStatus(str, Enum):
 
 class TeamStatus(str, Enum):
     """Team coordination status."""
+
     FORMING = "forming"
     ACTIVE = "active"
     EXECUTING = "executing"
@@ -37,6 +51,7 @@ class TeamStatus(str, Enum):
 
 class WorkflowStatus(str, Enum):
     """Workflow execution status."""
+
     DRAFT = "draft"
     READY = "ready"
     EXECUTING = "executing"
@@ -47,6 +62,7 @@ class WorkflowStatus(str, Enum):
 
 class ExecutionMode(str, Enum):
     """Workflow execution modes."""
+
     SEQUENTIAL = "sequential"
     PARALLEL = "parallel"
     HYBRID = "hybrid"
@@ -54,6 +70,7 @@ class ExecutionMode(str, Enum):
 
 class ProtocolStatus(str, Enum):
     """Protocol validation status."""
+
     DRAFT = "draft"
     VALID = "valid"
     INVALID = "invalid"
@@ -62,6 +79,7 @@ class ProtocolStatus(str, Enum):
 
 class ToolStatus(str, Enum):
     """Tool availability status."""
+
     AVAILABLE = "available"
     UNAVAILABLE = "unavailable"
     ERROR = "error"
@@ -70,6 +88,7 @@ class ToolStatus(str, Enum):
 
 class ToolType(str, Enum):
     """Tool integration types."""
+
     API = "api"
     CLI = "cli"
     LIBRARY = "library"
@@ -79,6 +98,7 @@ class ToolType(str, Enum):
 
 class BookStatus(str, Enum):
     """Book lifecycle status."""
+
     DRAFT = "draft"
     PUBLISHED = "published"
     ARCHIVED = "archived"
@@ -86,6 +106,7 @@ class BookStatus(str, Enum):
 
 class ProjectStatus(str, Enum):
     """Project lifecycle status."""
+
     ACTIVE = "active"
     ARCHIVED = "archived"
     DELETED = "deleted"
@@ -93,6 +114,7 @@ class ProjectStatus(str, Enum):
 
 class LogLevel(str, Enum):
     """Logging levels for observability."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -102,6 +124,7 @@ class LogLevel(str, Enum):
 
 class CoordinationStrategy(str, Enum):
     """Team coordination strategies."""
+
     HIERARCHICAL = "hierarchical"
     COLLABORATIVE = "collaborative"
     PARALLEL = "parallel"
@@ -121,7 +144,7 @@ class EngineError(Exception):
         error_code: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
         component: Optional[str] = None,
-        recoverable: bool = False
+        recoverable: bool = False,
     ):
         super().__init__(message)
         self.message = message
@@ -139,7 +162,7 @@ class EngineError(Exception):
             "component": self.component,
             "details": self.details,
             "recoverable": self.recoverable,
-            "timestamp": self.timestamp.isoformat()
+            "timestamp": self.timestamp.isoformat(),
         }
 
     def __str__(self) -> str:
@@ -155,7 +178,7 @@ class PaginationParams:
         page: int = 1,
         limit: int = 50,
         sort_by: Optional[str] = None,
-        sort_order: str = "asc"
+        sort_order: str = "asc",
     ):
         self.page = max(1, page)
         self.limit = max(1, min(100, limit))  # Max 100 items per page
@@ -178,7 +201,7 @@ class SearchFilters:
         created_after: Optional[datetime] = None,
         created_before: Optional[datetime] = None,
         updated_after: Optional[datetime] = None,
-        updated_before: Optional[datetime] = None
+        updated_before: Optional[datetime] = None,
     ):
         self.query = query
         self.tags = tags or []
@@ -198,7 +221,7 @@ class ExecutionContext:
         project_id: Optional[str] = None,
         session_id: Optional[str] = None,
         correlation_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         self.user_id = user_id
         self.project_id = project_id
@@ -220,7 +243,7 @@ class ExecutionContext:
             "correlation_id": self.correlation_id,
             "metadata": self.metadata,
             "start_time": self.start_time.isoformat(),
-            "duration": self.get_duration()
+            "duration": self.get_duration(),
         }
 
 

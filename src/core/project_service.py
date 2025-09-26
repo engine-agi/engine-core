@@ -21,46 +21,53 @@ Architecture:
 - Event-driven updates and notifications
 """
 
-from typing import Dict, Any, List, Optional, Union, TYPE_CHECKING
-from datetime import datetime, timedelta
+import asyncio
+import logging
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
-import asyncio
-import uuid
-import logging
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+
+from pydantic import ValidationError
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
-    from ..models.project import Project
     from ..models.infrastructure import User
+    from ..models.project import Project
 
 logger = logging.getLogger(__name__)
 
 
 class ProjectServiceError(Exception):
     """Base exception for project service errors."""
+
     pass
 
 
 class ProjectNotFoundError(ProjectServiceError):
     """Raised when a project is not found."""
+
     pass
 
 
 class ProjectValidationError(ProjectServiceError):
     """Raised when project validation fails."""
+
     pass
 
 
 class ProjectOperationError(ProjectServiceError):
     """Raised when a project operation fails."""
+
     pass
 
 
 @dataclass
 class ProjectLimits:
     """Project resource limits."""
+
     max_agents: int = 100
     max_teams: int = 20
     max_workflows: int = 50
@@ -81,7 +88,9 @@ class ProjectService:
         """Initialize the project service."""
         self.logger = logging.getLogger(__name__)
 
-    async def get_project(self, project_id: str, user_id: str) -> Optional[Dict[str, Any]]:
+    async def get_project(
+        self, project_id: str, user_id: str
+    ) -> Optional[Dict[str, Any]]:
         """
         Get a project by ID with access control.
 
@@ -108,14 +117,16 @@ class ProjectService:
                     "max_tools": 100,
                     "max_books": 5,
                     "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow()
+                    "updated_at": datetime.utcnow(),
                 }
             return None
         except Exception as e:
             self.logger.error(f"Error getting project {project_id}: {str(e)}")
             raise ProjectOperationError(f"Failed to get project: {str(e)}")
 
-    async def list_projects(self, user_id: str, skip: int = 0, limit: int = 50) -> List[Dict[str, Any]]:
+    async def list_projects(
+        self, user_id: str, skip: int = 0, limit: int = 50
+    ) -> List[Dict[str, Any]]:
         """
         List projects accessible by a user.
 
@@ -132,14 +143,16 @@ class ProjectService:
             # For now, return mock projects for testing
             projects = []
             for i in range(min(limit, 5)):  # Return up to 5 mock projects
-                projects.append({
-                    "id": f"project_{i+1}",
-                    "name": f"Project {i+1}",
-                    "description": f"Mock project {i+1}",
-                    "owner_id": user_id,
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow()
-                })
+                projects.append(
+                    {
+                        "id": f"project_{i+1}",
+                        "name": f"Project {i+1}",
+                        "description": f"Mock project {i+1}",
+                        "owner_id": user_id,
+                        "created_at": datetime.utcnow(),
+                        "updated_at": datetime.utcnow(),
+                    }
+                )
             return projects
         except Exception as e:
             self.logger.error(f"Error listing projects for user {user_id}: {str(e)}")
@@ -151,7 +164,7 @@ class ProjectService:
         description: str,
         owner_id: str,
         allowed_models: List[str],
-        limits: Optional[ProjectLimits] = None
+        limits: Optional[ProjectLimits] = None,
     ) -> Dict[str, Any]:
         """
         Create a new project.
@@ -181,7 +194,7 @@ class ProjectService:
                 "max_tools": limits.max_tools if limits else 100,
                 "max_books": limits.max_books if limits else 5,
                 "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow()
+                "updated_at": datetime.utcnow(),
             }
             return project
         except Exception as e:
@@ -189,10 +202,7 @@ class ProjectService:
             raise ProjectOperationError(f"Failed to create project: {str(e)}")
 
     async def update_project(
-        self,
-        project_id: str,
-        user_id: str,
-        updates: Dict[str, Any]
+        self, project_id: str, user_id: str, updates: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Update an existing project.
@@ -265,7 +275,7 @@ class ProjectService:
             "gpt-4",
             "gpt-3.5-turbo",
             "claude-3-haiku",
-            "claude-3-sonnet"
+            "claude-3-sonnet",
         ]
         return model_name in supported_models
 
@@ -296,7 +306,7 @@ class ProjectService:
                 "total_executions": 0,
                 "active_executions": 0,
                 "storage_used_gb": 0.0,
-                "last_activity": datetime.utcnow()
+                "last_activity": datetime.utcnow(),
             }
         except ProjectNotFoundError:
             raise

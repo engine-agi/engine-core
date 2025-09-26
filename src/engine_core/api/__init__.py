@@ -1,4 +1,8 @@
 """
+
+
+
+
 Engine Core API Package - REST API for Engine Framework Core Components.
 
 This package provides REST API endpoints for all Engine Framework core components,
@@ -30,5 +34,6 @@ Components:
 - protocols: Command protocols and behavior
 - books: Knowledge management and memory
 """
+
 
 __version__ = "1.0.0"

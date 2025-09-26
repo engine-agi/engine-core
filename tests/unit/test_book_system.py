@@ -11,25 +11,16 @@ Tests cover:
 """
 
 import pytest
-import asyncio
-from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime
-from typing import List, Dict, Any
 
 from engine_core.core.book.book_builder import (
-    BookBuilder,
-    Book,
-    BookChapter,
-    BookPage,
-    ContentSection,
-    SemanticSearchEngine,
-    ContentType,
     AccessLevel,
+    Book,
+    BookBuilder,
+    ContentSection,
     ContentStatus,
-    SearchScope,
-    ContentMetadata,
+    ContentType,
     SearchQuery,
-    SearchResult
+    SemanticSearchEngine,
 )
 
 
@@ -155,10 +146,7 @@ class TestBookBuilder:
 
     def test_build_basic_book(self):
         """Test building a basic book."""
-        book = (BookBuilder()
-            .with_id("test_book")
-            .with_title("Test Book")
-            .build())
+        book = BookBuilder().with_id("test_book").with_title("Test Book").build()
 
         assert isinstance(book, Book)
         assert book.book_id == "test_book"
@@ -170,7 +158,8 @@ class TestBookBuilder:
 
     def test_build_complete_book(self):
         """Test building a complete book with all options."""
-        book = (BookBuilder()
+        book = (
+            BookBuilder()
             .with_id("complete_book")
             .with_title("Complete Test Book")
             .with_description("A comprehensive test book")
@@ -184,7 +173,8 @@ class TestBookBuilder:
             .with_status(ContentStatus.PUBLISHED)
             .add_tags(["test", "documentation"])
             .add_categories(["tech", "guide"])
-            .build())
+            .build()
+        )
 
         assert book.book_id == "complete_book"
         assert book.title == "Complete Test Book"
@@ -227,11 +217,13 @@ class TestBookStructure:
     @pytest.fixture
     def sample_book(self):
         """Create a sample book for testing."""
-        book = (BookBuilder()
+        book = (
+            BookBuilder()
             .with_id("sample_book")
             .with_title("Sample Book")
             .with_description("A sample book for testing")
-            .build())
+            .build()
+        )
 
         # Add chapters
         chapter1 = book.add_chapter("Introduction", "Book introduction")
@@ -239,14 +231,14 @@ class TestBookStructure:
 
         # Add pages to chapters
         page1 = chapter1.add_page("Welcome", "Welcome to the book")
-        page2 = chapter1.add_page("Overview", "Book overview")
+        chapter1.add_page("Overview", "Book overview")
 
-        page3 = chapter2.add_page("Basic Concepts", "Fundamental ideas")
-        page4 = chapter2.add_page("Advanced Topics", "Complex subjects")
+        chapter2.add_page("Basic Concepts", "Fundamental ideas")
+        chapter2.add_page("Advanced Topics", "Complex subjects")
 
         # Add sections to pages
-        section1 = page1.add_section("Greeting", "Hello and welcome!")
-        section2 = page1.add_section("Purpose", "The purpose of this book")
+        page1.add_section("Greeting", "Hello and welcome!")
+        page1.add_section("Purpose", "The purpose of this book")
 
         return book
 
@@ -338,10 +330,12 @@ class TestSemanticSearchEngine:
     @pytest.fixture
     def sample_book(self):
         """Create a sample book with content."""
-        book = (BookBuilder()
+        book = (
+            BookBuilder()
             .with_id("search_test_book")
             .with_title("Search Test Book")
-            .build())
+            .build()
+        )
 
         chapter = book.add_chapter("Python Programming", "Python concepts")
         page1 = chapter.add_page("Variables", "Variable concepts in Python")
@@ -371,7 +365,7 @@ class TestSemanticSearchEngine:
             content_type="page",
             title=page.title,
             content=page.description,
-            metadata=page.metadata
+            metadata=page.metadata,
         )
 
         # Check indexing
@@ -389,14 +383,11 @@ class TestSemanticSearchEngine:
                     content_type="page",
                     title=page.title,
                     content=page.description,
-                    metadata=page.metadata
+                    metadata=page.metadata,
                 )
 
         # Perform search
-        query = SearchQuery(
-            query_text="python variables",
-            semantic_search=False
-        )
+        query = SearchQuery(query_text="python variables", semantic_search=False)
 
         results = search_engine.search(query, sample_book)
 
@@ -415,7 +406,7 @@ class TestSemanticSearchEngine:
                     content_type="page",
                     title=page.title,
                     content=page.description,
-                    metadata=page.metadata
+                    metadata=page.metadata,
                 )
 
         # Search with filters
@@ -423,7 +414,7 @@ class TestSemanticSearchEngine:
             query_text="function",
             content_types=[ContentType.TEXT],
             max_results=5,
-            semantic_search=False
+            semantic_search=False,
         )
 
         results = search_engine.search(query, sample_book)
@@ -434,8 +425,7 @@ class TestSemanticSearchEngine:
     def test_empty_search_results(self, search_engine, sample_book):
         """Test search with no matching results."""
         query = SearchQuery(
-            query_text="nonexistent content xyz123",
-            semantic_search=False
+            query_text="nonexistent content xyz123", semantic_search=False
         )
 
         results = search_engine.search(query, sample_book)
@@ -459,7 +449,7 @@ class TestSemanticSearchEngine:
         score = search_engine._calculate_relevance_score(
             query="python functions",
             title="Python Functions Guide",
-            content="Learn about functions in Python programming"
+            content="Learn about functions in Python programming",
         )
 
         assert score > 0
@@ -477,7 +467,7 @@ class TestContentManagement:
             section_id="test_section",
             title="Test Section",
             content="This is test content for the section.",
-            content_type=ContentType.TEXT
+            content_type=ContentType.TEXT,
         )
 
     def test_content_section_creation(self, content_section):
@@ -520,7 +510,7 @@ class TestContentManagement:
             target_type="page",
             target_id="target_page_1",
             reference_type="link",
-            label="See also"
+            label="See also",
         )
 
         content_section.add_reference(reference)
@@ -530,9 +520,7 @@ class TestContentManagement:
     def test_subsections(self, content_section):
         """Test subsection management."""
         subsection = ContentSection(
-            section_id="subsection_1",
-            title="Subsection",
-            content="Subsection content"
+            section_id="subsection_1", title="Subsection", content="Subsection content"
         )
 
         content_section.add_subsection(subsection)
@@ -546,10 +534,12 @@ class TestPersistenceAndStorage:
     @pytest.fixture
     def sample_book(self):
         """Create a sample book for persistence testing."""
-        book = (BookBuilder()
+        book = (
+            BookBuilder()
             .with_id("persistence_test")
             .with_title("Persistence Test Book")
-            .build())
+            .build()
+        )
 
         chapter = book.add_chapter("Test Chapter", "For persistence testing")
         page = chapter.add_page("Test Page", "Page content")
@@ -599,7 +589,9 @@ class TestPersistenceAndStorage:
         assert section.metadata.content_size == len(section.content)
 
         # Size should update with content
-        section.update_content("Much longer content that should increase the size significantly")
+        section.update_content(
+            "Much longer content that should increase the size significantly"
+        )
         assert section.metadata.content_size == len(section.content)
 
 
@@ -610,12 +602,14 @@ class TestIntegration:
     async def test_complete_book_workflow(self):
         """Test complete book creation and management workflow."""
         # Create book
-        book = (BookBuilder()
+        book = (
+            BookBuilder()
             .with_id("workflow_test")
             .with_title("Workflow Test Book")
             .with_description("Testing complete workflow")
             .with_author("Test System")
-            .build())
+            .build()
+        )
 
         # Add hierarchical content
         intro_chapter = book.add_chapter("Introduction", "Book introduction")
@@ -645,7 +639,7 @@ class TestIntegration:
                     content_type="page",
                     title=page.title,
                     content=page.description,
-                    metadata=page.metadata
+                    metadata=page.metadata,
                 )
 
         # Search for content
@@ -657,15 +651,13 @@ class TestIntegration:
     def test_book_builder_patterns(self):
         """Test different book builder usage patterns."""
         # Simple book
-        simple_book = (BookBuilder()
-            .with_id("simple")
-            .with_title("Simple Book")
-            .build())
+        simple_book = BookBuilder().with_id("simple").with_title("Simple Book").build()
 
         assert simple_book.book_id == "simple"
 
         # Complex book with all features
-        complex_book = (BookBuilder()
+        complex_book = (
+            BookBuilder()
             .with_id("complex")
             .with_title("Complex Book")
             .with_description("Feature-rich book")
@@ -677,7 +669,8 @@ class TestIntegration:
             .with_status(ContentStatus.PUBLISHED)
             .add_tags(["important", "featured"])
             .add_categories(["documentation", "tutorial"])
-            .build())
+            .build()
+        )
 
         assert complex_book.is_public is True
         assert complex_book.allow_comments is True
@@ -689,7 +682,7 @@ class TestIntegration:
         section = ContentSection(
             section_id="lifecycle_test",
             title="Lifecycle Test",
-            content="Initial content"
+            content="Initial content",
         )
 
         # Start as draft

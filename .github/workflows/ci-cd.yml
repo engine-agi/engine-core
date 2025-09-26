@@ -74,15 +74,15 @@ jobs:
         from engine_core.models.agent import AgentBuilder
         from engine_core.models.workflow import WorkflowBuilder
         from engine_core.workflows.workflow_engine import WorkflowEngine
-        
+
         # Test AgentBuilder contract
         agent = AgentBuilder().with_id('test').with_model('claude-3.5-sonnet').build()
         print('✅ AgentBuilder contract works')
-        
-        # Test WorkflowBuilder contract  
+
+        # Test WorkflowBuilder contract
         workflow = WorkflowBuilder().with_id('test').add_vertex('task1', agent='test').build()
         print('✅ WorkflowBuilder contract works')
-        
+
         print('✅ All core contracts validated')
         "
 

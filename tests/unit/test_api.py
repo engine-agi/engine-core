@@ -11,12 +11,12 @@ Tests cover:
 """
 
 import pytest
-from httpx import AsyncClient
 from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
 from engine_core.api.main import app
-from engine_core.api.schemas.book_schemas import BookCreateSchema, BookResponseSchema
-from engine_core.api.schemas.agent_schemas import AgentCreateSchema, AgentResponseSchema
+from engine_core.api.schemas.agent_schemas import AgentCreateSchema
+from engine_core.api.schemas.book_schemas import BookCreateSchema
 
 
 @pytest.fixture
@@ -66,7 +66,7 @@ class TestBooksAPI:
             version="1.0.0",
             tags=["test", "api"],
             semantic_search_enabled=True,
-            collaboration_enabled=True
+            collaboration_enabled=True,
         )
 
         response = client.post("/books/", json=book_data.dict())
@@ -113,7 +113,7 @@ class TestBooksAPI:
 
         update_data = {
             "title": "Updated Test Book",
-            "description": "Updated description"
+            "description": "Updated description",
         }
 
         response = client.put(f"/books/{self.book_id}", json=update_data)
@@ -131,7 +131,7 @@ class TestBooksAPI:
         chapter_data = {
             "title": "Test Chapter",
             "description": "A test chapter",
-            "order_index": 1
+            "order_index": 1,
         }
 
         response = client.post(f"/books/{self.book_id}/chapters", json=chapter_data)
@@ -151,10 +151,10 @@ class TestBooksAPI:
             "title": "Test Page",
             "content": "This is test page content for API testing.",
             "order_index": 1,
-            "tags": ["test", "api"]
+            "tags": ["test", "api"],
         }
 
-        response = client.post(f"/books/{self.book_id}/chapters/chapter_1/page", json=page_data)
+        client.post(f"/books/{self.book_id}/chapters/chapter_1/page", json=page_data)
         # Note: This endpoint might need adjustment based on actual implementation
         # For now, we'll skip the exact assertion
 
@@ -202,7 +202,7 @@ class TestAgentsAPI:
             protocol_id="test_protocol",
             workflow_id="test_workflow",
             book_id="test_book",
-            configuration={"debug": True}
+            configuration={"debug": True},
         )
 
         response = client.post("/agents/", json=agent_data.dict())
@@ -247,10 +247,7 @@ class TestAgentsAPI:
         # First create an agent
         self.test_create_agent(client)
 
-        update_data = {
-            "name": "Updated Test Agent",
-            "speciality": "Updated Testing"
-        }
+        update_data = {"name": "Updated Test Agent", "speciality": "Updated Testing"}
 
         response = client.put(f"/agents/{self.agent_id}", json=update_data)
         assert response.status_code == 200
@@ -317,10 +314,7 @@ class TestAPIErrorHandling:
 
     def test_invalid_book_data(self, client):
         """Test creating a book with invalid data."""
-        invalid_data = {
-            "title": "",  # Invalid: empty title
-            "author": "Test Author"
-        }
+        invalid_data = {"title": "", "author": "Test Author"}  # Invalid: empty title
 
         response = client.post("/books/", json=invalid_data)
         # Should return validation error
@@ -328,10 +322,7 @@ class TestAPIErrorHandling:
 
     def test_invalid_agent_data(self, client):
         """Test creating an agent with invalid data."""
-        invalid_data = {
-            "name": "",  # Invalid: empty name
-            "model": "invalid_model"
-        }
+        invalid_data = {"name": "", "model": "invalid_model"}  # Invalid: empty name
 
         response = client.post("/agents/", json=invalid_data)
         # Should return validation error
@@ -352,7 +343,7 @@ class TestAPIIntegration:
             version="1.0.0",
             tags=["integration", "test"],
             semantic_search_enabled=True,
-            collaboration_enabled=True
+            collaboration_enabled=True,
         )
 
         response = client.post("/books/", json=book_data.dict())
@@ -385,7 +376,7 @@ class TestAPIIntegration:
             persona="An agent for integration testing",
             stack=["python", "fastapi"],
             tools=["http", "json"],
-            configuration={"test_mode": True}
+            configuration={"test_mode": True},
         )
 
         response = client.post("/agents/", json=agent_data.dict())

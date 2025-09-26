@@ -1,4 +1,13 @@
 """
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from typing import Optional, List, Dict, Any
 Unit Tests for WorkflowBuilder - Fluent Interface for Pregel-based Workflows.
 
 Tests cover:
@@ -17,15 +26,14 @@ Test Categories:
 - Integration: Agent/team coordination, data flow
 - Error Handling: Invalid configurations, execution failures
 """
-
-import pytest
 import asyncio
 from datetime import datetime
-from unittest.mock import MagicMock, AsyncMock
-from typing import Dict, Any, List
+from typing import Any, Dict, List, Optional
+
+import pytest
+from pydantic import Field
 
 # Import workflow components
-from src.engine_core.core.workflows.workflow_builder import (
     WorkflowBuilder,
     BuiltWorkflow,
     WorkflowVertexConfig,
@@ -33,8 +41,6 @@ from src.engine_core.core.workflows.workflow_builder import (
 )
 
 # Import dependencies for testing
-from src.engine_core.core.agents.agent_builder import BuiltAgent, AgentExecutionContext
-from src.engine_core.core.teams.team_builder import BuiltTeam
 
 
 class TestWorkflowBuilder:

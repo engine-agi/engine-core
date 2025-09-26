@@ -2,23 +2,23 @@
 Unit tests for AgentBuilder - Minimal Configuration Tests
 """
 
-import pytest
-import asyncio
-from typing import List
+import os
 
 # Import the classes we need to test
 import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../src'))
+
+import pytest
 
 from engine_core.core.agents.agent_builder import (
     AgentBuilder,
-    AgentState,
-    BuiltAgent,
     AgentExecutionContext,
+    AgentExecutionEngine,
+    AgentState,
     AIModelInterface,
-    AgentExecutionEngine
+    BuiltAgent,
 )
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../src"))
 
 
 class TestAgentBuilderMinimal:
@@ -32,10 +32,9 @@ class TestAgentBuilderMinimal:
 
     def test_minimal_agent_build(self):
         """Test building an agent with minimal required fields"""
-        agent = AgentBuilder() \
-            .with_id("test_agent") \
-            .with_model("claude-3.5-sonnet") \
-            .build()
+        agent = (
+            AgentBuilder().with_id("test_agent").with_model("claude-3.5-sonnet").build()
+        )
 
         assert agent is not None
         assert isinstance(agent, BuiltAgent)
@@ -67,28 +66,31 @@ class TestAgentBuilderMinimal:
         builder = AgentBuilder()
 
         # Test method chaining
-        result = builder \
-            .with_id("test_agent") \
-            .with_name("Test Agent") \
-            .with_model("gpt-4") \
+        result = (
+            builder.with_id("test_agent")
+            .with_name("Test Agent")
+            .with_model("gpt-4")
             .with_speciality("Testing")
+        )
 
         assert result is builder  # Should return self
 
     def test_agent_with_all_optional_fields(self):
         """Test building an agent with all optional fields set"""
-        agent = AgentBuilder() \
-            .with_id("full_agent") \
-            .with_name("Full Test Agent") \
-            .with_model("claude-3.5-sonnet") \
-            .with_speciality("Full Stack Development") \
-            .with_persona("Experienced developer") \
-            .with_stack(["python", "react", "postgresql"]) \
-            .with_tools(["github", "vscode"]) \
-            .with_protocol("tdd_protocol") \
-            .with_workflow("development_workflow") \
-            .with_book("project_memory") \
+        agent = (
+            AgentBuilder()
+            .with_id("full_agent")
+            .with_name("Full Test Agent")
+            .with_model("claude-3.5-sonnet")
+            .with_speciality("Full Stack Development")
+            .with_persona("Experienced developer")
+            .with_stack(["python", "react", "postgresql"])
+            .with_tools(["github", "vscode"])
+            .with_protocol("tdd_protocol")
+            .with_workflow("development_workflow")
+            .with_book("project_memory")
             .build()
+        )
 
         assert agent.id == "full_agent"
         assert agent.name == "Full Test Agent"
@@ -169,7 +171,7 @@ class TestBuiltAgent:
             protocol="test_protocol",
             workflow="test_workflow",
             book="test_book",
-            execution_engine=engine
+            execution_engine=engine,
         )
 
         assert agent.id == "test_agent"
@@ -201,7 +203,7 @@ class TestBuiltAgent:
             protocol=None,
             workflow=None,
             book=None,
-            execution_engine=engine
+            execution_engine=engine,
         )
 
         context = await agent.execute("Test task")
@@ -217,18 +219,20 @@ class TestAgentBuilderComplete:
 
     def test_complete_agent_configuration(self):
         """Test building an agent with all 11 configurable modules"""
-        agent = AgentBuilder() \
-            .with_id("senior_dev") \
-            .with_name("Senior Developer") \
-            .with_model("claude-3.5-sonnet") \
-            .with_speciality("Full-Stack Development") \
-            .with_persona("Experienced, methodical developer") \
-            .with_stack(["python", "typescript", "react", "postgresql"]) \
-            .with_tools(["github", "vscode", "docker"]) \
-            .with_protocol("analysis_first") \
-            .with_workflow("tdd_workflow") \
-            .with_book("project_memory") \
+        agent = (
+            AgentBuilder()
+            .with_id("senior_dev")
+            .with_name("Senior Developer")
+            .with_model("claude-3.5-sonnet")
+            .with_speciality("Full-Stack Development")
+            .with_persona("Experienced, methodical developer")
+            .with_stack(["python", "typescript", "react", "postgresql"])
+            .with_tools(["github", "vscode", "docker"])
+            .with_protocol("analysis_first")
+            .with_workflow("tdd_workflow")
+            .with_book("project_memory")
             .build()
+        )
 
         # Verify all fields are set correctly
         assert agent.id == "senior_dev"
@@ -247,10 +251,7 @@ class TestAgentBuilderComplete:
         # This test validates that agents can be created and executed
         # without depending on teams, workflows, protocols, tools, or book modules
 
-        agent = AgentBuilder() \
-            .with_id("independent_agent") \
-            .with_model("gpt-4") \
-            .build()
+        agent = AgentBuilder().with_id("independent_agent").with_model("gpt-4").build()
 
         # Agent should be able to execute tasks independently
         # (This would fail if there were circular imports or missing dependencies)
@@ -261,12 +262,14 @@ class TestAgentBuilderComplete:
     @pytest.mark.asyncio
     async def test_agent_execution_with_context(self):
         """Test agent execution maintains proper context and state"""
-        agent = AgentBuilder() \
-            .with_id("context_test_agent") \
-            .with_name("Context Test Agent") \
-            .with_model("claude-3.5-sonnet") \
-            .with_speciality("Testing") \
+        agent = (
+            AgentBuilder()
+            .with_id("context_test_agent")
+            .with_name("Context Test Agent")
+            .with_model("claude-3.5-sonnet")
+            .with_speciality("Testing")
             .build()
+        )
 
         # Execute a task
         context = await agent.execute("Analyze this code for bugs")
@@ -288,17 +291,21 @@ class TestAgentBuilderComplete:
     def test_agent_builder_method_order_independence(self):
         """Test that builder methods can be called in any order"""
         # Call methods in different order
-        agent1 = AgentBuilder() \
-            .with_model("gpt-4") \
-            .with_id("agent1") \
-            .with_name("Agent 1") \
+        agent1 = (
+            AgentBuilder()
+            .with_model("gpt-4")
+            .with_id("agent1")
+            .with_name("Agent 1")
             .build()
+        )
 
-        agent2 = AgentBuilder() \
-            .with_name("Agent 2") \
-            .with_id("agent2") \
-            .with_model("claude-3.5-sonnet") \
+        agent2 = (
+            AgentBuilder()
+            .with_name("Agent 2")
+            .with_id("agent2")
+            .with_model("claude-3.5-sonnet")
             .build()
+        )
 
         assert agent1.id == "agent1"
         assert agent1.model == "gpt-4"
@@ -313,18 +320,17 @@ class TestAgentBuilderComplete:
         builder = AgentBuilder()
 
         # Create first agent
-        agent1 = builder \
-            .with_id("agent1") \
-            .with_model("gpt-4") \
-            .with_name("Agent One") \
-            .build()
+        agent1 = (
+            builder.with_id("agent1").with_model("gpt-4").with_name("Agent One").build()
+        )
 
         # Create second agent with same builder (should reset state)
-        agent2 = builder \
-            .with_id("agent2") \
-            .with_model("claude-3.5-sonnet") \
-            .with_name("Agent Two") \
+        agent2 = (
+            builder.with_id("agent2")
+            .with_model("claude-3.5-sonnet")
+            .with_name("Agent Two")
             .build()
+        )
 
         assert agent1.id == "agent1"
         assert agent1.model == "gpt-4"
@@ -337,13 +343,15 @@ class TestAgentBuilderComplete:
     def test_agent_validation_edge_cases(self):
         """Test agent validation with edge cases"""
         # Test with valid non-empty model
-        agent = AgentBuilder() \
-            .with_id("valid_id") \
-            .with_model("some_model") \
-            .with_name("") \
-            .with_speciality("") \
-            .with_persona("") \
+        agent = (
+            AgentBuilder()
+            .with_id("valid_id")
+            .with_model("some_model")
+            .with_name("")
+            .with_speciality("")
+            .with_persona("")
             .build()
+        )
 
         assert agent.id == "valid_id"
         assert agent.model == "some_model"
@@ -358,10 +366,9 @@ class TestAgentBuilderComplete:
     @pytest.mark.asyncio
     async def test_agent_execution_error_handling(self):
         """Test agent execution error handling"""
-        agent = AgentBuilder() \
-            .with_id("error_test_agent") \
-            .with_model("error_model") \
-            .build()
+        agent = (
+            AgentBuilder().with_id("error_test_agent").with_model("error_model").build()
+        )
 
         # Execute task (mock will still succeed, but we test the structure)
         context = await agent.execute("Test error handling")

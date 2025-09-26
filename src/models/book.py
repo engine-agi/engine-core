@@ -1,4 +1,17 @@
 """
+from sqlalchemy import Column
+from typing import Set, Tuple
+from pydantic import BaseModel
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Book models for Engine Framework.
 
 Books implement hierarchical memory system with:
@@ -10,18 +23,16 @@ Books implement hierarchical memory system with:
 
 Based on Engine Framework data model specification.
 """
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from typing import Dict, Any, List, Optional, Union, TYPE_CHECKING
-from sqlalchemy import (
+from pydantic import BaseModel, Field
+from sqlalchemy import Column
+
     Column, String, Text, Boolean, Integer, Float,
     ForeignKey, Index, CheckConstraint
 )
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy.orm import relationship, validates
-from datetime import datetime
 import re
-
-from .base import BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
@@ -40,12 +51,12 @@ class BookStatus:
 class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin):
     """
     Book entity - hierarchical memory and knowledge base.
-    
+
     Books provide structured memory storage for agents and teams,
     organizing information in a hierarchical format with chapters
     and pages. They support semantic search, context tracking,
     and collaborative knowledge management.
-    
+
     Key features:
     - Hierarchical organization (book → chapters → pages)
     - Semantic search with embeddings
@@ -53,7 +64,7 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
     - Collaborative editing and sharing
     - Context-aware content retrieval
     """
-    
+
     __tablename__ = "books"
 
     # Basic book information
@@ -63,13 +74,13 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Book title"
     )
-    
+
     description = Column(
         Text,
         nullable=True,
         comment="Book description and purpose"
     )
-    
+
     # Book classification and organization
     category = Column(
         String(100),
@@ -77,13 +88,13 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Book category (e.g., 'project_memory', 'knowledge_base', 'documentation')"
     )
-    
+
     tags = Column(
         ARRAY(String(100)),
         nullable=True,
         comment="Tags for book organization and discovery"
     )
-    
+
     # Book status and access control
     status = Column(
         String(50),
@@ -92,28 +103,28 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Book status and visibility"
     )
-    
+
     # Semantic search configuration
     search_config = Column(
         JSONB,
         nullable=True,
         comment="Semantic search configuration and settings"
     )
-    
+
     # Book metadata
     author = Column(
         String(255),
         nullable=True,
         comment="Book author or creator"
     )
-    
+
     version = Column(
         String(50),
         nullable=False,
         default="1.0",
         comment="Book version for change management"
     )
-    
+
     # Content statistics
     chapter_count = Column(
         Integer,
@@ -121,14 +132,14 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         nullable=False,
         comment="Number of chapters in book"
     )
-    
+
     page_count = Column(
         Integer,
         default=0,
         nullable=False,
         comment="Total number of pages in book"
     )
-    
+
     # Access and usage tracking
     access_count = Column(
         Integer,
@@ -136,13 +147,13 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         nullable=False,
         comment="Number of times book has been accessed"
     )
-    
+
     last_accessed_at = Column(
         String(50),
         nullable=True,
         comment="Last access timestamp"
     )
-    
+
     # Collaborative features
     contributors = Column(
         ARRAY(String(255)),
@@ -159,11 +170,12 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
 
     # Override the inherited metadata attribute to avoid SQLAlchemy conflict
     metadata = None
-    
+
     # === RELATIONSHIPS ===
-    
+
     # One-to-many relationship with chapters
-    chapters = relationship("BookChapter", back_populates="book", cascade="all, delete-orphan")
+    chapters = relationship("BookChapter", back_populates="book",
+                            cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         """Initialize book with validation."""
@@ -178,7 +190,7 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
             kwargs['page_count'] = 0
         if 'access_count' not in kwargs:
             kwargs['access_count'] = 0
-            
+
         super().__init__(**kwargs)
 
     def __repr__(self) -> str:
@@ -191,14 +203,14 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Validate book ID format."""
         if not value:
             raise ValueError("Book ID is required")
-        
+
         # Must be alphanumeric with underscores/hyphens, 2-100 characters
         if not re.match(r'^[a-zA-Z0-9_-]{2,100}$', value):
             raise ValueError(
                 "Book ID must be 2-100 characters, containing only "
                 "letters, numbers, underscores, and hyphens"
             )
-        
+
         return value.lower()
 
     @validates('title')
@@ -206,20 +218,21 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Validate book title."""
         if not value or not value.strip():
             raise ValueError("Book title is required")
-        
+
         if len(value.strip()) > 255:
             raise ValueError("Book title cannot exceed 255 characters")
-        
+
         return value.strip()
 
     @validates('status')
     def validate_status(self, key: str, value: str) -> str:
         """Validate book status."""
-        valid_statuses = [BookStatus.ACTIVE, BookStatus.ARCHIVED, BookStatus.PRIVATE, BookStatus.SHARED]
-        
+        valid_statuses = [BookStatus.ACTIVE, BookStatus.ARCHIVED,
+            BookStatus.PRIVATE, BookStatus.SHARED]
+
         if value not in valid_statuses:
             raise ValueError(f"Status must be one of: {', '.join(valid_statuses)}")
-        
+
         return value
 
     # === CONTENT MANAGEMENT ===
@@ -290,21 +303,21 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Record book access."""
         self.access_count += 1
         self.last_accessed_at = datetime.utcnow().isoformat()
-        
+
         # Track access metadata
         if self.metadata is None:
             self.metadata = {}
-        
+
         access_history = self.metadata.get('access_history', [])
         access_history.append({
             'timestamp': datetime.utcnow().isoformat(),
             'accessor': accessor
         })
-        
+
         # Keep only last 100 access records
         if len(access_history) > 100:
             access_history = access_history[-100:]
-        
+
         self.metadata['access_history'] = access_history
 
     # === COLLABORATIVE FEATURES ===
@@ -314,7 +327,7 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         contributors_value = getattr(self, 'contributors', None)
         if contributors_value is None:
             setattr(self, 'contributors', [])
-        
+
         contributors_list = getattr(self, 'contributors', [])
         if contributor not in contributors_list:
             contributors_list.append(contributor)
@@ -339,7 +352,7 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         contributors_value = getattr(self, 'contributors', None)
         created_at_value = getattr(self, 'created_at', None)
         updated_at_value = getattr(self, 'updated_at', None)
-        
+
         return {
             'id': self.id,
             'title': self.title,
@@ -364,11 +377,11 @@ class Book(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
 class BookChapter(BaseModel, StringIdentifierMixin, ConfigurationMixin):
     """
     Book chapter - organizational unit within a book.
-    
+
     Chapters group related pages and provide hierarchical organization.
     They can have their own metadata, ordering, and access controls.
     """
-    
+
     __tablename__ = "book_chapters"
 
     # Chapter information
@@ -377,13 +390,13 @@ class BookChapter(BaseModel, StringIdentifierMixin, ConfigurationMixin):
         nullable=False,
         comment="Chapter title"
     )
-    
+
     description = Column(
         Text,
         nullable=True,
         comment="Chapter description and overview"
     )
-    
+
     # Book association
     book_id = Column(
         String(255),
@@ -392,14 +405,14 @@ class BookChapter(BaseModel, StringIdentifierMixin, ConfigurationMixin):
         index=True,
         comment="Book this chapter belongs to"
     )
-    
+
     # Chapter ordering
     order_index = Column(
         Integer,
         nullable=True,
         comment="Chapter order within book"
     )
-    
+
     # Content statistics
     page_count = Column(
         Integer,
@@ -407,7 +420,7 @@ class BookChapter(BaseModel, StringIdentifierMixin, ConfigurationMixin):
         nullable=False,
         comment="Number of pages in chapter"
     )
-    
+
     # Chapter metadata
     tags = Column(
         ARRAY(String(100)),
@@ -424,11 +437,12 @@ class BookChapter(BaseModel, StringIdentifierMixin, ConfigurationMixin):
 
     # Override the inherited metadata attribute to avoid SQLAlchemy conflict
     metadata = None
-    
+
     # === RELATIONSHIPS ===
-    
+
     book = relationship("Book", back_populates="chapters")
-    pages = relationship("BookPage", back_populates="chapter", cascade="all, delete-orphan")
+    pages = relationship("BookPage", back_populates="chapter",
+                         cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<BookChapter(id='{self.id}', title='{self.title}', pages={self.page_count})>"
@@ -467,11 +481,11 @@ class BookChapter(BaseModel, StringIdentifierMixin, ConfigurationMixin):
 class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
     """
     Book page - content unit within a chapter.
-    
+
     Pages contain the actual content and are the basic unit of information
     storage. They support rich content, versioning, and semantic indexing.
     """
-    
+
     __tablename__ = "book_pages"
 
     # Page information
@@ -480,13 +494,13 @@ class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
         nullable=False,
         comment="Page title"
     )
-    
+
     content = Column(
         Text,
         nullable=False,
         comment="Page content (markdown, text, or structured data)"
     )
-    
+
     # Associations
     book_id = Column(
         String(255),
@@ -495,7 +509,7 @@ class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
         index=True,
         comment="Book this page belongs to"
     )
-    
+
     chapter_id = Column(
         String(255),
         ForeignKey("book_chapters.id", ondelete="CASCADE"),
@@ -503,14 +517,14 @@ class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
         index=True,
         comment="Chapter this page belongs to"
     )
-    
+
     # Page ordering
     order_index = Column(
         Integer,
         nullable=True,
         comment="Page order within chapter"
     )
-    
+
     # Content metadata
     content_type = Column(
         String(50),
@@ -518,26 +532,26 @@ class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
         default="markdown",
         comment="Content type (markdown, text, json, html)"
     )
-    
+
     word_count = Column(
         Integer,
         nullable=True,
         comment="Approximate word count"
     )
-    
+
     # Semantic search support
     embedding = Column(
         ARRAY(Float),
         nullable=True,
         comment="Content embedding vector for semantic search"
     )
-    
+
     embedding_model = Column(
         String(100),
         nullable=True,
         comment="Model used to generate embedding"
     )
-    
+
     # Page versioning
     version = Column(
         String(50),
@@ -545,7 +559,7 @@ class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
         default="1.0",
         comment="Page version"
     )
-    
+
     # Access tracking
     access_count = Column(
         Integer,
@@ -553,7 +567,7 @@ class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
         nullable=False,
         comment="Number of times page has been accessed"
     )
-    
+
     # Page tags
     tags = Column(
         ARRAY(String(100)),
@@ -570,9 +584,9 @@ class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
 
     # Override the inherited metadata attribute to avoid SQLAlchemy conflict
     metadata = None
-    
+
     # === RELATIONSHIPS ===
-    
+
     book = relationship("Book")
     chapter = relationship("BookChapter", back_populates="pages")
 
@@ -585,10 +599,10 @@ class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
     def validate_content_type(self, key: str, value: str) -> str:
         """Validate content type."""
         valid_types = ['markdown', 'text', 'json', 'html', 'yaml']
-        
+
         if value not in valid_types:
             raise ValueError(f"Content type must be one of: {', '.join(valid_types)}")
-        
+
         return value
 
     # === CONTENT MANAGEMENT ===
@@ -596,10 +610,10 @@ class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
     def update_content(self, new_content: str, version_increment: bool = True) -> None:
         """Update page content with optional version increment."""
         self.content = new_content
-        
+
         # Update word count (simplified)
         self.word_count = len(new_content.split()) if new_content else 0
-        
+
         # Increment version if requested
         if version_increment:
             try:
@@ -625,7 +639,7 @@ class BookPage(BaseModel, StringIdentifierMixin, ConfigurationMixin):
         embedding_value = getattr(self, 'embedding', None)
         if not embedding_value or not query_embedding:
             return 0.0
-        
+
         # Simplified cosine similarity calculation
         # In real implementation, would use proper vector operations
         return 0.8  # Placeholder similarity score
@@ -645,7 +659,8 @@ Index('idx_page_word_count', BookPage.word_count)
 
 # Database constraints
 CheckConstraint(
-    Book.status.in_([BookStatus.ACTIVE, BookStatus.ARCHIVED, BookStatus.PRIVATE, BookStatus.SHARED]),
+    Book.status.in_([BookStatus.ACTIVE, BookStatus.ARCHIVED,
+                    BookStatus.PRIVATE, BookStatus.SHARED]),
     name='ck_book_status_valid'
 )
 

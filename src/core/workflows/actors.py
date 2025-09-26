@@ -1,18 +1,32 @@
 """
+from abc import abstractmethod
+from typing import Set, Tuple
+from enum import Enum
+from dataclasses import dataclass, field
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from typing import Optional, List, Dict, Any
 Actor Model implementation for parallel workflow execution.
 
 This module provides actor-based execution for workflows, enabling true parallelism
 without the limitations of level-based superstep execution.
 """
-
 import asyncio
 import logging
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from .workflow_engine import (
+from pydantic import Field
+
     VertexState,
     WorkflowState,
     VertexComputation,
@@ -122,7 +136,8 @@ class VertexActor(Actor):
         elif message.message_type == ActorMessageType.TERMINATE:
             await self.stop()
         else:
-            logger.warning(f"Vertex {self.vertex_id} received unknown message: {message.message_type}")
+            logger.warning(
+                f"Vertex {self.vertex_id} received unknown message: {message.message_type}")
 
     async def _handle_execute(self, message: ActorMessage) -> None:
         """Handle execution request."""
@@ -217,7 +232,8 @@ class WorkflowCoordinatorActor(Actor):
         elif message.message_type == ActorMessageType.ERROR:
             await self._handle_vertex_error(message)
         else:
-            logger.warning(f"Coordinator received unknown message: {message.message_type}")
+            logger.warning(
+                f"Coordinator received unknown message: {message.message_type}")
 
     async def _handle_vertex_result(self, message: ActorMessage) -> None:
         """Handle successful vertex completion."""

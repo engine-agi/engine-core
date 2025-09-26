@@ -9,28 +9,26 @@ Tests cover:
 - Integration with agents and tools
 """
 
-import pytest
-import asyncio
-from unittest.mock import Mock, AsyncMock
-from datetime import datetime
+from unittest.mock import AsyncMock, Mock
 
-from engine_core.core.protocols.protocol_builder import (
-    ProtocolBuilder,
-    BuiltProtocol,
-    ProtocolConfiguration
-)
+import pytest
+
 from engine_core.core.protocols.protocol import (
-    ProtocolParser,
-    PatternBasedIntentRecognizer,
-    CommandType,
-    IntentCategory,
-    ContextScope,
-    CommandPriority,
     CommandContext,
-    ParsedCommand,
-    ExecutionPlan,
     CommandIntent,
-    IntentRecognizer
+    CommandType,
+    ContextScope,
+    ExecutionPlan,
+    IntentCategory,
+    IntentRecognizer,
+    ParsedCommand,
+    PatternBasedIntentRecognizer,
+    ProtocolParser,
+)
+from engine_core.core.protocols.protocol_builder import (
+    BuiltProtocol,
+    ProtocolBuilder,
+    ProtocolConfiguration,
 )
 
 
@@ -98,7 +96,9 @@ class TestProtocolBuilder:
     def test_with_confidence_threshold_invalid(self):
         """Test invalid confidence threshold raises error."""
         builder = ProtocolBuilder()
-        with pytest.raises(ValueError, match="Confidence threshold must be between 0.0 and 1.0"):
+        with pytest.raises(
+            ValueError, match="Confidence threshold must be between 0.0 and 1.0"
+        ):
             builder.with_confidence_threshold(1.5)
 
     def test_with_max_execution_time(self):
@@ -160,7 +160,7 @@ class TestProtocolBuilder:
         assert protocol.configuration.supported_intents == [
             IntentCategory.ANALYZE,
             IntentCategory.QUERY,
-            IntentCategory.READ
+            IntentCategory.READ,
         ]
         assert protocol.configuration.default_scope == ContextScope.PROJECT
         assert protocol.configuration.strict_validation is True
@@ -173,7 +173,7 @@ class TestProtocolBuilder:
         assert protocol.configuration.supported_intents == [
             IntentCategory.GENERATE,
             IntentCategory.CREATE,
-            IntentCategory.TRANSFORM
+            IntentCategory.TRANSFORM,
         ]
         assert protocol.configuration.default_scope == ContextScope.WORKFLOW
         assert protocol.configuration.enable_learning is True
@@ -186,7 +186,7 @@ class TestProtocolBuilder:
         assert protocol.configuration.supported_intents == [
             IntentCategory.COORDINATE,
             IntentCategory.EXECUTE,
-            IntentCategory.CONTROL
+            IntentCategory.CONTROL,
         ]
         assert protocol.configuration.default_scope == ContextScope.TEAM
         assert protocol.configuration.max_execution_time == 600
@@ -209,11 +209,13 @@ class TestBuiltProtocol:
 
     def test_protocol_with_name_description(self):
         """Test protocol with custom name and description."""
-        protocol = (ProtocolBuilder()
+        protocol = (
+            ProtocolBuilder()
             .with_id("test_protocol")
             .with_name("Custom Name")
             .with_description("Custom Description")
-            .build())
+            .build()
+        )
 
         assert protocol.name == "Custom Name"
         assert protocol.description == "Custom Description"
@@ -261,7 +263,10 @@ class TestSemanticCommandParsing:
         """Test parsing analysis commands."""
         command = await parser.parse_command("analyze this Python code")
         assert command.intent.category == IntentCategory.ANALYZE
-        assert "python" in command.intent.target.lower() or "code" in command.intent.target.lower()
+        assert (
+            "python" in command.intent.target.lower()
+            or "code" in command.intent.target.lower()
+        )
         assert command.command_type == CommandType.ANALYSIS
 
     @pytest.mark.asyncio
@@ -283,7 +288,9 @@ class TestSemanticCommandParsing:
     @pytest.mark.asyncio
     async def test_parse_coordination_command(self, parser):
         """Test parsing coordination commands."""
-        command = await parser.parse_command("coordinate the team to complete this task")
+        command = await parser.parse_command(
+            "coordinate the team to complete this task"
+        )
         assert command.intent.category == IntentCategory.COORDINATE
         assert "team" in command.intent.target.lower()
         assert command.command_type == CommandType.COORDINATION
@@ -292,9 +299,7 @@ class TestSemanticCommandParsing:
     async def test_parse_with_context(self, parser):
         """Test parsing with context."""
         context = CommandContext(
-            project_id="test_project",
-            agent_id="test_agent",
-            scope=ContextScope.PROJECT
+            project_id="test_project", agent_id="test_agent", scope=ContextScope.PROJECT
         )
 
         command = await parser.parse_command("analyze the current project", context)
@@ -348,7 +353,9 @@ class TestIntentRecognition:
     async def test_recognize_analyze_intent(self, recognizer):
         """Test recognizing analyze intents."""
         context = CommandContext()
-        intent = await recognizer.recognize_intent("analyze this code for bugs", context)
+        intent = await recognizer.recognize_intent(
+            "analyze this code for bugs", context
+        )
         assert intent.category == IntentCategory.ANALYZE
         assert intent.confidence > 0
 
@@ -366,7 +373,7 @@ class TestIntentRecognition:
         context = CommandContext()
         context.history = [
             {"intent": {"category": "analyze"}},
-            {"intent": {"category": "analyze"}}
+            {"intent": {"category": "analyze"}},
         ]
 
         intent = await recognizer.recognize_intent("check this", context)
@@ -440,11 +447,13 @@ class TestIntegration:
     async def test_full_protocol_workflow(self):
         """Test complete protocol workflow from creation to execution."""
         # Create protocol
-        protocol = (ProtocolBuilder()
+        protocol = (
+            ProtocolBuilder()
             .with_id("integration_test")
             .with_name("Integration Test Protocol")
             .with_supported_intents([IntentCategory.ANALYZE, IntentCategory.GENERATE])
-            .build())
+            .build()
+        )
 
         # Parse command
         command = await protocol.parse_command("analyze this Python code")
@@ -466,18 +475,22 @@ class TestIntegration:
         """Test protocol with custom intent recognizer."""
         # Create mock recognizer
         mock_recognizer = Mock(spec=IntentRecognizer)
-        mock_recognizer.recognize_intent = AsyncMock(return_value=CommandIntent(
-            category=IntentCategory.ANALYZE,
-            action="analyze",
-            confidence=0.9
-        ))
-        mock_recognizer.get_supported_intents = Mock(return_value=[IntentCategory.ANALYZE])
+        mock_recognizer.recognize_intent = AsyncMock(
+            return_value=CommandIntent(
+                category=IntentCategory.ANALYZE, action="analyze", confidence=0.9
+            )
+        )
+        mock_recognizer.get_supported_intents = Mock(
+            return_value=[IntentCategory.ANALYZE]
+        )
 
         # Create protocol with custom recognizer
-        protocol = (ProtocolBuilder()
+        protocol = (
+            ProtocolBuilder()
             .with_id("custom_recognizer_test")
             .with_custom_intent_recognizer(mock_recognizer)
-            .build())
+            .build()
+        )
 
         # Parse command
         command = await protocol.parse_command("analyze this")

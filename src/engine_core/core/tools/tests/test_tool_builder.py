@@ -1,4 +1,14 @@
 """
+from enum import Enum
+from dataclasses import dataclass
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
 Unit Tests for ToolBuilder - Tool Integration Architecture.
 
 Tests cover:
@@ -8,14 +18,16 @@ Tests cover:
 - Tool execution interfaces
 - API integration capabilities
 """
+import asyncio
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 import pytest
-import asyncio
-from unittest.mock import MagicMock, AsyncMock
-from typing import Dict, Any
+from pydantic import Field
 
 # Import tool components
-from src.engine_core.core.tools.tool_builder import (
     ToolBuilder,
     ToolConfiguration,
     ToolType,
@@ -164,7 +176,8 @@ class TestToolBuilder:
             name="get_data",
             description="Retrieve data from API",
             input_schema={"type": "object", "properties": {"id": {"type": "string"}}},
-            output_schema={"type": "object", "properties": {"data": {"type": "object"}}},
+            output_schema={"type": "object", "properties": {
+                "data": {"type": "object"}}},
             metadata={"http_method": "GET", "endpoint": "/data/{id}"}
         )
 

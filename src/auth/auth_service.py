@@ -1,4 +1,16 @@
 """
+from fastapi import Depends
+from fastapi import HTTPException
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Authentication Service - User Authentication and Authorization.
 
 This module provides authentication and authorization services for the Engine Framework,
@@ -18,13 +30,12 @@ Architecture:
 - Database-backed user management
 - Configurable security policies
 """
-
-from typing import Dict, Any, Optional, Union
-from datetime import datetime, timedelta
-import jwt
 import logging
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import jwt
+from fastapi import Depends, HTTPException
 
 logger = logging.getLogger(__name__)
 
@@ -38,26 +49,30 @@ security = HTTPBearer()
 
 class AuthServiceError(Exception):
     """Base exception for authentication service errors."""
+
     pass
 
 
 class InvalidTokenError(AuthServiceError):
     """Raised when a token is invalid."""
+
     pass
 
 
 class UserNotFoundError(AuthServiceError):
     """Raised when a user is not found."""
+
     pass
 
 
 class InsufficientPermissionsError(AuthServiceError):
     """Raised when user lacks required permissions."""
+
     pass
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> Dict[str, Any]:
     """
     FastAPI dependency to get the current authenticated user.
@@ -92,7 +107,7 @@ async def get_current_user(
             "role": payload.get("role", "user"),
             "permissions": payload.get("permissions", ["read"]),
             "created_at": datetime.utcnow(),
-            "last_login": datetime.utcnow()
+            "last_login": datetime.utcnow(),
         }
 
         return user_data
@@ -118,7 +133,9 @@ async def get_current_user(
         )
 
 
-def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(
+    data: Dict[str, Any], expires_delta: Optional[timedelta] = None
+) -> str:
     """
     Create a JWT access token.
 
@@ -146,7 +163,7 @@ async def validate_user_permissions(
     user: Dict[str, Any],
     required_permissions: list,
     resource_type: str = None,
-    resource_id: str = None
+    resource_id: str = None,
 ) -> bool:
     """
     Validate if a user has required permissions for a resource.
@@ -205,7 +222,7 @@ async def authenticate_user(username: str, password: str) -> Optional[Dict[str, 
                 "role": "user",
                 "permissions": ["read", "write"],
                 "created_at": datetime.utcnow(),
-                "last_login": datetime.utcnow()
+                "last_login": datetime.utcnow(),
             }
         return None
 
@@ -235,7 +252,7 @@ async def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
                 "role": "user",
                 "permissions": ["read", "write"],
                 "created_at": datetime.utcnow(),
-                "last_login": datetime.utcnow()
+                "last_login": datetime.utcnow(),
             }
         return None
 

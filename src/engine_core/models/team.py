@@ -1,4 +1,17 @@
 """
+from sqlalchemy import Column
+from typing import Set, Tuple
+from pydantic import BaseModel
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from typing import Optional, List, Dict, Any
 Team model for Engine Framework.
 
 A team coordinates multiple agents to work together on complex tasks.
@@ -12,48 +25,49 @@ Team coordination strategies:
 
 Based on Engine Framework data model specification.
 """
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from typing import Dict, Any, List, Optional, Union, TYPE_CHECKING
-from sqlalchemy import (
-    Column, String, Text, Boolean, Integer, 
+from pydantic import BaseModel, Field
+from sqlalchemy import Column
+
+    Column, String, Text, Boolean, Integer,
     ForeignKey, Table, Index, CheckConstraint
 )
-from .base import metadata
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy.orm import relationship, validates, backref
-from datetime import datetime
 import re
-
-from .base import BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin, TimestampMixin
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
-    from .project import Project
     from .agent import Agent
-    from .workflow import Workflow
-    from .protocol import Protocol
     from .book import Book
+    from .project import Project
+    from .protocol import Protocol
+    from .workflow import Workflow
 
 # Many-to-many association table for team-agent relationships
 team_agents = Table(
     'team_agents',
     metadata,
-    Column('team_id', String(255), ForeignKey('teams.id', ondelete='CASCADE'), primary_key=True),
-    Column('agent_id', String(255), ForeignKey('agents.id', ondelete='CASCADE'), primary_key=True),
+    Column('team_id', String(255), ForeignKey(
+        'teams.id', ondelete='CASCADE'), primary_key=True),
+    Column('agent_id', String(255), ForeignKey(
+        'agents.id', ondelete='CASCADE'), primary_key=True),
     Column('role', String(100), nullable=True, comment='Agent role within the team'),
-    Column('joined_at', String(50), nullable=True, comment='When agent joined the team'),
-    Column('is_active', Boolean, default=True, comment='Whether agent is active in team')
+    Column('joined_at', String(50), nullable=True,
+           comment='When agent joined the team'),
+    Column('is_active', Boolean, default=True,
+           comment='Whether agent is active in team')
 )
 
 
 class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin, TimestampMixin):
     """
     Team entity - coordinates multiple agents for collaborative work.
-    
+
     Teams provide structured coordination between multiple AI agents,
     enabling complex multi-step workflows that require specialized
     expertise and collaborative decision-making.
-    
+
     Key features:
     - Multiple coordination strategies (hierarchical, collaborative, parallel)
     - Flexible member management with roles
@@ -61,7 +75,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
     - Shared memory/knowledge base
     - Execution monitoring and coordination
     """
-    
+
     __tablename__ = "teams"
 
     # Basic team information
@@ -71,13 +85,13 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Human-readable team name"
     )
-    
+
     description = Column(
         Text,
         nullable=True,
         comment="Team purpose, objectives, and working methods"
     )
-    
+
     # Team coordination strategy
     coordination = Column(
         String(50),
@@ -86,14 +100,14 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Team coordination strategy"
     )
-    
+
     # Team hierarchy and leadership (for hierarchical coordination)
     hierarchy = Column(
         JSONB,
         nullable=True,
         comment="Team hierarchy structure with leaders and reporting relationships"
     )
-    
+
     # Project association
     project_id = Column(
         String(255),
@@ -102,7 +116,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Project this team belongs to"
     )
-    
+
     # Team-level protocol (overrides individual agent protocols)
     protocol_id = Column(
         String(255),
@@ -111,7 +125,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Team protocol that overrides individual agent protocols"
     )
-    
+
     # Team-level workflow
     workflow_id = Column(
         String(255),
@@ -120,7 +134,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Team workflow for coordinated execution"
     )
-    
+
     # Shared team memory
     book_id = Column(
         String(255),
@@ -129,7 +143,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Shared team memory/knowledge base"
     )
-    
+
     # Team status and execution
     status = Column(
         String(50),
@@ -138,7 +152,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         index=True,
         comment="Current team status"
     )
-    
+
     # Team execution metrics
     total_executions = Column(
         Integer,
@@ -146,34 +160,34 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         nullable=False,
         comment="Total number of team executions"
     )
-    
+
     successful_executions = Column(
         Integer,
         default=0,
         nullable=False,
         comment="Number of successful team executions"
     )
-    
+
     current_workflow = Column(
         String(255),
         nullable=True,
         comment="Currently executing workflow or task"
     )
-    
+
     # Team coordination settings
     coordination_config = Column(
         JSONB,
         nullable=True,
         comment="Coordination-specific configuration and rules"
     )
-    
+
     # Communication and decision-making
     communication_style = Column(
         String(50),
         nullable=True,
         comment="Team communication style (formal, casual, structured)"
     )
-    
+
     decision_making = Column(
         String(50),
         nullable=True,
@@ -189,9 +203,9 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
 
     # Override the inherited metadata attribute to avoid SQLAlchemy conflict
     metadata = None
-    
+
     # === RELATIONSHIPS ===
-    
+
     # Many-to-many relationship with agents
     agents = relationship(
         "Agent",
@@ -199,7 +213,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         back_populates="teams",
         lazy='select'
     )
-    
+
     # Foreign key relationships
     project = relationship("Project", back_populates="teams")
     protocol = relationship("Protocol", back_populates="teams")
@@ -221,7 +235,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
             kwargs['communication_style'] = 'structured'
         if 'decision_making' not in kwargs:
             kwargs['decision_making'] = 'consensus'
-            
+
         super().__init__(**kwargs)
 
     def __repr__(self) -> str:
@@ -234,14 +248,14 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Validate team ID format."""
         if not value:
             raise ValueError("Team ID is required")
-        
+
         # Must be alphanumeric with underscores/hyphens, 2-100 characters
         if not re.match(r'^[a-zA-Z0-9_-]{2,100}$', value):
             raise ValueError(
                 "Team ID must be 2-100 characters, containing only "
                 "letters, numbers, underscores, and hyphens"
             )
-        
+
         return value.lower()  # Normalize to lowercase
 
     @validates('name')
@@ -249,30 +263,32 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Validate team name."""
         if not value or not value.strip():
             raise ValueError("Team name is required")
-        
+
         if len(value.strip()) > 255:
             raise ValueError("Team name cannot exceed 255 characters")
-        
+
         return value.strip()
 
     @validates('coordination')
     def validate_coordination(self, key: str, value: str) -> str:
         """Validate coordination strategy."""
         valid_strategies = ['hierarchical', 'collaborative', 'parallel']
-        
+
         if value not in valid_strategies:
-            raise ValueError(f"Coordination must be one of: {', '.join(valid_strategies)}")
-        
+            raise ValueError(
+                f"Coordination must be one of: {', '.join(valid_strategies)}")
+
         return value
 
     @validates('status')
     def validate_status(self, key: str, value: str) -> str:
         """Validate team status."""
-        valid_statuses = ['idle', 'active', 'busy', 'coordinating', 'error', 'disbanded']
-        
+        valid_statuses = ['idle', 'active', 'busy',
+            'coordinating', 'error', 'disbanded']
+
         if value not in valid_statuses:
             raise ValueError(f"Status must be one of: {', '.join(valid_statuses)}")
-        
+
         return value
 
     @validates('communication_style')
@@ -280,12 +296,13 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Validate communication style."""
         if value is None:
             return value
-            
+
         valid_styles = ['formal', 'casual', 'structured', 'adaptive']
-        
+
         if value not in valid_styles:
-            raise ValueError(f"Communication style must be one of: {', '.join(valid_styles)}")
-        
+            raise ValueError(
+                f"Communication style must be one of: {', '.join(valid_styles)}")
+
         return value
 
     @validates('decision_making')
@@ -293,64 +310,66 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         """Validate decision making process."""
         if value is None:
             return value
-            
+
         valid_processes = ['consensus', 'majority', 'leader', 'hybrid', 'weighted']
-        
+
         if value not in valid_processes:
-            raise ValueError(f"Decision making must be one of: {', '.join(valid_processes)}")
-        
+            raise ValueError(
+                f"Decision making must be one of: {', '.join(valid_processes)}")
+
         return value
 
     @classmethod
     def validate_data(cls, data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate team data before creating/updating."""
         validated = data.copy()
-        
+
         # Required fields
         if 'id' not in validated or not validated['id']:
             raise ValueError("Team ID is required")
-        
+
         if 'name' not in validated or not validated['name']:
             raise ValueError("Team name is required")
-        
+
         # Validate hierarchy structure for hierarchical teams
         if validated.get('coordination') == 'hierarchical':
             hierarchy = validated.get('hierarchy', {})
-            
+
             if not hierarchy.get('leader'):
-                raise ValueError("Hierarchical teams must have a leader specified in hierarchy")
-        
+                raise ValueError(
+                    "Hierarchical teams must have a leader specified in hierarchy")
+
         # Validate coordination config
         if 'coordination_config' in validated and validated['coordination_config']:
             if not isinstance(validated['coordination_config'], dict):
                 raise ValueError("Coordination config must be a dictionary")
-        
+
         return validated
 
     def validate_instance(self) -> List[str]:
         """Validate team instance and return list of errors."""
         errors = []
-        
+
         # Validate required fields
         if not getattr(self, 'id', None):
             errors.append("Team ID is required")
-        
+
         if not getattr(self, 'name', None):
             errors.append("Team name is required")
-        
+
         # Validate coordination-specific requirements
         coordination = getattr(self, 'coordination', None)
         hierarchy = getattr(self, 'hierarchy', None)
         if coordination == 'hierarchical':
             if not hierarchy or not hierarchy.get('leader'):
                 errors.append("Hierarchical teams must have a leader defined")
-        
+
         # Validate execution statistics
         successful_executions = getattr(self, 'successful_executions', 0)
         total_executions = getattr(self, 'total_executions', 0)
         if successful_executions > total_executions:
             errors.append("Successful executions cannot exceed total executions")
-        
+
         return errors
 
     # === TEAM MANAGEMENT METHODS ===
@@ -361,22 +380,22 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         # For now, just validate the data
         if not agent_id:
             raise ValueError("Agent ID is required")
-        
+
         # Add role to hierarchy if hierarchical coordination
         coordination = getattr(self, 'coordination', None)
         hierarchy = getattr(self, 'hierarchy', None) or {}
-        
+
         if coordination == 'hierarchical' and role:
             if not hierarchy:
                 hierarchy = {}
                 self.hierarchy = hierarchy
-            
+
             members = hierarchy.get('members', [])
             if agent_id not in members:
                 members.append(agent_id)
                 hierarchy['members'] = members
                 self.hierarchy = hierarchy
-            
+
             # Set role in hierarchy
             roles = hierarchy.get('roles', {})
             roles[agent_id] = role
@@ -393,7 +412,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
                 members.remove(agent_id)
                 hierarchy['members'] = members
                 self.hierarchy = hierarchy
-            
+
             # Remove role
             roles = hierarchy.get('roles', {})
             if agent_id in roles:
@@ -406,15 +425,15 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         coordination = getattr(self, 'coordination', None)
         if coordination != 'hierarchical':
             raise ValueError("Leaders can only be set for hierarchical coordination")
-        
+
         hierarchy = getattr(self, 'hierarchy', None)
         if not hierarchy:
             hierarchy = {}
             self.hierarchy = hierarchy
-        
+
         hierarchy['leader'] = agent_id
         self.hierarchy = hierarchy
-        
+
         # Ensure leader is in members
         members = hierarchy.get('members', [])
         if agent_id not in members:
@@ -443,7 +462,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         if coordination_config is None:
             coordination_config = {}
             self.coordination_config = coordination_config
-        
+
         coordination_config[key] = value
         self.coordination_config = coordination_config
 
@@ -459,29 +478,29 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
     def update_execution_stats(self, success: bool = True, metadata: Optional[Dict[str, Any]] = None) -> None:
         """Update team execution statistics."""
         self.total_executions += 1
-        
+
         if success:
             self.successful_executions += 1
-        
+
         # Update last execution timestamp
         self.last_executed_at = datetime.utcnow()
-        
+
         # Store execution metadata
         if metadata:
             if self.metadata is None:
                 self.metadata = {}
-            
+
             execution_history = self.metadata.get('execution_history', [])
             execution_history.append({
                 'timestamp': datetime.utcnow().isoformat(),
                 'success': success,
                 'metadata': metadata
             })
-            
+
             # Keep only last 50 execution records
             if len(execution_history) > 50:
                 execution_history = execution_history[-50:]
-            
+
             self.metadata['execution_history'] = execution_history
 
     def get_success_rate(self) -> Optional[float]:
@@ -497,7 +516,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
         agents = getattr(self, 'agents', None) or []
         created_at = getattr(self, 'created_at', None)
         updated_at = getattr(self, 'updated_at', None)
-        
+
         return {
             'id': getattr(self, 'id', None),
             'name': getattr(self, 'name', None),
@@ -527,21 +546,29 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
             'communication_style': getattr(self, 'communication_style', None),
             'decision_making': getattr(self, 'decision_making', None)
         }
-        
+
         if coordination == 'hierarchical':
             base_strategy['leader'] = self.get_leader()
             base_strategy['hierarchy'] = getattr(self, 'hierarchy', None)
-            base_strategy['escalation_rules'] = self.get_coordination_config('escalation_rules', [])
-            base_strategy['approval_required'] = self.get_coordination_config('approval_required', True)
+            base_strategy['escalation_rules'] = self.get_coordination_config(
+                'escalation_rules', [])
+            base_strategy['approval_required'] = self.get_coordination_config(
+                'approval_required', True)
         elif coordination == 'collaborative':
-            base_strategy['consensus_threshold'] = self.get_coordination_config('consensus_threshold', 0.7)
-            base_strategy['discussion_rounds'] = self.get_coordination_config('discussion_rounds', 3)
-            base_strategy['conflict_resolution'] = self.get_coordination_config('conflict_resolution', 'vote')
+            base_strategy['consensus_threshold'] = self.get_coordination_config(
+                'consensus_threshold', 0.7)
+            base_strategy['discussion_rounds'] = self.get_coordination_config(
+                'discussion_rounds', 3)
+            base_strategy['conflict_resolution'] = self.get_coordination_config(
+                'conflict_resolution', 'vote')
         elif coordination == 'parallel':
-            base_strategy['synchronization_points'] = self.get_coordination_config('synchronization_points', [])
-            base_strategy['result_aggregation'] = self.get_coordination_config('result_aggregation', 'merge')
-            base_strategy['failure_handling'] = self.get_coordination_config('failure_handling', 'continue')
-        
+            base_strategy['synchronization_points'] = self.get_coordination_config(
+                'synchronization_points', [])
+            base_strategy['result_aggregation'] = self.get_coordination_config(
+                'result_aggregation', 'merge')
+            base_strategy['failure_handling'] = self.get_coordination_config(
+                'failure_handling', 'continue')
+
         return base_strategy
 
     @classmethod
@@ -561,12 +588,12 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
             'decision_flow': 'leader_approval_required',
             'escalation_rules': ['complex_decisions_to_leader', 'conflicts_to_leader']
         }
-        
+
         # Set member roles if provided
         for i, member_id in enumerate(members):
             if member_id != leader_id:
                 hierarchy['roles'][member_id] = f'member_{i+1}'
-        
+
         return cls(
             id=team_id,
             name=name,
@@ -591,7 +618,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
             'conflict_resolution': 'vote',
             'equal_participation': True
         }
-        
+
         return cls(
             id=team_id,
             name=name,
@@ -616,7 +643,7 @@ class Team(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
             'failure_handling': 'continue',
             'independent_execution': True
         }
-        
+
         return cls(
             id=team_id,
             name=name,

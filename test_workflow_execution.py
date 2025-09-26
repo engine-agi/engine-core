@@ -3,23 +3,28 @@
 Execution test for WorkflowBuilder - demonstrates full workflow execution.
 """
 
-import sys
 import os
-from unittest.mock import MagicMock, AsyncMock
+import sys
+from unittest.mock import AsyncMock, MagicMock
 
 # Add the src directory to the path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.join(current_dir, 'src')
+src_dir = os.path.join(current_dir, "src")
 sys.path.insert(0, src_dir)
+
 
 async def test_workflow_execution():
     """Test complete workflow execution with mock components."""
     print("🚀 Testing Complete Workflow Execution")
 
     try:
-        from engine_core.core.workflows import WorkflowBuilder
-        from engine_core.core.agents.agent_builder import AgentExecutionContext, AgentMessage
         from datetime import datetime
+
+        from engine_core.core.agents.agent_builder import (
+            AgentExecutionContext,
+            AgentMessage,
+        )
+        from engine_core.core.workflows import WorkflowBuilder
 
         # Create mock agent
         mock_agent = MagicMock()
@@ -48,28 +53,32 @@ async def test_workflow_execution():
             return {
                 "report": "Quarterly Sales Report",
                 "insights": ["Revenue up 15%", "Customer satisfaction improved"],
-                "recommendations": ["Increase marketing budget", "Expand product line"]
+                "recommendations": ["Increase marketing budget", "Expand product line"],
             }
 
         # Build complete workflow
-        workflow = WorkflowBuilder() \
-            .with_id("sales_analysis_workflow") \
-            .with_name("Sales Analysis and Reporting Workflow") \
-            .with_description("Complete workflow for sales data analysis and report generation") \
+        workflow = (
+            WorkflowBuilder()
+            .with_id("sales_analysis_workflow")
+            .with_name("Sales Analysis and Reporting Workflow")
+            .with_description(
+                "Complete workflow for sales data analysis and report generation"
+            )
             .add_agent_vertex(
                 "data_analysis",
                 mock_agent,
                 "Analyze quarterly sales data and identify key trends and insights",
-                config={"analysis_type": "trend_analysis"}
-            ) \
+                config={"analysis_type": "trend_analysis"},
+            )
             .add_function_vertex(
                 "report_generation",
                 generate_report,
                 dependencies=["data_analysis"],
-                config={"report_format": "comprehensive"}
-            ) \
-            .add_edge("data_analysis", "report_generation") \
+                config={"report_format": "comprehensive"},
+            )
+            .add_edge("data_analysis", "report_generation")
             .build()
+        )
 
         print("✅ Complete workflow built successfully!")
         print(f"   Workflow: {workflow.name}")
@@ -119,8 +128,10 @@ async def test_workflow_execution():
     except Exception as e:
         print(f"❌ Execution test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def demonstrate_templates():
     """Demonstrate workflow templates."""
@@ -141,39 +152,41 @@ async def demonstrate_templates():
 
         # ML Pipeline Template
         ml_workflow = WorkflowBuilder.ml_training_pipeline(
-            "demo_ml_pipeline",
-            mock_team,
-            mock_agent,
-            evaluate_model
+            "demo_ml_pipeline", mock_team, mock_agent, evaluate_model
         ).build()
 
         print("✅ ML Training Pipeline template created!")
-        print(f"   Vertices: {ml_workflow.vertex_count}, Edges: {ml_workflow.edge_count}")
+        print(
+            f"   Vertices: {ml_workflow.vertex_count}, Edges: {ml_workflow.edge_count}"
+        )
 
         # Sequential Workflow Template
         agents = [MagicMock(id=f"agent_{i}") for i in range(1, 4)]
         instructions = [
             "Research and gather information",
             "Analyze data and draw conclusions",
-            "Write comprehensive report"
+            "Write comprehensive report",
         ]
 
         sequential_workflow = WorkflowBuilder.sequential_workflow(
-            "demo_sequential",
-            agents,  # type: ignore
-            instructions
+            "demo_sequential", agents, instructions  # type: ignore
         ).build()
 
         print("✅ Sequential Workflow template created!")
-        print(f"   Vertices: {sequential_workflow.vertex_count}, Edges: {sequential_workflow.edge_count}")
+        print(
+            f"   Vertices: {sequential_workflow.vertex_count}, "
+            f"Edges: {sequential_workflow.edge_count}"
+        )
 
         return True
 
     except Exception as e:
         print(f"❌ Template demonstration failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     import asyncio

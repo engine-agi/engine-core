@@ -4,18 +4,34 @@ Tests for engine_types.py - Shared types and enumerations.
 Tests serialization, validation, and compatibility of shared types.
 """
 
-import pytest
 import json
 from datetime import datetime, timezone
+
 from engine_core.engine_types import (
-    AgentStatus, TeamStatus, WorkflowStatus, ExecutionMode,
-    ProtocolStatus, ToolStatus, ToolType, BookStatus,
-    ProjectStatus, LogLevel, CoordinationStrategy,
-    EngineError, PaginationParams, SearchFilters, ExecutionContext,
-    AgentId, TeamId, WorkflowId, ProtocolId, ToolId, BookId,
-    ProjectId, UserId,
-    DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, DEFAULT_TIMEOUT, MAX_TIMEOUT,
-    MAX_NAME_LENGTH, MAX_DESCRIPTION_LENGTH, MAX_TAGS_PER_ITEM, MAX_ITEMS_PER_PAGE
+    DEFAULT_PAGE_SIZE,
+    DEFAULT_TIMEOUT,
+    MAX_DESCRIPTION_LENGTH,
+    MAX_ITEMS_PER_PAGE,
+    MAX_NAME_LENGTH,
+    MAX_PAGE_SIZE,
+    MAX_TAGS_PER_ITEM,
+    MAX_TIMEOUT,
+    AgentId,
+    AgentStatus,
+    BookId,
+    EngineError,
+    ExecutionContext,
+    PaginationParams,
+    ProjectId,
+    ProtocolId,
+    SearchFilters,
+    TeamId,
+    TeamStatus,
+    ToolId,
+    ToolType,
+    UserId,
+    WorkflowId,
+    WorkflowStatus,
 )
 
 
@@ -80,7 +96,7 @@ class TestEngineError:
             error_code="TEST_ERROR",
             details={"test": "data"},
             component="test",
-            recoverable=True
+            recoverable=True,
         )
         error_dict = error.to_dict()
 
@@ -126,7 +142,7 @@ class TestConstants:
     def test_timeout_constants(self):
         """Test timeout-related constants."""
         assert DEFAULT_TIMEOUT == 300  # 5 minutes
-        assert MAX_TIMEOUT == 3600     # 1 hour
+        assert MAX_TIMEOUT == 3600  # 1 hour
 
     def test_validation_constants(self):
         """Test validation-related constants."""
@@ -150,30 +166,30 @@ class TestCompatibility:
         """Test that EngineError interface hasn't changed."""
         error = EngineError("test")
         # These methods/attributes should always exist
-        assert hasattr(error, 'message')
-        assert hasattr(error, 'error_code')
-        assert hasattr(error, 'to_dict')
-        assert hasattr(error, 'timestamp')
-        assert hasattr(error, '__str__')
+        assert hasattr(error, "message")
+        assert hasattr(error, "error_code")
+        assert hasattr(error, "to_dict")
+        assert hasattr(error, "timestamp")
+        assert hasattr(error, "__str__")
 
     def test_class_backward_compatibility(self):
         """Test that class interfaces haven't changed."""
         # PaginationParams
         params = PaginationParams()
-        assert hasattr(params, 'page')
-        assert hasattr(params, 'limit')
-        assert hasattr(params, 'offset')
+        assert hasattr(params, "page")
+        assert hasattr(params, "limit")
+        assert hasattr(params, "offset")
 
         # SearchFilters
         filters = SearchFilters()
-        assert hasattr(filters, 'query')
-        assert hasattr(filters, 'tags')
+        assert hasattr(filters, "query")
+        assert hasattr(filters, "tags")
 
         # ExecutionContext
         context = ExecutionContext()
-        assert hasattr(context, 'user_id')
-        assert hasattr(context, 'get_duration')
-        assert hasattr(context, 'to_dict')
+        assert hasattr(context, "user_id")
+        assert hasattr(context, "get_duration")
+        assert hasattr(context, "to_dict")
 
 
 class TestSearchFilters:
@@ -200,7 +216,7 @@ class TestSearchFilters:
             created_after=now,
             created_before=now,
             updated_after=now,
-            updated_before=now
+            updated_before=now,
         )
         assert filters.query == "test query"
         assert filters.tags == ["tag1", "tag2"]
@@ -232,7 +248,7 @@ class TestExecutionContext:
             project_id="project456",
             session_id="session789",
             correlation_id="corr123",
-            metadata=metadata
+            metadata=metadata,
         )
         assert context.user_id == "user123"
         assert context.project_id == "project456"
@@ -250,9 +266,7 @@ class TestExecutionContext:
     def test_context_to_dict(self):
         """Test context serialization to dict."""
         context = ExecutionContext(
-            user_id="user123",
-            correlation_id="corr123",
-            metadata={"test": "data"}
+            user_id="user123", correlation_id="corr123", metadata={"test": "data"}
         )
         context_dict = context.to_dict()
 

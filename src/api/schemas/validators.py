@@ -1,10 +1,11 @@
 # Custom Validators for API Schemas
-# This module contains custom validation functions used in Pydantic schemas
-
 import re
-from typing import List, Dict, Any, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
+
 from pydantic import ValidationError
+
+# This module contains custom validation functions used in Pydantic schemas
 
 
 def validate_agent_model(model: str) -> bool:
@@ -15,10 +16,10 @@ def validate_agent_model(model: str) -> bool:
     # Valid model patterns
     valid_patterns = [
         r"^claude-3\..*$",  # Claude models
-        r"^gpt-4.*$",      # GPT-4 models
-        r"^gpt-3\.5.*$",   # GPT-3.5 models
-        r"^llama-.*$",     # Llama models
-        r"^mistral-.*$",   # Mistral models
+        r"^gpt-4.*$",  # GPT-4 models
+        r"^gpt-3\.5.*$",  # GPT-3.5 models
+        r"^llama-.*$",  # Llama models
+        r"^mistral-.*$",  # Mistral models
     ]
 
     if not any(re.match(pattern, model, re.IGNORECASE) for pattern in valid_patterns):
@@ -36,7 +37,9 @@ def validate_workflow_dag(vertices: List[str], edges: List[Tuple[str, str]]) -> 
     adj_list = {v: [] for v in vertices}
     for source, target in edges:
         if source not in adj_list or target not in adj_list:
-            raise ValidationError(f"Edge references unknown vertex: {source} -> {target}")
+            raise ValidationError(
+                f"Edge references unknown vertex: {source} -> {target}"
+            )
         adj_list[source].append(target)
 
     # Detect cycles using DFS

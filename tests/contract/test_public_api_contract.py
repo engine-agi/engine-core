@@ -37,8 +37,7 @@ class TestCorePublicAPIContract:
 
         # Test can build minimal agent
         agent = (
-            builder
-            .with_id("test_agent")
+            builder.with_id("test_agent")
             .with_model("test_model")
             .with_stack(["python"])
             .build()
@@ -52,7 +51,12 @@ class TestCorePublicAPIContract:
         builder = TeamBuilder()
         assert builder is not None
 
-        required_methods = ["with_id", "add_member", "with_coordination_strategy", "build"]
+        required_methods = [
+            "with_id",
+            "add_member",
+            "with_coordination_strategy",
+            "build",
+        ]
         for method in required_methods:
             assert hasattr(builder, method), f"TeamBuilder missing {method}"
 
@@ -102,6 +106,11 @@ class TestCorePublicAPIContract:
         engine = WorkflowEngine()
         assert engine is not None
 
-        required_methods = ["add_vertex", "add_edge", "validate_workflow", "execute_workflow"]
+        required_methods = [
+            "add_vertex",
+            "add_edge",
+            "validate_workflow",
+            "execute_workflow",
+        ]
         for method in required_methods:
             assert hasattr(engine, method), f"WorkflowEngine missing {method}"

@@ -3,23 +3,28 @@
 Integration test for WorkflowBuilder with agents and teams.
 """
 
-import sys
 import os
-from unittest.mock import MagicMock, AsyncMock
+import sys
+from unittest.mock import AsyncMock, MagicMock
 
 # Add the src directory to the path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.join(current_dir, 'src')
+src_dir = os.path.join(current_dir, "src")
 sys.path.insert(0, src_dir)
+
 
 async def test_workflow_with_agents():
     """Test WorkflowBuilder with mock agents and teams."""
     print("🧪 Testing WorkflowBuilder with Agents and Teams")
 
     try:
-        from engine_core.core.workflows import WorkflowBuilder
-        from engine_core.core.agents.agent_builder import AgentExecutionContext, AgentMessage
         from datetime import datetime
+
+        from engine_core.core.agents.agent_builder import (
+            AgentExecutionContext,
+            AgentMessage,
+        )
+        from engine_core.core.workflows import WorkflowBuilder
 
         # Create mock agent
         mock_agent = MagicMock()
@@ -45,22 +50,24 @@ async def test_workflow_with_agents():
         mock_team.id = "test_team"
 
         # Build workflow with agent and team
-        workflow = WorkflowBuilder() \
-            .with_id("integration_test_workflow") \
-            .with_name("Integration Test Workflow") \
+        workflow = (
+            WorkflowBuilder()
+            .with_id("integration_test_workflow")
+            .with_name("Integration Test Workflow")
             .add_agent_vertex(
                 "data_analysis",
                 mock_agent,
                 "Analyze the provided data and extract insights",
-                output_targets=["report_generation"]
-            ) \
+                output_targets=["report_generation"],
+            )
             .add_function_vertex(
                 "report_generation",
                 lambda: {"report": "Analysis complete"},
-                dependencies=["data_analysis"]
-            ) \
-            .add_edge("data_analysis", "report_generation") \
+                dependencies=["data_analysis"],
+            )
+            .add_edge("data_analysis", "report_generation")
             .build()
+        )
 
         print("✅ Workflow with agent built successfully!")
         print(f"   Workflow ID: {workflow.id}")
@@ -78,15 +85,19 @@ async def test_workflow_with_agents():
 
         # Test workflow stats
         stats = workflow.get_stats()
-        print(f"   Stats: {stats['vertex_count']} vertices, {stats['edge_count']} edges")
+        print(
+            f"   Stats: {stats['vertex_count']} vertices, {stats['edge_count']} edges"
+        )
 
         return True
 
     except Exception as e:
         print(f"❌ Test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def test_factory_methods():
     """Test WorkflowBuilder factory methods."""
@@ -107,10 +118,7 @@ async def test_factory_methods():
 
         # Test data processing pipeline
         pipeline = WorkflowBuilder.data_processing_pipeline(
-            "test_pipeline",
-            mock_agent,
-            mock_team,
-            export_func
+            "test_pipeline", mock_agent, mock_team, export_func
         )
 
         workflow = pipeline.build()
@@ -122,8 +130,10 @@ async def test_factory_methods():
     except Exception as e:
         print(f"❌ Factory method test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     import asyncio

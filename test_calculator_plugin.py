@@ -3,15 +3,15 @@ Test Calculator Plugin - Demonstrates plugin system functionality.
 """
 
 import asyncio
-import sys
 import os
+import sys
+
+from engine_core.core.tools.plugins.calculator_plugin import CalculatorPlugin
 
 # Add the src directory to the path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.join(current_dir, 'src')
+src_dir = os.path.join(current_dir, "src")
 sys.path.insert(0, src_dir)
-
-from engine_core.core.tools.plugins.calculator_plugin import CalculatorPlugin
 
 
 async def test_calculator_plugin():

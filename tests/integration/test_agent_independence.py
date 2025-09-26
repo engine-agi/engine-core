@@ -6,15 +6,15 @@ without depending on teams, workflows, protocols, tools, or book modules.
 """
 
 import asyncio
-import sys
 import os
-
-# Add src to path (ensure engine-core comes first)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../src'))
-# Remove any backend paths that might conflict
-sys.path = [p for p in sys.path if 'backend' not in p]
+import sys
 
 from engine_core.core.agents.agent_builder import AgentBuilder
+
+# Add src to path (ensure engine-core comes first)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
+# Remove any backend paths that might conflict
+sys.path = [p for p in sys.path if "backend" not in p]
 
 
 async def test_agent_independence():
@@ -25,10 +25,9 @@ async def test_agent_independence():
 
     # Test 1: Create minimal agent
     print("✅ Test 1: Creating minimal agent...")
-    minimal_agent = AgentBuilder() \
-        .with_id("minimal_agent") \
-        .with_model("claude-3.5-sonnet") \
-        .build()
+    minimal_agent = (
+        AgentBuilder().with_id("minimal_agent").with_model("claude-3.5-sonnet").build()
+    )
 
     assert minimal_agent.id == "minimal_agent"
     assert minimal_agent.model == "claude-3.5-sonnet"
@@ -36,18 +35,20 @@ async def test_agent_independence():
 
     # Test 2: Create complete agent with all modules
     print("✅ Test 2: Creating complete agent with all 11 modules...")
-    complete_agent = AgentBuilder() \
-        .with_id("senior_developer") \
-        .with_name("Senior Python Developer") \
-        .with_model("claude-3.5-sonnet") \
-        .with_speciality("Full-Stack Python Development") \
-        .with_persona("Experienced developer who follows best practices") \
-        .with_stack(["python", "fastapi", "postgresql", "docker"]) \
-        .with_tools(["github", "vscode", "pytest"]) \
-        .with_protocol("tdd_protocol") \
-        .with_workflow("development_workflow") \
-        .with_book("project_memory") \
+    complete_agent = (
+        AgentBuilder()
+        .with_id("senior_developer")
+        .with_name("Senior Python Developer")
+        .with_model("claude-3.5-sonnet")
+        .with_speciality("Full-Stack Python Development")
+        .with_persona("Experienced developer who follows best practices")
+        .with_stack(["python", "fastapi", "postgresql", "docker"])
+        .with_tools(["github", "vscode", "pytest"])
+        .with_protocol("tdd_protocol")
+        .with_workflow("development_workflow")
+        .with_book("project_memory")
         .build()
+    )
 
     assert complete_agent.id == "senior_developer"
     assert complete_agent.name == "Senior Python Developer"
@@ -92,18 +93,17 @@ async def test_agent_independence():
 
     agents = []
     for i in range(3):
-        agent = AgentBuilder() \
-            .with_id(f"agent_{i}") \
-            .with_model("claude-3.5-sonnet") \
-            .with_name(f"Agent {i}") \
+        agent = (
+            AgentBuilder()
+            .with_id(f"agent_{i}")
+            .with_model("claude-3.5-sonnet")
+            .with_name(f"Agent {i}")
             .build()
+        )
         agents.append(agent)
 
     # Execute tasks concurrently
-    tasks = [
-        agent.execute(f"Task for agent {i}")
-        for i, agent in enumerate(agents)
-    ]
+    tasks = [agent.execute(f"Task for agent {i}") for i, agent in enumerate(agents)]
 
     results = await asyncio.gather(*tasks)
 
@@ -128,11 +128,11 @@ async def test_agent_independence():
 
         # Check that we haven't imported the other core modules
         forbidden_modules = [
-            'engine_core.core.teams',
-            'engine_core.core.workflows',
-            'engine_core.core.protocols',
-            'engine_core.core.tools',
-            'engine_core.core.book'
+            "engine_core.core.teams",
+            "engine_core.core.workflows",
+            "engine_core.core.protocols",
+            "engine_core.core.tools",
+            "engine_core.core.book",
         ]
 
         for module in forbidden_modules:

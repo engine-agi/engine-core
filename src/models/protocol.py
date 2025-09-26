@@ -1,4 +1,16 @@
 """
+from sqlalchemy import Column
+from typing import Set, Tuple
+from pydantic import BaseModel
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from datetime import datetime
+from pydantic import Field
+from typing import Optional, List, Dict, Any
+
+from typing import Optional, List, Dict, Any
 Protocol model for Engine Framework.
 
 Protocols define command structures and semantic behavior patterns
@@ -10,18 +22,16 @@ for agents and teams. They specify:
 
 Based on Engine Framework data model specification.
 """
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from typing import Dict, Any, List, Optional, Union, TYPE_CHECKING
-from sqlalchemy import (
-    Column, String, Text, Boolean, Integer, 
+from pydantic import BaseModel, Field
+from sqlalchemy import Column
+
+    Column, String, Text, Boolean, Integer,
     ForeignKey, Index, CheckConstraint
 )
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY
-from sqlalchemy.orm import relationship, validates
-from datetime import datetime
 import re
-
-from .base import BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
@@ -32,12 +42,12 @@ if TYPE_CHECKING:
 class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationMixin):
     """
     Protocol entity - defines command structure and behavior patterns.
-    
+
     Protocols provide structured command sets that define how agents
     and teams interact with their environment. They specify available
     commands, execution patterns, and semantic meanings to enable
     consistent and predictable behavior.
-    
+
     Key features:
     - Semantic command definitions with parameters
     - Execution order and dependency management
@@ -45,7 +55,7 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
     - Validation rules for command usage
     - Integration with agent and team behavior
     """
-    
+
     __tablename__ = "protocols"
 
     # Basic protocol information
@@ -55,13 +65,13 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         index=True,
         comment="Human-readable protocol name"
     )
-    
+
     description = Column(
         Text,
         nullable=True,
         comment="Protocol purpose, usage patterns, and behavior"
     )
-    
+
     # Protocol classification
     category = Column(
         String(100),
@@ -69,14 +79,14 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         index=True,
         comment="Protocol category (e.g., 'analysis', 'development', 'coordination')"
     )
-    
+
     version = Column(
         String(50),
         nullable=False,
         default="1.0",
         comment="Protocol version for change management"
     )
-    
+
     # Protocol status
     status = Column(
         String(50),
@@ -85,7 +95,7 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         index=True,
         comment="Protocol status (active, deprecated, experimental)"
     )
-    
+
     # Command structure
     commands = Column(
         JSONB,
@@ -93,27 +103,27 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         default=list,
         comment="List of commands with parameters and semantic meanings"
     )
-    
+
     # Validation and execution rules
     validation_rules = Column(
         JSONB,
         nullable=True,
         comment="Validation rules for command usage and execution"
     )
-    
+
     execution_order = Column(
         JSONB,
         nullable=True,
         comment="Command execution order and dependency constraints"
     )
-    
+
     # Context and conditions
     context_requirements = Column(
         JSONB,
         nullable=True,
         comment="Context requirements for protocol activation"
     )
-    
+
     # Protocol metrics
     usage_count = Column(
         Integer,
@@ -121,7 +131,7 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         nullable=False,
         comment="Number of times protocol has been used"
     )
-    
+
     # Semantic processing
     semantic_patterns = Column(
         JSONB,
@@ -150,7 +160,7 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
             kwargs['commands'] = []
         if 'usage_count' not in kwargs:
             kwargs['usage_count'] = 0
-            
+
         super().__init__(**kwargs)
 
     def __repr__(self) -> str:
@@ -165,14 +175,14 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         """Validate protocol ID format."""
         if not value:
             raise ValueError("Protocol ID is required")
-        
+
         # Must be alphanumeric with underscores, 2-100 characters
         if not re.match(r'^[a-zA-Z0-9_]{2,100}$', value):
             raise ValueError(
                 "Protocol ID must be 2-100 characters, containing only "
                 "letters, numbers, and underscores"
             )
-        
+
         return value.lower()
 
     @validates('name')
@@ -180,20 +190,20 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         """Validate protocol name."""
         if not value or not value.strip():
             raise ValueError("Protocol name is required")
-        
+
         if len(value.strip()) > 255:
             raise ValueError("Protocol name cannot exceed 255 characters")
-        
+
         return value.strip()
 
     @validates('status')
     def validate_status(self, key: str, value: str) -> str:
         """Validate protocol status."""
         valid_statuses = ['active', 'deprecated', 'experimental', 'archived']
-        
+
         if value not in valid_statuses:
             raise ValueError(f"Status must be one of: {', '.join(valid_statuses)}")
-        
+
         return value
 
     @validates('commands')
@@ -201,70 +211,70 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         """Validate commands structure."""
         if not isinstance(value, list):
             raise ValueError("Commands must be a list")
-        
+
         if len(value) == 0:
             raise ValueError("Protocol must have at least one command")
-        
+
         # Validate each command structure
         for i, command in enumerate(value):
             if not isinstance(command, dict):
                 raise ValueError(f"Command {i} must be a dictionary")
-            
+
             # Required fields
             if 'name' not in command or not command['name']:
                 raise ValueError(f"Command {i} must have a name")
-            
+
             if 'description' not in command:
                 raise ValueError(f"Command {i} must have a description")
-            
+
             # Validate command name format
             if not re.match(r'^[a-zA-Z0-9_]{2,100}$', command['name']):
                 raise ValueError(
                     f"Command {i} name must be 2-100 characters, "
                     "containing only letters, numbers, and underscores"
                 )
-            
+
             # Validate parameters if present
             if 'parameters' in command and command['parameters']:
                 if not isinstance(command['parameters'], list):
                     raise ValueError(f"Command {i} parameters must be a list")
-                
+
                 for param in command['parameters']:
                     if not isinstance(param, str):
                         raise ValueError(f"Command {i} parameters must be strings")
-            
+
             # Validate semantic meaning if present
             if 'semantic_meaning' in command and command['semantic_meaning']:
                 if not isinstance(command['semantic_meaning'], str):
                     raise ValueError(f"Command {i} semantic_meaning must be a string")
-        
+
         return value
 
     @classmethod
     def validate_data(cls, data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate protocol data before creating/updating."""
         validated = data.copy()
-        
+
         # Required fields
         if 'id' not in validated or not validated['id']:
             raise ValueError("Protocol ID is required")
-        
+
         if 'name' not in validated or not validated['name']:
             raise ValueError("Protocol name is required")
-        
+
         if 'commands' not in validated or not validated['commands']:
             raise ValueError("Protocol commands are required")
-        
+
         # Validate validation rules structure
         if 'validation_rules' in validated and validated['validation_rules']:
             if not isinstance(validated['validation_rules'], list):
                 raise ValueError("Validation rules must be a list")
-        
+
         # Validate execution order structure
         if 'execution_order' in validated and validated['execution_order']:
             if not isinstance(validated['execution_order'], dict):
                 raise ValueError("Execution order must be a dictionary")
-        
+
         return validated
 
     # === PROTOCOL COMMAND MANAGEMENT ===
@@ -281,12 +291,12 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         commands = getattr(self, 'commands') or []
         if not commands:
             commands = []
-        
+
         # Check for duplicate command names
         existing_names = [cmd['name'] for cmd in commands]
         if name in existing_names:
             raise ValueError(f"Command '{name}' already exists in protocol")
-        
+
         command = {
             'name': name,
             'description': description,
@@ -294,7 +304,7 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
             'semantic_meaning': semantic_meaning,
             **kwargs
         }
-        
+
         commands.append(command)
         setattr(self, 'commands', commands)
 
@@ -323,7 +333,7 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         commands = getattr(self, 'commands') or []
         if not commands:
             return []
-        
+
         return [
             cmd for cmd in commands
             if cmd.get('semantic_meaning') == meaning
@@ -336,7 +346,7 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         validation_rules = getattr(self, 'validation_rules') or []
         if not validation_rules:
             validation_rules = []
-        
+
         if rule not in validation_rules:
             validation_rules.append(rule)
             setattr(self, 'validation_rules', validation_rules)
@@ -351,13 +361,13 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
     def validate_command_usage(self, command_name: str, context: Dict[str, Any]) -> tuple[bool, List[str]]:
         """Validate command usage against protocol rules."""
         errors = []
-        
+
         # Check if command exists
         command = self.get_command(command_name)
         if not command:
             errors.append(f"Command '{command_name}' not found in protocol")
             return False, errors
-        
+
         # Apply validation rules
         validation_rules = getattr(self, 'validation_rules') or []
         if validation_rules:
@@ -366,13 +376,15 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
                 if rule == "analysis_required_before_implementation":
                     if command.get('semantic_meaning') == 'implementation':
                         if not context.get('analysis_completed'):
-                            errors.append("Analysis must be completed before implementation")
-                
+                            errors.append(
+                                "Analysis must be completed before implementation")
+
                 elif rule == "specification_must_be_complete":
                     if command.get('semantic_meaning') == 'validation':
                         if not context.get('specification_complete'):
-                            errors.append("Specification must be complete before validation")
-        
+                            errors.append(
+                                "Specification must be complete before validation")
+
         return len(errors) == 0, errors
 
     # === EXECUTION ORDER MANAGEMENT ===
@@ -386,10 +398,10 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         execution_order = getattr(self, 'execution_order')
         if not execution_order:
             return []
-        
+
         # Simple implementation - in real system this would be more sophisticated
         next_commands = execution_order.get(current_command, [])
-        
+
         # Filter based on context if needed
         filtered_commands = []
         for cmd in next_commands:
@@ -402,14 +414,14 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
             else:
                 # Simple next command
                 filtered_commands.append(cmd)
-        
+
         return filtered_commands
 
     def _evaluate_condition(self, condition: Optional[str], context: Dict[str, Any]) -> bool:
         """Evaluate execution condition (simplified)."""
         if not condition:
             return True
-        
+
         # Simple condition evaluation
         # In real implementation, this would use a proper expression evaluator
         if condition == "success":
@@ -418,7 +430,7 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
             return context.get('analysis_complete', False)
         elif condition == "validation_passed":
             return context.get('validation_passed', False)
-        
+
         return True
 
     # === SEMANTIC PROCESSING ===
@@ -428,7 +440,7 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         semantic_patterns = getattr(self, 'semantic_patterns') or {}
         if not semantic_patterns:
             semantic_patterns = {}
-        
+
         semantic_patterns[pattern] = meaning
         setattr(self, 'semantic_patterns', semantic_patterns)
 
@@ -437,9 +449,9 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         semantic_patterns = getattr(self, 'semantic_patterns') or {}
         if not semantic_patterns:
             return None
-        
+
         input_lower = input_text.lower()
-        
+
         # Simple pattern matching (in real implementation, would use NLP)
         for pattern, meaning in semantic_patterns.items():
             if pattern.lower() in input_lower:
@@ -452,7 +464,7 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
                         'confidence': 0.8,  # Simplified confidence score
                         'input_text': input_text
                     }
-        
+
         return None
 
     # === PROTOCOL USAGE AND METRICS ===
@@ -469,7 +481,7 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
         semantic_patterns = getattr(self, 'semantic_patterns')
         created_at = getattr(self, 'created_at')
         updated_at = getattr(self, 'updated_at')
-        
+
         return {
             'id': self.id,
             'name': self.name,
@@ -510,19 +522,19 @@ class Protocol(BaseModel, StringIdentifierMixin, ConfigurationMixin, ValidationM
                 'semantic_meaning': 'implementation'
             }
         ]
-        
+
         validation_rules = [
             'analysis_required_before_implementation',
             'specification_must_be_complete',
             'validation_required_for_architecture'
         ]
-        
+
         execution_order = {
             'analyze_requirements': ['validate_approach'],
             'validate_approach': ['implement_solution'],
             'implement_solution': []
         }
-        
+
         return cls(
             id='analysis_first',
             name='Analysis First Protocol',

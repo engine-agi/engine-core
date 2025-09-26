@@ -3,18 +3,16 @@ API Integration Test - Demonstrates tool integration with external APIs.
 """
 
 import asyncio
-import sys
 import os
-from unittest.mock import AsyncMock, patch, MagicMock
+import sys
+from unittest.mock import AsyncMock
+
+from engine_core.core.tools.tool_builder import APITool, ToolBuilder, ToolType
 
 # Add the src directory to the path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = os.path.join(current_dir, 'src')
+src_dir = os.path.join(current_dir, "src")
 sys.path.insert(0, src_dir)
-
-from engine_core.core.tools.tool_builder import (
-    ToolBuilder, ToolType, ToolExecutionMode, APITool, ToolCapability
-)
 
 
 async def test_api_tool_basic():
@@ -23,18 +21,19 @@ async def test_api_tool_basic():
 
     try:
         # Create API tool configuration
-        api_tool_config = (ToolBuilder()
-                          .with_id("test_api")
-                          .with_name("Test API")
-                          .with_description("Simple test API")
-                          .with_type(ToolType.API)
-                          .with_endpoint("https://httpbin.org")
-                          .with_headers({
-                              "Accept": "application/json",
-                              "User-Agent": "Engine-Test/1.0"
-                          })
-                          .with_timeout(10)
-                          .build())
+        api_tool_config = (
+            ToolBuilder()
+            .with_id("test_api")
+            .with_name("Test API")
+            .with_description("Simple test API")
+            .with_type(ToolType.API)
+            .with_endpoint("https://httpbin.org")
+            .with_headers(
+                {"Accept": "application/json", "User-Agent": "Engine-Test/1.0"}
+            )
+            .with_timeout(10)
+            .build()
+        )
 
         assert api_tool_config.tool_id == "test_api"
         assert api_tool_config.tool_type == ToolType.API
@@ -72,6 +71,7 @@ async def test_api_tool_basic():
     except Exception as e:
         print(f"❌ Test failed: {str(e)}")
         import traceback
+
         traceback.print_exc()
         raise
 
@@ -82,21 +82,29 @@ async def test_plugin_tool_integration():
 
     try:
         # Create plugin tool configuration
-        plugin_config = (ToolBuilder()
-                        .with_id("calculator_plugin")
-                        .with_name("Calculator Plugin")
-                        .with_description("Mathematical calculator plugin")
-                        .with_type(ToolType.PLUGIN)
-                        .with_plugin_class("engine_core.core.tools.plugins.calculator_plugin.CalculatorPlugin")
-                        .with_plugin_config({"precision": 2})
-                        .build())
+        plugin_config = (
+            ToolBuilder()
+            .with_id("calculator_plugin")
+            .with_name("Calculator Plugin")
+            .with_description("Mathematical calculator plugin")
+            .with_type(ToolType.PLUGIN)
+            .with_plugin_class(
+                "engine_core.core.tools.plugins.calculator_plugin.CalculatorPlugin"
+            )
+            .with_plugin_config({"precision": 2})
+            .build()
+        )
 
         assert plugin_config.tool_type == ToolType.PLUGIN
-        assert plugin_config.plugin_class == "engine_core.core.tools.plugins.calculator_plugin.CalculatorPlugin"
+        assert (
+            plugin_config.plugin_class
+            == "engine_core.core.tools.plugins.calculator_plugin.CalculatorPlugin"
+        )
         print("✅ Plugin Tool configuration created")
 
         # Create plugin tool instance
         from engine_core.core.tools.tool_builder import PluginTool
+
         plugin_tool = PluginTool(plugin_config)
 
         # Test initialization
@@ -131,6 +139,7 @@ async def test_plugin_tool_integration():
     except Exception as e:
         print(f"❌ Plugin test failed: {str(e)}")
         import traceback
+
         traceback.print_exc()
         raise
 
