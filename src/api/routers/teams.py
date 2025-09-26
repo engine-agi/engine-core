@@ -7,7 +7,6 @@ coordinated execution of complex projects through different coordination strateg
 """
 import uuid
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
@@ -16,7 +15,7 @@ from pydantic import BaseModel, Field
 from src.api.dependencies import get_current_user, get_event_broadcaster
 from src.api.websocket import EventType
 from src.core.project_service import ProjectService
-from src.engine_core.api.schemas.enums import TeamCoordinationStrategy
+from src.engine_core.core.teams.team_builder import TeamCoordinationStrategy
 from src.engine_core.engine_types import EngineError
 from src.engine_core.services.agent_service import AgentService
 from src.engine_core.services.team_service import (
