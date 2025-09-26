@@ -47,6 +47,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import Field, ValidationError
 
 # Import core team system
+from ..core.teams.team_builder import (
     TeamBuilder, BuiltTeam, TeamExecutionContext, TeamTask, TeamMember,
     TeamCoordinationStrategy, TeamMemberRole, TeamExecutionMode, TeamState
 )

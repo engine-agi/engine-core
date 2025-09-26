@@ -6,14 +6,14 @@ from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime
 from pydantic import Field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, TYPE_CHECKING
 
 from datetime import datetime
 from pydantic import Field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, TYPE_CHECKING
 
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, TYPE_CHECKING
 Agent Service Layer - Business Logic for Agent Management.
 
 The AgentService provides high-level business logic for agent management,
