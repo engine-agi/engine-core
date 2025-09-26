@@ -1,23 +1,10 @@
 """
-from fastapi import HTTPException
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from typing import Optional, List, Dict, Any
 WebSocket Dependencies - FastAPI dependency injection for WebSocket services.
 
 This module provides dependency injection functions for WebSocket services,
 enabling clean integration with FastAPI routers and proper service lifecycle management.
 """
-from datetime import datetime
-from typing import Any, Dict, List, Optional
-
-from fastapi import HTTPException
+from typing import Optional
 
 from .websocket import EventBroadcaster, WebSocketManager
 

@@ -19,7 +19,7 @@ without the limitations of level-based superstep execution.
 """
 import asyncio
 import logging
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -27,12 +27,12 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pydantic import Field
 
-    VertexState,
-    WorkflowState,
+from .workflow_engine import (
     VertexComputation,
     VertexExecutionResult,
+    VertexState,
     WorkflowExecutionContext,
-    WorkflowMessage
+    WorkflowState,
 )
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 class ActorMessageType(Enum):
     """Types of messages that actors can exchange."""
+
     EXECUTE = "execute"
     RESULT = "result"
     ERROR = "error"
@@ -50,6 +51,7 @@ class ActorMessageType(Enum):
 @dataclass
 class ActorMessage:
     """Message exchanged between actors."""
+
     message_type: ActorMessageType
     sender_id: str
     receiver_id: str
@@ -113,7 +115,7 @@ class VertexActor(Actor):
         vertex_id: str,
         computation: VertexComputation,
         dependencies: Set[str],
-        dependents: Set[str]
+        dependents: Set[str],
     ):
         super().__init__(f"vertex_{vertex_id}")
         self.vertex_id = vertex_id
@@ -123,9 +125,9 @@ class VertexActor(Actor):
         self.pending_dependencies = dependencies.copy()
         self.state = VertexState.PENDING
         self.result: Optional[VertexExecutionResult] = None
-        self.coordinator: Optional['WorkflowCoordinatorActor'] = None
+        self.coordinator: Optional["WorkflowCoordinatorActor"] = None
 
-    def set_coordinator(self, coordinator: 'WorkflowCoordinatorActor') -> None:
+    def set_coordinator(self, coordinator: "WorkflowCoordinatorActor") -> None:
         """Set the workflow coordinator for this vertex."""
         self.coordinator = coordinator
 
@@ -137,15 +139,16 @@ class VertexActor(Actor):
             await self.stop()
         else:
             logger.warning(
-                f"Vertex {self.vertex_id} received unknown message: {message.message_type}")
+                f"Vertex {self.vertex_id} received unknown message: {message.message_type}"
+            )
 
     async def _handle_execute(self, message: ActorMessage) -> None:
         """Handle execution request."""
         if self.state != VertexState.PENDING:
             return
 
-        input_data = message.payload.get('input_data', {})
-        context = message.payload.get('context')
+        input_data = message.payload.get("input_data", {})
+        context = message.payload.get("context")
 
         if not context:
             raise ValueError("Execution context is required")
@@ -158,7 +161,7 @@ class VertexActor(Actor):
                 self.vertex_id,
                 input_data,
                 [],  # messages - will be handled differently in actor model
-                context
+                context,
             )
 
             self.result = result
@@ -166,38 +169,34 @@ class VertexActor(Actor):
 
             # Notify coordinator of completion
             if self.coordinator:
-                await self.coordinator.send_message(ActorMessage(
-                    message_type=ActorMessageType.RESULT,
-                    sender_id=self.actor_id,
-                    receiver_id=self.coordinator.actor_id,
-                    payload={
-                        'vertex_id': self.vertex_id,
-                        'result': result
-                    },
-                    correlation_id=message.correlation_id
-                ))
+                await self.coordinator.send_message(
+                    ActorMessage(
+                        message_type=ActorMessageType.RESULT,
+                        sender_id=self.actor_id,
+                        receiver_id=self.coordinator.actor_id,
+                        payload={"vertex_id": self.vertex_id, "result": result},
+                        correlation_id=message.correlation_id,
+                    )
+                )
 
         except Exception as e:
             logger.error(f"Error executing vertex {self.vertex_id}: {e}")
             self.state = VertexState.FAILED
             self.result = VertexExecutionResult(
-                vertex_id=self.vertex_id,
-                status=VertexState.FAILED,
-                error=str(e)
+                vertex_id=self.vertex_id, status=VertexState.FAILED, error=str(e)
             )
 
             # Notify coordinator of error
             if self.coordinator:
-                await self.coordinator.send_message(ActorMessage(
-                    message_type=ActorMessageType.ERROR,
-                    sender_id=self.actor_id,
-                    receiver_id=self.coordinator.actor_id,
-                    payload={
-                        'vertex_id': self.vertex_id,
-                        'error': str(e)
-                    },
-                    correlation_id=message.correlation_id
-                ))
+                await self.coordinator.send_message(
+                    ActorMessage(
+                        message_type=ActorMessageType.ERROR,
+                        sender_id=self.actor_id,
+                        receiver_id=self.coordinator.actor_id,
+                        payload={"vertex_id": self.vertex_id, "error": str(e)},
+                        correlation_id=message.correlation_id,
+                    )
+                )
 
     def dependency_satisfied(self, dependency_id: str) -> None:
         """Mark a dependency as satisfied."""
@@ -233,12 +232,13 @@ class WorkflowCoordinatorActor(Actor):
             await self._handle_vertex_error(message)
         else:
             logger.warning(
-                f"Coordinator received unknown message: {message.message_type}")
+                f"Coordinator received unknown message: {message.message_type}"
+            )
 
     async def _handle_vertex_result(self, message: ActorMessage) -> None:
         """Handle successful vertex completion."""
-        vertex_id = message.payload['vertex_id']
-        result = message.payload['result']
+        vertex_id = message.payload["vertex_id"]
+        result = message.payload["result"]
 
         self.completed_vertices.add(vertex_id)
         logger.info(f"Vertex {vertex_id} completed successfully")
@@ -251,8 +251,8 @@ class WorkflowCoordinatorActor(Actor):
 
     async def _handle_vertex_error(self, message: ActorMessage) -> None:
         """Handle vertex execution error."""
-        vertex_id = message.payload['vertex_id']
-        error = message.payload['error']
+        vertex_id = message.payload["vertex_id"]
+        error = message.payload["error"]
 
         self.failed_vertices.add(vertex_id)
         logger.error(f"Vertex {vertex_id} failed: {error}")
@@ -263,7 +263,9 @@ class WorkflowCoordinatorActor(Actor):
         # Stop all vertices
         await self._terminate_all_vertices()
 
-    async def _propagate_messages(self, sender_vertex_id: str, result: VertexExecutionResult) -> None:
+    async def _propagate_messages(
+        self, sender_vertex_id: str, result: VertexExecutionResult
+    ) -> None:
         """Propagate messages from completed vertex to dependents."""
         for message in result.messages:
             receiver_id = message.receiver_vertex_id
@@ -275,17 +277,18 @@ class WorkflowCoordinatorActor(Actor):
                 if vertex_actor.is_ready():
                     await self._start_vertex(vertex_actor, message.content or {})
 
-    async def _start_vertex(self, vertex_actor: VertexActor, input_data: Dict[str, Any]) -> None:
+    async def _start_vertex(
+        self, vertex_actor: VertexActor, input_data: Dict[str, Any]
+    ) -> None:
         """Start execution of a ready vertex."""
-        await vertex_actor.send_message(ActorMessage(
-            message_type=ActorMessageType.EXECUTE,
-            sender_id=self.actor_id,
-            receiver_id=vertex_actor.actor_id,
-            payload={
-                'input_data': input_data,
-                'context': self.execution_context
-            }
-        ))
+        await vertex_actor.send_message(
+            ActorMessage(
+                message_type=ActorMessageType.EXECUTE,
+                sender_id=self.actor_id,
+                receiver_id=vertex_actor.actor_id,
+                payload={"input_data": input_data, "context": self.execution_context},
+            )
+        )
 
     async def _check_workflow_completion(self) -> None:
         """Check if the entire workflow has completed."""
@@ -308,13 +311,15 @@ class WorkflowCoordinatorActor(Actor):
 
         # Find leaf vertices (no dependents)
         leaf_vertices = [
-            vid for vid, vertex in self.vertices.items()
-            if not vertex.dependents
+            vid for vid, vertex in self.vertices.items() if not vertex.dependents
         ]
 
         for vertex_id in leaf_vertices:
             vertex_actor = self.vertices[vertex_id]
-            if vertex_actor.result and vertex_actor.result.status == VertexState.COMPLETED:
+            if (
+                vertex_actor.result
+                and vertex_actor.result.status == VertexState.COMPLETED
+            ):
                 final_outputs[vertex_id] = vertex_actor.result.output_data
 
         self.final_result = final_outputs
@@ -323,18 +328,20 @@ class WorkflowCoordinatorActor(Actor):
         """Terminate all vertex actors."""
         terminate_tasks = []
         for vertex_actor in self.vertices.values():
-            terminate_tasks.append(vertex_actor.send_message(ActorMessage(
-                message_type=ActorMessageType.TERMINATE,
-                sender_id=self.actor_id,
-                receiver_id=vertex_actor.actor_id
-            )))
+            terminate_tasks.append(
+                vertex_actor.send_message(
+                    ActorMessage(
+                        message_type=ActorMessageType.TERMINATE,
+                        sender_id=self.actor_id,
+                        receiver_id=vertex_actor.actor_id,
+                    )
+                )
+            )
 
         await asyncio.gather(*terminate_tasks, return_exceptions=True)
 
     async def execute_workflow(
-        self,
-        context: WorkflowExecutionContext,
-        input_data: Dict[str, Any]
+        self, context: WorkflowExecutionContext, input_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Execute the workflow using actor-based coordination."""
         self.execution_context = context
@@ -347,8 +354,7 @@ class WorkflowCoordinatorActor(Actor):
 
         # Start execution from vertices with no dependencies
         ready_vertices = [
-            vertex for vertex in self.vertices.values()
-            if vertex.is_ready()
+            vertex for vertex in self.vertices.values() if vertex.is_ready()
         ]
 
         for vertex_actor in ready_vertices:
@@ -366,8 +372,8 @@ class WorkflowCoordinatorActor(Actor):
         await asyncio.gather(*stop_tasks, return_exceptions=True)
 
         return {
-            'status': self.workflow_state.value,
-            'result': self.final_result or {},
-            'completed_vertices': list(self.completed_vertices),
-            'failed_vertices': list(self.failed_vertices)
+            "status": self.workflow_state.value,
+            "result": self.final_result or {},
+            "completed_vertices": list(self.completed_vertices),
+            "failed_vertices": list(self.failed_vertices),
         }

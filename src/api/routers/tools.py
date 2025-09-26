@@ -149,21 +149,24 @@ async def list_tools(
 
         # Get tools for the project
         from src.services.tool_service import ToolSearchCriteria
+
         criteria = ToolSearchCriteria()
         tools_data = await tool_service.search_tools(criteria)
 
         # Convert to response format
         tools = []
         for tool in tools_data:
-            tools.append(ToolSummary(
-                id=str(tool.id),
-                name=getattr(tool, 'name', 'Unknown'),
-                description=getattr(tool, 'description', None),
-                tool_type=getattr(tool, 'tool_type', 'unknown'),
-                status=getattr(tool, 'status', 'unknown'),
-                created_at=getattr(tool, 'created_at', datetime.utcnow()),
-                command_count=0,
-            ))
+            tools.append(
+                ToolSummary(
+                    id=str(tool.id),
+                    name=getattr(tool, "name", "Unknown"),
+                    description=getattr(tool, "description", None),
+                    tool_type=getattr(tool, "tool_type", "unknown"),
+                    status=getattr(tool, "status", "unknown"),
+                    created_at=getattr(tool, "created_at", datetime.utcnow()),
+                    command_count=0,
+                )
+            )
 
         return ToolListResponse(tools=tools, total=len(tools))
 
@@ -203,26 +206,30 @@ async def create_tool(
             pass  # Tool doesn't exist, which is fine
 
         # Create the tool (mock implementation for now)
-        tool = type('MockTool', (), {
-            'id': tool_data.id,
-            'name': tool_data.name,
-            'description': tool_data.description,
-            'tool_type': tool_data.tool_type,
-            'created_at': datetime.utcnow(),
-            'updated_at': None,
-        })()
+        tool = type(
+            "MockTool",
+            (),
+            {
+                "id": tool_data.id,
+                "name": tool_data.name,
+                "description": tool_data.description,
+                "tool_type": tool_data.tool_type,
+                "created_at": datetime.utcnow(),
+                "updated_at": None,
+            },
+        )()
 
         # Prepare response
         response = ToolResponse(
-            id=str(getattr(tool, 'id', tool_data.id)),
-            name=getattr(tool, 'name', tool_data.name),
-            description=getattr(tool, 'description', tool_data.description),
-            tool_type=getattr(tool, 'tool_type', tool_data.tool_type),
+            id=str(getattr(tool, "id", tool_data.id)),
+            name=getattr(tool, "name", tool_data.name),
+            description=getattr(tool, "description", tool_data.description),
+            tool_type=getattr(tool, "tool_type", tool_data.tool_type),
             interface_config=tool_data.interface_config,
             authentication=tool_data.authentication,
             available_commands=tool_data.available_commands,
             rate_limits=tool_data.rate_limits,
-            status='active',
+            status="active",
             created_at=datetime.utcnow(),
             updated_at=None,
             command_count=len(tool_data.available_commands),
@@ -233,7 +240,7 @@ async def create_tool(
             event_type=EventType.TOOL_STATUS_CHANGED,
             data={
                 "project_id": project_id,
-                "tool_id": str(getattr(tool, 'id', tool_data.id)),
+                "tool_id": str(getattr(tool, "id", tool_data.id)),
                 "tool_name": tool_data.name,
                 "action": "created",
             },

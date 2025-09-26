@@ -858,10 +858,10 @@ class TeamBuilder:
     def development_team(cls, team_id: str, leader_id: str,
                          member_ids: List[str]) -> 'TeamBuilder':
         """Create development team template."""
-        builder = cls()\\
-            .with_id(team_id)\\
-            .with_name("Development Team")\\
-            .with_coordination_strategy(TeamCoordinationStrategy.HIERARCHICAL)\\
+        builder = cls()\
+            .with_id(team_id)\
+            .with_name("Development Team")\
+            .with_coordination_strategy(TeamCoordinationStrategy.HIERARCHICAL)\
             .add_leader(leader_id, ["leadership", "code_review", "architecture"])
 
         for member_id in member_ids:
@@ -872,9 +872,9 @@ class TeamBuilder:
     @classmethod
     def analysis_team(cls, team_id: str, analyst_ids: List[str]) -> 'TeamBuilder':
         """Create analysis team template."""
-        builder = cls()\\
-            .with_id(team_id)\\
-            .with_name("Analysis Team")\\
+        builder = cls() \
+            .with_id(team_id) \
+            .with_name("Analysis Team") \
             .with_coordination_strategy(TeamCoordinationStrategy.COLLABORATIVE)
 
         for i, analyst_id in enumerate(analyst_ids):
@@ -886,10 +886,10 @@ class TeamBuilder:
     @classmethod
     def parallel_processing_team(cls, team_id: str, processor_ids: List[str]) -> 'TeamBuilder':
         """Create parallel processing team template."""
-        builder = cls()\\
-            .with_id(team_id)\\
-            .with_name("Parallel Processing Team")\\
-            .with_coordination_strategy(TeamCoordinationStrategy.PARALLEL)\\
+        builder = cls() \
+            .with_id(team_id) \
+            .with_name("Parallel Processing Team") \
+            .with_coordination_strategy(TeamCoordinationStrategy.PARALLEL) \
             .with_execution_mode(TeamExecutionMode.ASYNCHRONOUS)
 
         for processor_id in processor_ids:

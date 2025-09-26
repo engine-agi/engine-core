@@ -1,19 +1,4 @@
 """
-from pathlib import Path
-from fastapi import Depends
-from fastapi import HTTPException
-from pydantic import BaseModel
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
 Teams API Router
 Handles team management and coordination within projects including team creation and project execution.
 
@@ -25,8 +10,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+
+from src.api.dependencies import get_current_user, get_event_broadcaster
+from src.api.websocket import EventType
+from src.core.project_service import ProjectService
+from src.engine_core.api.schemas.enums import TeamCoordinationStrategy
+from src.engine_core.engine_types import EngineError
+from src.engine_core.services.agent_service import AgentService
+from src.engine_core.services.team_service import (
+    TaskExecutionRequest,
+    TeamCreateRequest,
+    TeamService,
+)
 
 
 class TeamSummary(BaseModel):
@@ -115,8 +112,7 @@ router = APIRouter(
 
 
 @router.get("/", response_model=TeamListResponse)
-async def list_teams(project_id: str = Path(...,
-                                            description="Project ID"),
+async def list_teams(project_id: str,
                      status: Optional[str] = Query(None,
                                                    description="Filter by team status"),
                      coordination_strategy: Optional[str] = Query(None,
@@ -176,7 +172,7 @@ async def list_teams(project_id: str = Path(...,
 
 @router.post("/", response_model=TeamResponse)
 async def create_team(
-    project_id: str = Path(..., description="Project ID"),
+    project_id: str,
     current_user: dict = Depends(get_current_user),
     team_service: TeamService = Depends(),
     project_service: ProjectService = Depends(),
@@ -297,8 +293,8 @@ async def create_team(
 
 @router.post("/{team_id}/execute", response_model=ProjectExecutionResponse)
 async def execute_project(
-    project_id: str = Path(..., description="Project ID"),
-    team_id: str = Path(..., description="Team ID"),
+    project_id: str,
+    team_id: str,
     current_user: dict = Depends(get_current_user),
     team_service: TeamService = Depends(),
     project_service: ProjectService = Depends(),
