@@ -2,7 +2,7 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, field_validator
 
 # This module contains base schemas used across all API endpoints
 
@@ -51,7 +51,8 @@ class FilterSchema(BaseModel):
     value: Any = Field(..., description="Filter value")
     case_sensitive: bool = Field(default=False, description="Case sensitivity flag")
 
-    @validator("operator")
+    @field_validator("operator")
+    @classmethod
     def validate_operator(cls, v):
         """Validate filter operator."""
         valid_operators = [
@@ -79,7 +80,8 @@ class SortSchema(BaseModel):
     field: str = Field(..., description="Field to sort by")
     direction: str = Field(..., description="Sort direction")
 
-    @validator("direction")
+    @field_validator("direction")
+    @classmethod
     def validate_direction(cls, v):
         """Validate sort direction."""
         if v.lower() not in ["asc", "desc"]:

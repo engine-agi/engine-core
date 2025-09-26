@@ -2,7 +2,10 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from .base_schemas import BaseResponseSchema
+from .enums import RelationshipType, TeamCoordinationStrategy
 
 # This module contains Pydantic schemas for team-related API operations
 
@@ -23,7 +26,8 @@ class TeamMemberSchema(BaseModel):
         default_factory=datetime.utcnow, description="Join date"
     )
 
-    @validator("workload_percentage")
+    @field_validator("workload_percentage")
+    @classmethod
     def validate_workload(cls, v):
         """Validate workload percentage."""
         if v < 0 or v > 100:
@@ -68,7 +72,8 @@ class TeamCreateSchema(BaseModel):
         default_factory=dict, description="Additional configuration"
     )
 
-    @validator("name")
+    @field_validator("name")
+    @classmethod
     def validate_name(cls, v):
         """Validate team name."""
         if not v.strip():
