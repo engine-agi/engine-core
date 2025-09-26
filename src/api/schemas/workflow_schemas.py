@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
+from .enums import EdgeType, VertexType, WorkflowStatus
+
 # This module contains Pydantic schemas for workflow-related API operations
 
 
