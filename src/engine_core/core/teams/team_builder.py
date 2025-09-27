@@ -33,13 +33,13 @@ from pydantic import Field
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
+    # Agent system imports for type hints
+    from ...core.agents.agent_builder import AgentExecutionContext, BuiltAgent
     from ...models.agent import Agent
     from ...models.book import Book
     from ...models.protocol import Protocol
     from ...models.team import Team
     from ...models.workflow import Workflow
-    # Agent system imports for type hints
-    from ...core.agents.agent_builder import BuiltAgent, AgentExecutionContext
 class TeamCoordinationStrategy(Enum):
     """Team coordination strategies."""
     HIERARCHICAL = "hierarchical"

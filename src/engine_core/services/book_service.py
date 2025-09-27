@@ -1,18 +1,4 @@
 """
-from pathlib import Path
-from typing import Set, Tuple
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Book Service Layer - Memory Management and Content Organization.
 
 The Book Service provides comprehensive business logic for hierarchical memory
@@ -56,16 +42,25 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
 from pydantic import Field
 
 # Import core book components
+from ..core.book import (
     Book, BookChapter, BookPage, ContentSection,
     BookBuilder, SearchQuery, SearchResult, ContentMetadata,
     ContentType, AccessLevel, ContentStatus, SearchScope,
     ContentReference, SemanticSearchEngine
 )
+
+# Type checking imports to avoid circular imports
+if TYPE_CHECKING:
+    from ..models.agent import Agent
+    from ..models.infrastructure import User
+    from ..models.project import Project
+    from ..models.team import Team
+    from ..models.workflow import Workflow
 
 logger = logging.getLogger(__name__)
 
@@ -394,7 +389,7 @@ class MockBookRepository:
         self,
         user_id: Optional[str] = None,
         project_id: Optional[str] = None,
-        tags: List[str] = None,
+        tags: Optional[List[str]] = None,
         limit: int = 50
     ) -> List[Book]:
         """List books with optional filters."""
@@ -469,7 +464,7 @@ class MockBookRepository:
 class BookService:
     """Service for book management and operations."""
 
-    def __init__(self, repository: MockBookRepository = None):
+    def __init__(self, repository: Optional[MockBookRepository] = None):
         """Initialize book service."""
         self.repository = repository or MockBookRepository()
         self.search_engine = SemanticSearchEngine(enable_embeddings=True)
@@ -744,8 +739,8 @@ class BookService:
         self,
         user_id: Optional[str] = None,
         project_id: Optional[str] = None,
-        tags: List[str] = None,
-        categories: List[str] = None,
+        tags: Optional[List[str]] = None,
+        categories: Optional[List[str]] = None,
         access_level: Optional[AccessLevel] = None,
         status: Optional[ContentStatus] = None,
         limit: int = 50,
@@ -1037,8 +1032,8 @@ class BookService:
         description: str,
         category: str,
         structure: Dict[str, Any],
-        default_content: Dict[str, str] = None,
-        metadata_template: Dict[str, Any] = None,
+        default_content: Optional[Dict[str, str]] = None,
+        metadata_template: Optional[Dict[str, Any]] = None,
         user_id: Optional[str] = None
     ) -> bool:
         """Create book template."""

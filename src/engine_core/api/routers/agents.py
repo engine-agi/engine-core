@@ -18,12 +18,12 @@ from pydantic import BaseModel, Field
 from engine_core.api.dependencies import get_current_user
 from engine_core.api.websocket import EventType, get_event_broadcaster
 from engine_core.core.project_service import ProjectService
-from engine_core.shared_types.engine_types import EngineError
 from engine_core.services.agent_service import (
     AgentCreateRequest,
     AgentService,
     AgentUpdateRequest,
 )
+from engine_core.shared_types.engine_types import EngineError
 
 
 class AgentSummary(BaseModel):

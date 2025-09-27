@@ -9,12 +9,21 @@ Based on Engine Framework data model specification.
 """
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
-from pydantic import BaseModel
-from sqlalchemy import ARRAY, JSON, Column, String, Text
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    Index,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 
-# Type checking imports to avoid circular imports
+from .base import SQLAlchemyBaseModel
 if TYPE_CHECKING:
     from .agent import Agent
     from .book import Book
@@ -24,7 +33,7 @@ if TYPE_CHECKING:
     from .workflow import Workflow
 
 
-class Project(BaseModel):
+class Project(SQLAlchemyBaseModel):
     """
     Project entity - top-level container for Engine Framework entities.
 
@@ -78,7 +87,7 @@ class Project(BaseModel):
 
     # Project requirements and specifications
     requirements = Column(
-        JSON,
+        JSONB,
         nullable=True,
         comment="Project requirements, objectives, and success criteria"
     )
@@ -147,7 +156,7 @@ class Project(BaseModel):
 
     # Project-specific metadata (separate from base metadata to avoid conflicts)
     project_metadata = Column(
-        JSON,
+        JSONB,
         nullable=True,
         comment="Project-specific metadata and tracking information"
     )
@@ -232,8 +241,7 @@ class Project(BaseModel):
 
         return value
 
-    # @classmethod
-    def validate_data(cls, data: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Validate project data before creating/updating."""
         validated = data.copy()
 
@@ -275,15 +283,15 @@ class Project(BaseModel):
         errors = []
 
         # Validate required fields
-        if not self.id:
+        if not self.id:  # type: ignore
             errors.append("Project ID is required")
 
-        if not self.name:
+        if not self.name:  # type: ignore
             errors.append("Project name is required")
 
         # Validate tech stack consistency
-        if self.tech_stack and self.requirements:
-            req_tech = self.requirements.get('tech_stack', [])
+        if self.tech_stack and self.requirements:  # type: ignore
+            req_tech = self.requirements.get('tech_stack', [])  # type: ignore
             if req_tech and not all(tech in self.tech_stack for tech in req_tech):
                 errors.append(
                     "Requirements tech stack must be subset of project tech stack")
@@ -294,19 +302,19 @@ class Project(BaseModel):
 
     def add_requirement(self, key: str, value: Any) -> None:
         """Add or update a project requirement."""
-        if self.requirements is None:
-            self.requirements = {}
-        self.requirements[key] = value
+        if self.requirements is None:  # type: ignore
+            self.requirements = {}  # type: ignore
+        self.requirements[key] = value  # type: ignore
 
     def remove_requirement(self, key: str) -> None:
         """Remove a project requirement."""
-        if self.requirements and key in self.requirements:
-            del self.requirements[key]
+        if self.requirements and key in self.requirements:  # type: ignore
+            del self.requirements[key]  # type: ignore
 
     def get_requirement(self, key: str, default: Any = None) -> Any:
         """Get a specific requirement value."""
-        if self.requirements:
-            return self.requirements.get(key, default)
+        if self.requirements:  # type: ignore
+            return self.requirements.get(key, default)  # type: ignore
         return default
 
     def add_tech_stack_item(self, tech: str) -> None:
@@ -320,10 +328,10 @@ class Project(BaseModel):
 
     def remove_tech_stack_item(self, tech: str) -> None:
         """Remove a technology from the tech stack."""
-        if self.tech_stack:
+        if self.tech_stack:  # type: ignore
             tech = tech.strip().lower()
-            if tech in self.tech_stack:
-                self.tech_stack.remove(tech)
+            if tech in self.tech_stack:  # type: ignore
+                self.tech_stack.remove(tech)  # type: ignore
 
     def add_tag(self, tag: str) -> None:
         """Add a tag to the project."""
@@ -336,10 +344,10 @@ class Project(BaseModel):
 
     def remove_tag(self, tag: str) -> None:
         """Remove a tag from the project."""
-        if self.tags:
+        if self.tags:  # type: ignore
             tag = tag.strip().lower()
-            if tag in self.tags:
-                self.tags.remove(tag)
+            if tag in self.tags:  # type: ignore
+                self.tags.remove(tag)  # type: ignore
 
     def update_status(self, new_status: str,
                       metadata: Optional[Dict[str, Any]] = None) -> None:
@@ -358,7 +366,7 @@ class Project(BaseModel):
                 'metadata': metadata
             })
 
-            self.project_metadata['status_history'] = status_history
+            self.project_metadata['status_history'] = status_history  # type: ignore
 
     def get_summary(self) -> Dict[str, Any]:
         """Get project summary information."""
@@ -369,14 +377,14 @@ class Project(BaseModel):
             'status': self.status,
             'complexity': self.complexity,
             'priority': self.priority,
-            'tech_stack_count': len(self.tech_stack) if self.tech_stack else 0,
-            'requirements_count': len(self.requirements) if self.requirements else 0,
-            'tags_count': len(self.tags) if self.tags else 0,
-            'created_at': self.created_at.isoformat() if self.created_at else None,
-            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+            'tech_stack_count': len(self.tech_stack) if self.tech_stack else 0,  # type: ignore
+            'requirements_count': len(self.requirements) if self.requirements else 0,  # type: ignore
+            'tags_count': len(self.tags) if self.tags else 0,  # type: ignore
+            'created_at': self.created_at.isoformat() if self.created_at else None,  # type: ignore
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None  # type: ignore
         }
 
-    # @classmethod
+    @classmethod
     def create_from_template(
             cls,
             project_id: str,
@@ -449,7 +457,7 @@ Index('idx_project_created_at', Project.created_at.desc())
 
 # Database constraints
 CheckConstraint(
-    Project.status.in_(['planning', 'active', 'on_hold',
+    Project.status.in_(['planning', 'active', 'on_hold',  # type: ignore
                        'completed', 'cancelled', 'archived']),
     name='ck_project_status_valid'
 )

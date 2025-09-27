@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 
+
 # Mock dependencies for development
 def get_current_user():
     return {"id": "user_123", "username": "developer"}

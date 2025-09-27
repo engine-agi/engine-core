@@ -19,21 +19,27 @@ The 11 agent modules provide comprehensive customization:
 
 Based on Engine Framework data model specification.
 """
+import json
+import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
 from pydantic import BaseModel, Field
 from sqlalchemy import (
-    Boolean, CheckConstraint, Column, Float, ForeignKey, Index, Integer,
-    String, Text
+    Boolean,
+    CheckConstraint,
+    Column,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import relationship, validates
 
 from .base import SQLAlchemyBaseModel
-
-import json
-import re
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
@@ -332,58 +338,58 @@ class Agent(SQLAlchemyBaseModel):
         # Required fields validation
         required_fields = ['id', 'model', 'stack']
         for field in required_fields:
-        if field not in validated or not validated[field]:
-        raise ValueError(f"Agent {field} is required")
+            if field not in validated or not validated[field]:
+                raise ValueError(f"Agent {field} is required")
 
         # Validate tools references
         if 'tools' in validated and validated['tools']:
-        if not isinstance(validated['tools'], list):
-        raise ValueError("Tools must be a list of tool IDs")
+            if not isinstance(validated['tools'], list):
+                raise ValueError("Tools must be a list of tool IDs")
 
             for tool_id in validated['tools']:
-        if not isinstance(tool_id, str) or not tool_id.strip():
-        raise ValueError("All tool IDs must be non-empty strings")
+                if not isinstance(tool_id, str) or not tool_id.strip():
+                    raise ValueError("All tool IDs must be non-empty strings")
 
         # Validate configuration
         if 'config' in validated and validated['config']:
-        if not isinstance(validated['config'], dict):
-        raise ValueError("Config must be a dictionary")
+            if not isinstance(validated['config'], dict):
+                raise ValueError("Config must be a dictionary")
 
             # Validate specific config fields
             config = validated['config']
 
             if 'temperature' in config:
-        temp = config['temperature']
+                temp = config['temperature']
                 if not isinstance(temp, (int, float)) or not 0.0 <= temp <= 2.0:
-        raise ValueError("Temperature must be a number between 0.0 and 2.0")
+                    raise ValueError("Temperature must be a number between 0.0 and 2.0")
 
             if 'max_tokens' in config:
-        tokens = config['max_tokens']
+                tokens = config['max_tokens']
                 if not isinstance(tokens, int) or not 1 <= tokens <= 100000:
-        raise ValueError("Max tokens must be an integer between 1 and 100,000")
+                    raise ValueError("Max tokens must be an integer between 1 and 100,000")
 
         return validated
 
-        def validate_instance(self) -> List[str]:
+    def validate_instance(self) -> List[str]:
         """Validate agent instance and return list of errors."""
         errors = []
 
         # Validate required fields
         if not getattr(self, 'id', None):
-        errors.append("Agent ID is required")
+            errors.append("Agent ID is required")
 
         if not getattr(self, 'model', None):
-        errors.append("AI model is required")
+            errors.append("AI model is required")
 
         stack = getattr(self, 'stack', None)
         if not stack or len(stack) == 0:
-        errors.append("Technology stack is required")
+            errors.append("Technology stack is required")
 
         # Validate consistency
         successful_executions = getattr(self, 'successful_executions', 0)
         total_executions = getattr(self, 'total_executions', 0)
         if successful_executions > total_executions:
-        errors.append("Successful executions cannot exceed total executions")
+            errors.append("Successful executions cannot exceed total executions")
 
         # Validate references exist (would need database queries in real implementation)
         # For now, just validate they are properly formatted
@@ -392,65 +398,65 @@ class Agent(SQLAlchemyBaseModel):
 
         # === UTILITY METHODS ===
 
-        def has_capability(self, technology: str) -> bool:
+    def has_capability(self, technology: str) -> bool:
         """Check if agent has specific technology capability."""
         stack = getattr(self, 'stack', None)
         if not stack:
-        return False
+            return False
 
         tech_lower = technology.lower()
         return tech_lower in [item.lower() for item in stack]
 
-        def add_capability(self, technology: str) -> None:
+    def add_capability(self, technology: str) -> None:
         """Add technology capability to agent stack."""
         stack = getattr(self, 'stack', None)
         if not stack:
-        self.stack = []
+            self.stack = []
             stack = []
 
         tech_lower = technology.lower()
         if not self.has_capability(tech_lower):
-        stack.append(tech_lower)
+            stack.append(tech_lower)
             self.stack = stack
 
-        def remove_capability(self, technology: str) -> None:
+    def remove_capability(self, technology: str) -> None:
         """Remove technology capability from agent stack."""
         stack = getattr(self, 'stack', None)
         if stack:
-        tech_lower = technology.lower()
+            tech_lower = technology.lower()
             self.stack = [item for item in stack if item.lower() != tech_lower]
 
-        def add_tool(self, tool_id: str) -> None:
+    def add_tool(self, tool_id: str) -> None:
         """Add tool reference to agent."""
         tools = getattr(self, 'tools', None)
         if not tools:
-        self.tools = []
+            self.tools = []
             tools = []
 
         if tool_id not in tools:
-        tools.append(tool_id)
+            tools.append(tool_id)
             self.tools = tools
 
-        def remove_tool(self, tool_id: str) -> None:
+    def remove_tool(self, tool_id: str) -> None:
         """Remove tool reference from agent."""
         tools = getattr(self, 'tools', None)
         if tools and tool_id in tools:
-        tools.remove(tool_id)
+            tools.remove(tool_id)
             self.tools = tools
 
-        def update_execution_stats(
+    def update_execution_stats(
         self,
         execution_time: float,
         success: bool = True,
         metadata: Optional[Dict[str, Any]] = None
     ) -> None:
-    """Update agent execution statistics."""
+        """Update agent execution statistics."""
         # Get current values using getattr
         total_executions = getattr(self, 'total_executions', 0) + 1
         successful_executions = getattr(self, 'successful_executions', 0)
 
         if success:
-    successful_executions += 1
+            successful_executions += 1
 
         # Update instance attributes
         self.total_executions = total_executions
@@ -459,10 +465,10 @@ class Agent(SQLAlchemyBaseModel):
         # Update average execution time
         current_avg = getattr(self, 'average_execution_time', None)
         if current_avg is None:
-    self.average_execution_time = execution_time
+            self.average_execution_time = execution_time
         else:
             # Running average calculation
-    total_time = current_avg * (total_executions - 1) + execution_time
+            total_time = current_avg * (total_executions - 1) + execution_time
             self.average_execution_time = total_time / total_executions
 
         # Update performance score based on success rate
@@ -470,9 +476,9 @@ class Agent(SQLAlchemyBaseModel):
 
         # Store learning data
         if metadata:
-    learning_data = getattr(self, 'learning_data', None)
+            learning_data = getattr(self, 'learning_data', None)
             if learning_data is None:
-    learning_data = {'executions': []}
+                learning_data = {'executions': []}
 
             executions = learning_data['executions']
             executions.append({
@@ -489,7 +495,7 @@ class Agent(SQLAlchemyBaseModel):
             learning_data['executions'] = executions
             self.learning_data = learning_data
 
-        def get_capabilities_summary(self) -> Dict[str, Any]:
+    def get_capabilities_summary(self) -> Dict[str, Any]:
         """Get summary of agent capabilities."""
         stack = getattr(self, 'stack', None) or []
         tools = getattr(self, 'tools', None) or []
@@ -497,7 +503,7 @@ class Agent(SQLAlchemyBaseModel):
         successful_executions = getattr(self, 'successful_executions', 0)
 
         return {
-           'id': getattr(self, 'id', None),
+            'id': getattr(self, 'id', None),
             'name': getattr(self, 'name', None),
             'model': getattr(self, 'model', None),
             'speciality': getattr(self, 'speciality', None),
@@ -514,7 +520,7 @@ class Agent(SQLAlchemyBaseModel):
             'total_executions': total_executions
         }
 
-        def reset_stats(self) -> None:
+    def reset_stats(self) -> None:
         """Reset agent execution statistics."""
         self.total_executions = 0
         self.successful_executions = 0
@@ -522,17 +528,17 @@ class Agent(SQLAlchemyBaseModel):
         self.performance_score = None
         self.learning_data = None
 
-    @ classmethod
-        def create_minimal(cls, agent_id: str, model: str, stack: List[str]) -> "Agent":
+    @classmethod
+    def create_minimal(cls, agent_id: str, model: str, stack: List[str]) -> "Agent":
         """Create agent with minimal required configuration (3 modules)."""
         return cls(
-            id = agent_id,
-            model = model,
-            stack = stack
+            id=agent_id,
+            model=model,
+            stack=stack
         )
 
-    @ classmethod
-        def create_complete(
+    @classmethod
+    def create_complete(
         cls,
         agent_id: str,
         model: str,
@@ -546,31 +552,31 @@ class Agent(SQLAlchemyBaseModel):
         book_id: Optional[str] = None,
         config: Optional[Dict[str, Any]] = None
     ) -> "Agent":
-    """Create agent with all 11 modules configured."""
+        """Create agent with all 11 modules configured."""
         return cls(
-            id = agent_id,
-            model = model,
-            stack = stack,
-            name = name,
-            speciality = speciality,
-            persona = persona,
-            tools = tools,
-            protocol_id = protocol_id,
-            workflow_id = workflow_id,
-            book_id = book_id,
-            config = config
+            id=agent_id,
+            model=model,
+            stack=stack,
+            name=name,
+            speciality=speciality,
+            persona=persona,
+            tools=tools,
+            protocol_id=protocol_id,
+            workflow_id=workflow_id,
+            book_id=book_id,
+            config=config
         )
 
 
-        # Database indexes for performance
-        Index('idx_agent_model_status', Agent.model, Agent.status)
-            Index('idx_agent_project_status', Agent.project_id, Agent.status)
-            # Note: Performance and execution indexes removed due to type conflicts
+# Database indexes for performance
+Index('idx_agent_model_status', Agent.model, Agent.status)
+Index('idx_agent_project_status', Agent.project_id, Agent.status)
+# Note: Performance and execution indexes removed due to type conflicts
 
-            # Database constraints
-            CheckConstraint(
+# Database constraints
+CheckConstraint(
     Agent.status.in_(['idle', 'active', 'busy', 'error', 'offline', 'maintenance']),
-    name = 'ck_agent_status_valid'
+    name='ck_agent_status_valid'
 )
 
-    # Note: Execution and performance constraints removed due to type conflicts
+# Note: Execution and performance constraints removed due to type conflicts

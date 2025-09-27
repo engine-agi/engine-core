@@ -1,18 +1,4 @@
 """
-from pathlib import Path
-from typing import Set, Tuple
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Book System Core - Hierarchical Memory Management Architecture.
 
 The Book System provides a comprehensive hierarchical memory framework for the
@@ -48,17 +34,17 @@ Dependencies:
 - Full-text search engines
 - Permission frameworks
 """
-import asyncio
-import hashlib
-import json
 import logging
-import re
-import uuid
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
+import asyncio
+import hashlib
+import json
+import re
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -206,7 +192,7 @@ class ContentSection:
     def update_content(self, content: str, updated_by: Optional[str] = None) -> None:
         """Update section content."""
         self.content = content
-        self.metadata.updated_at = datetime.utcnow()
+        self.metadata.updated_at = datetime.now(UTC)
         self.metadata.updated_by = updated_by
         self.metadata.version += 1
         self._update_content_metrics()
@@ -484,7 +470,7 @@ class BookPage:
 
     def _update_page_metadata(self) -> None:
         """Update page metadata based on content."""
-        self.metadata.updated_at = datetime.utcnow()
+        self.metadata.updated_at = datetime.now(UTC)
         self.metadata.version += 1
 
         # Update content size
@@ -680,7 +666,7 @@ class BookChapter:
 
     def _update_chapter_metadata(self) -> None:
         """Update chapter metadata based on content."""
-        self.metadata.updated_at = datetime.utcnow()
+        self.metadata.updated_at = datetime.now(UTC)
         self.metadata.version += 1
 
         # Aggregate content size from pages

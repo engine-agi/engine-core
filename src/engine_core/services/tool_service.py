@@ -20,23 +20,6 @@ Architecture:
 - Service layer for business logic coordination
 - Integration with ToolExecutor for secure execution
 """
-import logging
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
-
-from ..core.tools import (
-    ToolBuilder, ToolConfiguration, ToolCapability, ToolInterface,
-    ToolType, ToolExecutionMode, ToolStatus, PermissionLevel,
-    ExecutionEnvironment, ToolExecutionRequest, ToolExecutionResult,
-    ToolHealthCheck, ToolRegistry, APITool, CLITool, MCPTool, PluginTool
-)
-
-from ..core.tools.tool_executor import (
-    ToolExecutor, ExecutionContext, ExecutionMetrics, ResourceLimits,
-    SecurityPolicy, SecurityManager, ResourceManager, CacheManager,
-    ExecutionQueue, ExecutionPriority, ExecutionStatus,
-    create_tool_executor
-)
 import asyncio
 import importlib
 import json
@@ -44,13 +27,47 @@ import logging
 import os
 import tempfile
 import uuid
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
 from pydantic import Field
+
+from ..core.tools import (
+    APITool,
+    CLITool,
+    ExecutionEnvironment,
+    MCPTool,
+    PermissionLevel,
+    PluginTool,
+    ToolBuilder,
+    ToolCapability,
+    ToolConfiguration,
+    ToolExecutionMode,
+    ToolExecutionRequest,
+    ToolExecutionResult,
+    ToolHealthCheck,
+    ToolInterface,
+    ToolRegistry,
+    ToolStatus,
+    ToolType,
+)
+from ..core.tools.tool_executor import (
+    CacheManager,
+    ExecutionContext,
+    ExecutionMetrics,
+    ExecutionPriority,
+    ExecutionQueue,
+    ExecutionStatus,
+    ResourceLimits,
+    ResourceManager,
+    SecurityManager,
+    SecurityPolicy,
+    ToolExecutor,
+    create_tool_executor,
+)
 
 # Type checking imports
 if TYPE_CHECKING:
@@ -60,17 +77,37 @@ if TYPE_CHECKING:
 
 # Core imports
 from ..core.tools import (
-    ToolBuilder, ToolConfiguration, ToolCapability, ToolInterface,
-    ToolType, ToolExecutionMode, ToolStatus, PermissionLevel,
-    ExecutionEnvironment, ToolExecutionRequest, ToolExecutionResult,
-    ToolHealthCheck, ToolRegistry, APITool, CLITool, MCPTool, PluginTool
+    APITool,
+    CLITool,
+    ExecutionEnvironment,
+    MCPTool,
+    PermissionLevel,
+    PluginTool,
+    ToolBuilder,
+    ToolCapability,
+    ToolConfiguration,
+    ToolExecutionMode,
+    ToolExecutionRequest,
+    ToolExecutionResult,
+    ToolHealthCheck,
+    ToolInterface,
+    ToolRegistry,
+    ToolStatus,
+    ToolType,
 )
-
 from ..core.tools.tool_executor import (
-    ToolExecutor, ExecutionContext, ExecutionMetrics, ResourceLimits,
-    SecurityPolicy, SecurityManager, ResourceManager, CacheManager,
-    ExecutionQueue, ExecutionPriority, ExecutionStatus,
-    create_tool_executor
+    CacheManager,
+    ExecutionContext,
+    ExecutionMetrics,
+    ExecutionPriority,
+    ExecutionQueue,
+    ExecutionStatus,
+    ResourceLimits,
+    ResourceManager,
+    SecurityManager,
+    SecurityPolicy,
+    ToolExecutor,
+    create_tool_executor,
 )
 
 logger = logging.getLogger(__name__)
@@ -78,27 +115,32 @@ logger = logging.getLogger(__name__)
 
 class ToolServiceError(Exception):
     """Base exception for tool service errors."""
+
     pass
 
 
 class ToolNotFoundError(ToolServiceError):
     """Tool not found error."""
+
     pass
 
 
 class ToolRegistrationError(ToolServiceError):
     """Tool registration error."""
+
     pass
 
 
 class ToolExecutionError(ToolServiceError):
     """Tool execution error."""
+
     pass
 
 
 @dataclass
 class ToolCreateRequest:
     """Request for creating/registering a new tool."""
+
     tool_id: str
     name: str
     tool_type: ToolType
@@ -145,6 +187,7 @@ class ToolCreateRequest:
 @dataclass
 class ToolUpdateRequest:
     """Request for updating tool configuration."""
+
     name: Optional[str] = None
     description: Optional[str] = None
     endpoint: Optional[str] = None
@@ -163,6 +206,7 @@ class ToolUpdateRequest:
 @dataclass
 class ToolSearchCriteria:
     """Criteria for searching tools."""
+
     name_pattern: Optional[str] = None
     tool_type: Optional[ToolType] = None
     project_id: Optional[str] = None
@@ -180,6 +224,7 @@ class ToolSearchCriteria:
 @dataclass
 class ToolAnalytics:
     """Tool performance analytics."""
+
     tool_id: str
     total_executions: int = 0
     successful_executions: int = 0
@@ -197,6 +242,7 @@ class ToolAnalytics:
 @dataclass
 class ToolTemplate:
     """Template for common tool configurations."""
+
     template_id: str
     name: str
     description: str
@@ -213,17 +259,19 @@ class ToolRepository(ABC):
     """Abstract repository interface for tool data persistence."""
 
     @abstractmethod
-    async def create_tool(self, tool_data: Dict[str, Any]) -> 'Tool':
+    async def create_tool(self, tool_data: Dict[str, Any]) -> "Tool":
         """Create a new tool record."""
         pass
 
     @abstractmethod
-    async def get_tool_by_id(self, tool_id: str) -> Optional['Tool']:
+    async def get_tool_by_id(self, tool_id: str) -> Optional["Tool"]:
         """Get tool by ID."""
         pass
 
     @abstractmethod
-    async def update_tool(self, tool_id: str, updates: Dict[str, Any]) -> Optional['Tool']:
+    async def update_tool(
+        self, tool_id: str, updates: Dict[str, Any]
+    ) -> Optional["Tool"]:
         """Update tool record."""
         pass
 
@@ -233,30 +281,28 @@ class ToolRepository(ABC):
         pass
 
     @abstractmethod
-    async def search_tools(self, criteria: ToolSearchCriteria) -> List['Tool']:
+    async def search_tools(self, criteria: ToolSearchCriteria) -> List["Tool"]:
         """Search tools by criteria."""
         pass
 
     @abstractmethod
-    async def create_tool_execution(self, execution_data: Dict[str, Any]) -> 'ToolExecution':
+    async def create_tool_execution(
+        self, execution_data: Dict[str, Any]
+    ) -> "ToolExecution":
         """Create tool execution record."""
         pass
 
     @abstractmethod
     async def update_tool_execution(
-        self,
-        execution_id: str,
-        updates: Dict[str, Any]
-    ) -> Optional['ToolExecution']:
+        self, execution_id: str, updates: Dict[str, Any]
+    ) -> Optional["ToolExecution"]:
         """Update tool execution record."""
         pass
 
     @abstractmethod
     async def get_tool_executions(
-        self,
-        tool_id: str,
-        limit: int = 50
-    ) -> List['ToolExecution']:
+        self, tool_id: str, limit: int = 50
+    ) -> List["ToolExecution"]:
         """Get tool execution history."""
         pass
 
@@ -271,7 +317,9 @@ class ToolRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_tool_templates(self, tool_type: Optional[ToolType] = None) -> List[ToolTemplate]:
+    async def get_tool_templates(
+        self, tool_type: Optional[ToolType] = None
+    ) -> List[ToolTemplate]:
         """Get tool templates."""
         pass
 
@@ -287,13 +335,13 @@ class MockToolRepository(ToolRepository):
         # Create default templates
         self._create_default_templates()
 
-    async def create_tool(self, tool_data: Dict[str, Any]) -> 'Tool':
+    async def create_tool(self, tool_data: Dict[str, Any]) -> "Tool":
         """Create a new tool record."""
-        tool_id = tool_data.get('id', str(uuid.uuid4()))
-        tool_data['id'] = tool_id
-        tool_data['created_at'] = datetime.utcnow()
-        tool_data['updated_at'] = datetime.utcnow()
-        tool_data['execution_count'] = 0
+        tool_id = tool_data.get("id", str(uuid.uuid4()))
+        tool_data["id"] = tool_id
+        tool_data["created_at"] = datetime.utcnow()
+        tool_data["updated_at"] = datetime.utcnow()
+        tool_data["execution_count"] = 0
 
         self.tools[tool_id] = tool_data.copy()
 
@@ -304,7 +352,7 @@ class MockToolRepository(ToolRepository):
 
         return MockTool(tool_data)
 
-    async def get_tool_by_id(self, tool_id: str) -> Optional['Tool']:
+    async def get_tool_by_id(self, tool_id: str) -> Optional["Tool"]:
         """Get tool by ID."""
         if tool_id not in self.tools:
             return None
@@ -316,13 +364,15 @@ class MockToolRepository(ToolRepository):
 
         return MockTool(self.tools[tool_id])
 
-    async def update_tool(self, tool_id: str, updates: Dict[str, Any]) -> Optional['Tool']:
+    async def update_tool(
+        self, tool_id: str, updates: Dict[str, Any]
+    ) -> Optional["Tool"]:
         """Update tool record."""
         if tool_id not in self.tools:
             return None
 
         self.tools[tool_id].update(updates)
-        self.tools[tool_id]['updated_at'] = datetime.utcnow()
+        self.tools[tool_id]["updated_at"] = datetime.utcnow()
 
         class MockTool:
             def __init__(self, data):
@@ -337,32 +387,44 @@ class MockToolRepository(ToolRepository):
             del self.tools[tool_id]
             # Delete related executions
             executions_to_delete = [
-                eid for eid, exec_data in self.executions.items()
-                if exec_data.get('tool_id') == tool_id
+                eid
+                for eid, exec_data in self.executions.items()
+                if exec_data.get("tool_id") == tool_id
             ]
             for eid in executions_to_delete:
                 del self.executions[eid]
             return True
         return False
 
-    async def search_tools(self, criteria: ToolSearchCriteria) -> List['Tool']:
+    async def search_tools(self, criteria: ToolSearchCriteria) -> List["Tool"]:
         """Search tools by criteria."""
         results = []
 
         for tool_id, tool_data in self.tools.items():
             # Apply filters
-            if criteria.name_pattern and criteria.name_pattern not in tool_data.get('name', ''):
+            if criteria.name_pattern and criteria.name_pattern not in tool_data.get(
+                "name", ""
+            ):
                 continue
-            if criteria.tool_type and tool_data.get('tool_type') != criteria.tool_type.value:
+            if (
+                criteria.tool_type
+                and tool_data.get("tool_type") != criteria.tool_type.value
+            ):
                 continue
-            if criteria.project_id and tool_data.get('project_id') != criteria.project_id:
+            if (
+                criteria.project_id
+                and tool_data.get("project_id") != criteria.project_id
+            ):
                 continue
-            if criteria.user_id and tool_data.get('user_id') != criteria.user_id:
+            if criteria.user_id and tool_data.get("user_id") != criteria.user_id:
                 continue
-            if criteria.is_active is not None and tool_data.get('is_active') != criteria.is_active:
+            if (
+                criteria.is_active is not None
+                and tool_data.get("is_active") != criteria.is_active
+            ):
                 continue
             if criteria.tags:
-                tool_tags = set(tool_data.get('tags', []))
+                tool_tags = set(tool_data.get("tags", []))
                 if not set(criteria.tags).issubset(tool_tags):
                     continue
 
@@ -373,13 +435,15 @@ class MockToolRepository(ToolRepository):
 
             results.append(MockTool(tool_data))
 
-        return results[criteria.offset:criteria.offset + criteria.limit]
+        return results[criteria.offset : criteria.offset + criteria.limit]
 
-    async def create_tool_execution(self, execution_data: Dict[str, Any]) -> 'ToolExecution':
+    async def create_tool_execution(
+        self, execution_data: Dict[str, Any]
+    ) -> "ToolExecution":
         """Create tool execution record."""
-        execution_id = execution_data.get('id', str(uuid.uuid4()))
-        execution_data['id'] = execution_id
-        execution_data['created_at'] = datetime.utcnow()
+        execution_id = execution_data.get("id", str(uuid.uuid4()))
+        execution_data["id"] = execution_id
+        execution_data["created_at"] = datetime.utcnow()
 
         self.executions[execution_id] = execution_data.copy()
 
@@ -391,16 +455,14 @@ class MockToolRepository(ToolRepository):
         return MockToolExecution(execution_data)
 
     async def update_tool_execution(
-        self,
-        execution_id: str,
-        updates: Dict[str, Any]
-    ) -> Optional['ToolExecution']:
+        self, execution_id: str, updates: Dict[str, Any]
+    ) -> Optional["ToolExecution"]:
         """Update tool execution record."""
         if execution_id not in self.executions:
             return None
 
         self.executions[execution_id].update(updates)
-        self.executions[execution_id]['updated_at'] = datetime.utcnow()
+        self.executions[execution_id]["updated_at"] = datetime.utcnow()
 
         class MockToolExecution:
             def __init__(self, data):
@@ -410,17 +472,16 @@ class MockToolRepository(ToolRepository):
         return MockToolExecution(self.executions[execution_id])
 
     async def get_tool_executions(
-        self,
-        tool_id: str,
-        limit: int = 50
-    ) -> List['ToolExecution']:
+        self, tool_id: str, limit: int = 50
+    ) -> List["ToolExecution"]:
         """Get tool execution history."""
         executions = [
-            exec_data for exec_data in self.executions.values()
-            if exec_data.get('tool_id') == tool_id
+            exec_data
+            for exec_data in self.executions.values()
+            if exec_data.get("tool_id") == tool_id
         ]
 
-        executions.sort(key=lambda x: x.get('created_at', datetime.min), reverse=True)
+        executions.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
 
         class MockToolExecution:
             def __init__(self, data):
@@ -432,32 +493,38 @@ class MockToolRepository(ToolRepository):
     async def get_tool_analytics(self, tool_id: str) -> Dict[str, Any]:
         """Get tool analytics data."""
         executions = [
-            exec_data for exec_data in self.executions.values()
-            if exec_data.get('tool_id') == tool_id
+            exec_data
+            for exec_data in self.executions.values()
+            if exec_data.get("tool_id") == tool_id
         ]
 
         if not executions:
             return {
-                'total_executions': 0,
-                'successful_executions': 0,
-                'failed_executions': 0,
-                'average_execution_time': 0.0
+                "total_executions": 0,
+                "successful_executions": 0,
+                "failed_executions": 0,
+                "average_execution_time": 0.0,
             }
 
-        successful = sum(1 for e in executions if e.get('status') == 'success')
-        failed = sum(1 for e in executions if e.get('status') in ['error', 'failed'])
+        successful = sum(1 for e in executions if e.get("status") == "success")
+        failed = sum(1 for e in executions if e.get("status") in ["error", "failed"])
 
         execution_times = [
-            e.get('execution_time', 0.0) for e in executions
-            if e.get('execution_time') is not None
+            e.get("execution_time", 0.0)
+            for e in executions
+            if e.get("execution_time") is not None
         ]
 
         return {
-            'total_executions': len(executions),
-            'successful_executions': successful,
-            'failed_executions': failed,
-            'average_execution_time': sum(execution_times) / len(execution_times) if execution_times else 0.0,
-            'last_execution_at': max(e.get('created_at', datetime.min) for e in executions)
+            "total_executions": len(executions),
+            "successful_executions": successful,
+            "failed_executions": failed,
+            "average_execution_time": sum(execution_times) / len(execution_times)
+            if execution_times
+            else 0.0,
+            "last_execution_at": max(
+                e.get("created_at", datetime.min) for e in executions
+            ),
         }
 
     async def create_tool_template(self, template_data: Dict[str, Any]) -> ToolTemplate:
@@ -466,7 +533,9 @@ class MockToolRepository(ToolRepository):
         self.templates[template.template_id] = template
         return template
 
-    async def get_tool_templates(self, tool_type: Optional[ToolType] = None) -> List[ToolTemplate]:
+    async def get_tool_templates(
+        self, tool_type: Optional[ToolType] = None
+    ) -> List[ToolTemplate]:
         """Get tool templates."""
         templates = list(self.templates.values())
 
@@ -486,7 +555,7 @@ class MockToolRepository(ToolRepository):
             configuration_template={
                 "endpoint": "https://api.github.com",
                 "headers": {"Accept": "application/vnd.github.v3+json"},
-                "authentication": {"type": "token", "token": "<GITHUB_TOKEN>"}
+                "authentication": {"type": "token", "token": "<GITHUB_TOKEN>"},
             },
             capability_templates=[
                 {
@@ -497,13 +566,16 @@ class MockToolRepository(ToolRepository):
                         "required": ["owner", "repo"],
                         "properties": {
                             "owner": {"type": "string"},
-                            "repo": {"type": "string"}
-                        }
+                            "repo": {"type": "string"},
+                        },
                     },
-                    "metadata": {"http_method": "GET", "endpoint": "repos/{owner}/{repo}"}
+                    "metadata": {
+                        "http_method": "GET",
+                        "endpoint": "repos/{owner}/{repo}",
+                    },
                 }
             ],
-            tags=["api", "github", "version_control"]
+            tags=["api", "github", "version_control"],
         )
         self.templates[github_template.template_id] = github_template
 
@@ -515,21 +587,21 @@ class MockToolRepository(ToolRepository):
             tool_type=ToolType.CLI,
             configuration_template={
                 "executable": "git",
-                "execution_environment": "sandbox"
+                "execution_environment": "sandbox",
             },
             capability_templates=[
                 {
                     "name": "status",
                     "description": "Get git status",
-                    "metadata": {"command_template": "status --porcelain"}
+                    "metadata": {"command_template": "status --porcelain"},
                 },
                 {
                     "name": "log",
                     "description": "Get git log",
-                    "metadata": {"command_template": "log --oneline -n {count}"}
-                }
+                    "metadata": {"command_template": "log --oneline -n {count}"},
+                },
             ],
-            tags=["cli", "git", "version_control"]
+            tags=["cli", "git", "version_control"],
         )
         self.templates[git_template.template_id] = git_template
 
@@ -551,8 +623,8 @@ class ToolService:
         self,
         repository: ToolRepository,
         tool_executor: Optional[ToolExecutor] = None,
-        agent_service: Optional['AgentService'] = None,
-        workflow_service: Optional['WorkflowService'] = None
+        agent_service: Optional["AgentService"] = None,
+        workflow_service: Optional["WorkflowService"] = None,
     ):
         """Initialize tool service."""
         self.repository = repository
@@ -571,17 +643,17 @@ class ToolService:
 
         # Service statistics
         self.service_stats = {
-            'total_tools_registered': 0,
-            'total_tools_active': 0,
-            'total_executions': 0,
-            'total_execution_failures': 0,
-            'total_templates_created': 0,
-            'average_tool_response_time': 0.0
+            "total_tools_registered": 0,
+            "total_tools_active": 0,
+            "total_executions": 0,
+            "total_execution_failures": 0,
+            "total_templates_created": 0,
+            "average_tool_response_time": 0.0,
         }
 
     # === Tool Lifecycle Management ===
 
-    async def register_tool(self, request: ToolCreateRequest) -> 'Tool':
+    async def register_tool(self, request: ToolCreateRequest) -> "Tool":
         """Register a new tool with the system."""
         start_time = datetime.utcnow()
 
@@ -595,42 +667,44 @@ class ToolService:
             # Register with tool registry
             if not await self.tool_registry.register_tool(config):
                 raise ToolRegistrationError(
-                    f"Failed to register tool: {request.tool_id}")
+                    f"Failed to register tool: {request.tool_id}"
+                )
 
             # Create database record
             tool_data = {
-                'id': request.tool_id,
-                'name': request.name,
-                'tool_type': request.tool_type.value,
-                'version': request.version,
-                'description': request.description,
-                'configuration': config.__dict__,
-                'project_id': request.project_id,
-                'user_id': request.user_id,
-                'is_active': request.is_active,
-                'tags': request.tags,
-                'metadata': request.metadata
+                "id": request.tool_id,
+                "name": request.name,
+                "tool_type": request.tool_type.value,
+                "version": request.version,
+                "description": request.description,
+                "configuration": config.__dict__,
+                "project_id": request.project_id,
+                "user_id": request.user_id,
+                "is_active": request.is_active,
+                "tags": request.tags,
+                "metadata": request.metadata,
             }
 
             tool = await self.repository.create_tool(tool_data)
 
             # Update statistics
-            self.service_stats['total_tools_registered'] += 1
+            self.service_stats["total_tools_registered"] += 1
             if request.is_active:
-                self.service_stats['total_tools_active'] += 1
+                self.service_stats["total_tools_active"] += 1
 
             response_time = (datetime.utcnow() - start_time).total_seconds()
             self._update_response_time_stats(response_time)
 
             logger.info(
-                f"Registered tool: {request.tool_id} ({request.tool_type.value})")
+                f"Registered tool: {request.tool_id} ({request.tool_type.value})"
+            )
             return tool
 
         except Exception as e:
             logger.error(f"Failed to register tool {request.tool_id}: {str(e)}")
             raise ToolRegistrationError(str(e))
 
-    async def get_tool(self, tool_id: str) -> 'Tool':
+    async def get_tool(self, tool_id: str) -> "Tool":
         """Get tool by ID."""
 
         # Check cache first
@@ -650,7 +724,7 @@ class ToolService:
 
         return tool
 
-    async def update_tool(self, tool_id: str, request: ToolUpdateRequest) -> 'Tool':
+    async def update_tool(self, tool_id: str, request: ToolUpdateRequest) -> "Tool":
         """Update tool configuration."""
         start_time = datetime.utcnow()
 
@@ -663,39 +737,41 @@ class ToolService:
             config_updates = {}
 
             if request.name is not None:
-                updates['name'] = request.name
+                updates["name"] = request.name
             if request.description is not None:
-                updates['description'] = request.description
+                updates["description"] = request.description
             if request.endpoint is not None:
-                config_updates['endpoint'] = request.endpoint
+                config_updates["endpoint"] = request.endpoint
             if request.authentication is not None:
-                config_updates['authentication'] = request.authentication
+                config_updates["authentication"] = request.authentication
             if request.headers is not None:
-                config_updates['headers'] = request.headers
+                config_updates["headers"] = request.headers
             if request.timeout_seconds is not None:
-                config_updates['timeout_seconds'] = request.timeout_seconds
+                config_updates["timeout_seconds"] = request.timeout_seconds
             if request.retry_attempts is not None:
-                config_updates['retry_attempts'] = request.retry_attempts
+                config_updates["retry_attempts"] = request.retry_attempts
             if request.execution_mode is not None:
-                config_updates['execution_mode'] = request.execution_mode.value
+                config_updates["execution_mode"] = request.execution_mode.value
             if request.max_concurrent_executions is not None:
-                config_updates['max_concurrent_executions'] = request.max_concurrent_executions
+                config_updates[
+                    "max_concurrent_executions"
+                ] = request.max_concurrent_executions
             if request.capabilities is not None:
-                config_updates['capabilities'] = [
+                config_updates["capabilities"] = [
                     self._dict_to_capability(cap) for cap in request.capabilities
                 ]
             if request.tags is not None:
-                updates['tags'] = request.tags
+                updates["tags"] = request.tags
             if request.metadata is not None:
-                updates['metadata'] = request.metadata
+                updates["metadata"] = request.metadata
             if request.is_active is not None:
-                updates['is_active'] = request.is_active
+                updates["is_active"] = request.is_active
 
             # Update configuration if needed
             if config_updates:
                 current_config = existing.configuration
                 current_config.update(config_updates)
-                updates['configuration'] = current_config
+                updates["configuration"] = current_config
 
                 # Update tool registry
                 tool = self.tool_registry.get_tool(tool_id)
@@ -743,7 +819,7 @@ class ToolService:
                 if cache_key in self._tool_cache:
                     del self._tool_cache[cache_key]
 
-                self.service_stats['total_tools_active'] -= 1
+                self.service_stats["total_tools_active"] -= 1
                 logger.info(f"Unregistered tool: {tool_id}")
 
             return success
@@ -754,7 +830,7 @@ class ToolService:
             logger.error(f"Failed to unregister tool {tool_id}: {str(e)}")
             raise ToolServiceError(str(e))
 
-    async def search_tools(self, criteria: ToolSearchCriteria) -> List['Tool']:
+    async def search_tools(self, criteria: ToolSearchCriteria) -> List["Tool"]:
         """Search tools by criteria."""
         try:
             tools = await self.repository.search_tools(criteria)
@@ -778,20 +854,22 @@ class ToolService:
 
             # Create execution record
             execution_data = {
-                'id': request.execution_id or str(uuid.uuid4()),
-                'tool_id': request.tool_id,
-                'capability_name': request.capability_name,
-                'parameters': request.parameters,
-                'context': request.context,
-                'user_id': request.user_id,
-                'project_id': request.project_id,
-                'session_id': request.session_id,
-                'priority': request.priority,
-                'status': ExecutionStatus.QUEUED.value,
-                'requested_at': datetime.utcnow()
+                "id": request.execution_id or str(uuid.uuid4()),
+                "tool_id": request.tool_id,
+                "capability_name": request.capability_name,
+                "parameters": request.parameters,
+                "context": request.context,
+                "user_id": request.user_id,
+                "project_id": request.project_id,
+                "session_id": request.session_id,
+                "priority": request.priority,
+                "status": ExecutionStatus.QUEUED.value,
+                "requested_at": datetime.utcnow(),
             }
 
-            execution_record = await self.repository.create_tool_execution(execution_data)
+            execution_record = await self.repository.create_tool_execution(
+                execution_data
+            )
 
             try:
                 # Execute using tool executor
@@ -799,23 +877,22 @@ class ToolService:
 
                 # Update execution record
                 execution_updates = {
-                    'status': result.status,
-                    'result': result.result,
-                    'error': result.error,
-                    'execution_time': result.execution_time,
-                    'resource_usage': result.resource_usage,
-                    'completed_at': datetime.utcnow()
+                    "status": result.status,
+                    "result": result.result,
+                    "error": result.error,
+                    "execution_time": result.execution_time,
+                    "resource_usage": result.resource_usage,
+                    "completed_at": datetime.utcnow(),
                 }
 
                 await self.repository.update_tool_execution(
-                    execution_record.id,
-                    execution_updates
+                    execution_record.id, execution_updates
                 )
 
                 # Update statistics
-                self.service_stats['total_executions'] += 1
-                if result.status != 'success':
-                    self.service_stats['total_execution_failures'] += 1
+                self.service_stats["total_executions"] += 1
+                if result.status != "success":
+                    self.service_stats["total_execution_failures"] += 1
 
                 execution_time = (datetime.utcnow() - start_time).total_seconds()
                 self._update_response_time_stats(execution_time)
@@ -830,19 +907,18 @@ class ToolService:
             except Exception as e:
                 # Update execution record with failure
                 execution_updates = {
-                    'status': ExecutionStatus.FAILED.value,
-                    'error': str(e),
-                    'completed_at': datetime.utcnow()
+                    "status": ExecutionStatus.FAILED.value,
+                    "error": str(e),
+                    "completed_at": datetime.utcnow(),
                 }
                 await self.repository.update_tool_execution(
-                    execution_record.id,
-                    execution_updates
+                    execution_record.id, execution_updates
                 )
                 raise
 
         except Exception as e:
             logger.error(f"Tool execution failed: {str(e)}")
-            self.service_stats['total_execution_failures'] += 1
+            self.service_stats["total_execution_failures"] += 1
             raise ToolExecutionError(str(e))
 
     async def get_tool_capabilities(self, tool_id: str) -> List[ToolCapability]:
@@ -906,9 +982,7 @@ class ToolService:
 
             # Create analytics object
             analytics = ToolAnalytics(
-                tool_id=tool_id,
-                health_status=health_status,
-                **analytics_data
+                tool_id=tool_id, health_status=health_status, **analytics_data
             )
 
             # Cache result
@@ -921,10 +995,8 @@ class ToolService:
             raise ToolServiceError(str(e))
 
     async def get_tool_executions(
-        self,
-        tool_id: str,
-        limit: int = 50
-    ) -> List['ToolExecution']:
+        self, tool_id: str, limit: int = 50
+    ) -> List["ToolExecution"]:
         """Get tool execution history."""
         try:
             executions = await self.repository.get_tool_executions(tool_id, limit)
@@ -938,11 +1010,11 @@ class ToolService:
         executor_stats = self.tool_executor.get_executor_stats()
 
         return {
-            'service_stats': self.service_stats,
-            'executor_stats': executor_stats,
-            'registered_tools': len(self.tool_registry.tools),
-            'cache_size': len(self._analytics_cache) + len(self._tool_cache),
-            'uptime': datetime.utcnow().isoformat()
+            "service_stats": self.service_stats,
+            "executor_stats": executor_stats,
+            "registered_tools": len(self.tool_registry.tools),
+            "cache_size": len(self._analytics_cache) + len(self._tool_cache),
+            "uptime": datetime.utcnow().isoformat(),
         }
 
     # === Template Management ===
@@ -956,26 +1028,26 @@ class ToolService:
         configuration_template: Dict[str, Any],
         capability_templates: List[Dict[str, Any]] = None,
         tags: List[str] = None,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
     ) -> ToolTemplate:
         """Create reusable tool template."""
         try:
             template_data = {
-                'template_id': template_id,
-                'name': name,
-                'description': description,
-                'tool_type': tool_type,
-                'configuration_template': configuration_template,
-                'capability_templates': capability_templates or [],
-                'tags': tags or [],
-                'created_by': user_id,
-                'created_at': datetime.utcnow(),
-                'usage_count': 0
+                "template_id": template_id,
+                "name": name,
+                "description": description,
+                "tool_type": tool_type,
+                "configuration_template": configuration_template,
+                "capability_templates": capability_templates or [],
+                "tags": tags or [],
+                "created_by": user_id,
+                "created_at": datetime.utcnow(),
+                "usage_count": 0,
             }
 
             template = await self.repository.create_tool_template(template_data)
 
-            self.service_stats['total_templates_created'] += 1
+            self.service_stats["total_templates_created"] += 1
 
             logger.info(f"Created tool template: {template_id}")
             return template
@@ -985,8 +1057,7 @@ class ToolService:
             raise ToolServiceError(str(e))
 
     async def get_tool_templates(
-        self,
-        tool_type: Optional[ToolType] = None
+        self, tool_type: Optional[ToolType] = None
     ) -> List[ToolTemplate]:
         """Get available tool templates."""
         try:
@@ -1003,14 +1074,15 @@ class ToolService:
         name: str,
         customizations: Optional[Dict[str, Any]] = None,
         user_id: Optional[str] = None,
-        project_id: Optional[str] = None
-    ) -> 'Tool':
+        project_id: Optional[str] = None,
+    ) -> "Tool":
         """Create tool from template with customizations."""
         try:
             # Get template
             templates = await self.get_tool_templates()
             template = next(
-                (t for t in templates if t.template_id == template_id), None)
+                (t for t in templates if t.template_id == template_id), None
+            )
 
             if not template:
                 raise ToolServiceError(f"Template {template_id} not found")
@@ -1035,7 +1107,7 @@ class ToolService:
                 capabilities=capabilities,
                 tags=template.tags,
                 user_id=user_id,
-                project_id=project_id
+                project_id=project_id,
             )
 
             # Register tool
@@ -1053,7 +1125,7 @@ class ToolService:
 
     # === Integration Operations ===
 
-    async def get_tools_for_agent(self, agent_id: str) -> List['Tool']:
+    async def get_tools_for_agent(self, agent_id: str) -> List["Tool"]:
         """Get tools available to a specific agent."""
         try:
             # This would integrate with agent permissions/configuration
@@ -1065,19 +1137,18 @@ class ToolService:
             logger.error(f"Failed to get tools for agent {agent_id}: {str(e)}")
             raise ToolServiceError(str(e))
 
-    async def get_tools_by_capability(self, capability_name: str) -> List['Tool']:
+    async def get_tools_by_capability(self, capability_name: str) -> List["Tool"]:
         """Get tools that support a specific capability."""
         try:
             criteria = ToolSearchCriteria(
-                capabilities=[capability_name],
-                is_active=True,
-                limit=100
+                capabilities=[capability_name], is_active=True, limit=100
             )
             tools = await self.search_tools(criteria)
             return tools
         except Exception as e:
             logger.error(
-                f"Failed to get tools by capability {capability_name}: {str(e)}")
+                f"Failed to get tools by capability {capability_name}: {str(e)}"
+            )
             raise ToolServiceError(str(e))
 
     # === Lifecycle Management ===
@@ -1128,55 +1199,61 @@ class ToolService:
         if request.tool_type == ToolType.PLUGIN and not request.plugin_class:
             raise ValueError("Plugin tools require a plugin class")
 
-    async def _build_tool_configuration(self, request: ToolCreateRequest) -> ToolConfiguration:
+    async def _build_tool_configuration(
+        self, request: ToolCreateRequest
+    ) -> ToolConfiguration:
         """Build tool configuration from request."""
 
         # Convert capability dictionaries to ToolCapability objects
         capabilities = [self._dict_to_capability(cap) for cap in request.capabilities]
 
         # Build configuration
-        config = ToolBuilder()\
-            .with_id(request.tool_id)\
-            .with_name(request.name)\
-            .with_type(request.tool_type)\
-            .with_version(request.version)\
-            .with_description(request.description)\
-            .with_endpoint(request.endpoint)\
-            .with_authentication(request.authentication)\
-            .with_headers(request.headers)\
-            .with_timeout(request.timeout_seconds)\
-            .with_retry_attempts(request.retry_attempts)\
-            .with_execution_mode(request.execution_mode)\
-            .with_execution_environment(request.execution_environment)\
-            .with_concurrent_executions(request.max_concurrent_executions)\
-            .with_permissions(request.required_permissions)\
-            .with_allowed_users(request.allowed_users)\
-            .with_allowed_projects(request.allowed_projects)\
-            .with_capabilities(capabilities)\
-            .with_tags(request.tags)\
-            .with_metadata(request.metadata)\
-            .with_plugin_class(request.plugin_class)\
-            .with_plugin_config(request.plugin_config)\
-            .with_mcp_server(request.mcp_server_path, request.mcp_args, request.mcp_env)\
+        config = (
+            ToolBuilder()
+            .with_id(request.tool_id)
+            .with_name(request.name)
+            .with_type(request.tool_type)
+            .with_version(request.version)
+            .with_description(request.description)
+            .with_endpoint(request.endpoint)
+            .with_authentication(request.authentication)
+            .with_headers(request.headers)
+            .with_timeout(request.timeout_seconds)
+            .with_retry_attempts(request.retry_attempts)
+            .with_execution_mode(request.execution_mode)
+            .with_execution_environment(request.execution_environment)
+            .with_concurrent_executions(request.max_concurrent_executions)
+            .with_permissions(request.required_permissions)
+            .with_allowed_users(request.allowed_users)
+            .with_allowed_projects(request.allowed_projects)
+            .with_capabilities(capabilities)
+            .with_tags(request.tags)
+            .with_metadata(request.metadata)
+            .with_plugin_class(request.plugin_class)
+            .with_plugin_config(request.plugin_config)
+            .with_mcp_server(request.mcp_server_path, request.mcp_args, request.mcp_env)
             .build()
+        )
 
         return config
 
     def _dict_to_capability(self, cap_dict: Dict[str, Any]) -> ToolCapability:
         """Convert dictionary to ToolCapability."""
         return ToolCapability(
-            name=cap_dict.get('name', ''),
-            description=cap_dict.get('description', ''),
-            input_schema=cap_dict.get('input_schema', {}),
-            output_schema=cap_dict.get('output_schema', {}),
-            required_permissions=set(cap_dict.get('required_permissions', [])),
-            execution_time_estimate=cap_dict.get('execution_time_estimate'),
-            resource_requirements=cap_dict.get('resource_requirements', {}),
-            dependencies=cap_dict.get('dependencies', []),
-            examples=cap_dict.get('examples', [])
+            name=cap_dict.get("name", ""),
+            description=cap_dict.get("description", ""),
+            input_schema=cap_dict.get("input_schema", {}),
+            output_schema=cap_dict.get("output_schema", {}),
+            required_permissions=set(cap_dict.get("required_permissions", [])),
+            execution_time_estimate=cap_dict.get("execution_time_estimate"),
+            resource_requirements=cap_dict.get("resource_requirements", {}),
+            dependencies=cap_dict.get("dependencies", []),
+            examples=cap_dict.get("examples", []),
         )
 
-    def _dict_to_tool_configuration(self, config_dict: Dict[str, Any]) -> ToolConfiguration:
+    def _dict_to_tool_configuration(
+        self, config_dict: Dict[str, Any]
+    ) -> ToolConfiguration:
         """Convert dictionary to ToolConfiguration."""
         # This would convert configuration dictionary back to ToolConfiguration
         # Implementation would depend on the specific structure
@@ -1184,23 +1261,26 @@ class ToolService:
 
     def _update_response_time_stats(self, response_time: float) -> None:
         """Update service response time statistics."""
-        current_avg = self.service_stats['average_tool_response_time']
-        total_ops = (self.service_stats['total_tools_registered'] +
-                    self.service_stats['total_executions'])
+        current_avg = self.service_stats["average_tool_response_time"]
+        total_ops = (
+            self.service_stats["total_tools_registered"]
+            + self.service_stats["total_executions"]
+        )
 
         if total_ops > 0:
-            self.service_stats['average_tool_response_time'] = (
-                (current_avg * (total_ops - 1) + response_time) / total_ops
-            )
+            self.service_stats["average_tool_response_time"] = (
+                current_avg * (total_ops - 1) + response_time
+            ) / total_ops
 
 
 # === FACTORY FUNCTION ===
 
+
 def create_tool_service(
     repository: Optional[ToolRepository] = None,
     tool_executor: Optional[ToolExecutor] = None,
-    agent_service: Optional['AgentService'] = None,
-    workflow_service: Optional['WorkflowService'] = None
+    agent_service: Optional["AgentService"] = None,
+    workflow_service: Optional["WorkflowService"] = None,
 ) -> ToolService:
     """Create ToolService with default dependencies."""
     if repository is None:
@@ -1210,11 +1290,12 @@ def create_tool_service(
         repository=repository,
         tool_executor=tool_executor,
         agent_service=agent_service,
-        workflow_service=workflow_service
+        workflow_service=workflow_service,
     )
 
 
 # === EXAMPLE USAGE ===
+
 
 async def example_tool_service_usage():
     """Example usage of ToolService."""
@@ -1243,18 +1324,18 @@ async def example_tool_service_usage():
                         "required": ["owner", "repo"],
                         "properties": {
                             "owner": {"type": "string"},
-                            "repo": {"type": "string"}
-                        }
+                            "repo": {"type": "string"},
+                        },
                     },
                     "metadata": {
                         "http_method": "GET",
-                        "endpoint": "repos/{owner}/{repo}"
-                    }
+                        "endpoint": "repos/{owner}/{repo}",
+                    },
                 }
             ],
             tags=["api", "github", "version_control"],
             user_id="test_user",
-            project_id="test_project"
+            project_id="test_project",
         )
 
         tool = await service.register_tool(github_request)
@@ -1266,7 +1347,7 @@ async def example_tool_service_usage():
             capability_name="get_repository",
             parameters={"owner": "microsoft", "repo": "vscode"},
             user_id="test_user",
-            project_id="test_project"
+            project_id="test_project",
         )
 
         result = await service.execute_tool(execution_request)
@@ -1288,9 +1369,9 @@ async def example_tool_service_usage():
             tool_type=ToolType.API,
             configuration_template={
                 "endpoint": "https://api.github.com",
-                "headers": {"Accept": "application/vnd.github.v3+json"}
+                "headers": {"Accept": "application/vnd.github.v3+json"},
             },
-            tags=["template", "api", "github"]
+            tags=["template", "api", "github"],
         )
         print(f"Created template: {template.template_id}")
 
@@ -1302,4 +1383,5 @@ async def example_tool_service_usage():
 if __name__ == "__main__":
     # Run example
     import asyncio
+
     asyncio.run(example_tool_service_usage())

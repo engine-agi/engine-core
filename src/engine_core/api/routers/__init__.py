@@ -36,14 +36,7 @@ Each router follows consistent patterns:
 __version__ = "1.0.0"
 
 # Import all routers
-from . import agents
-from . import books
-from . import observability
-from . import projects
-from . import protocols
-from . import teams
-from . import tools
-from . import workflows
+from . import agents, books, observability, projects, protocols, teams, tools, workflows
 
 __all__ = [
     "projects",
@@ -53,5 +46,5 @@ __all__ = [
     "protocols",
     "tools",
     "books",
-    "observability"
+    "observability",
 ]

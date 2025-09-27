@@ -9,24 +9,33 @@ Infrastructure models provide core system functionality:
 
 Based on Engine Framework data model specification.
 """
+import hashlib
+import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pydantic import BaseModel, Field
 from sqlalchemy import (
-    Boolean, Column, DateTime, Float, ForeignKey, Index, Integer,
-    String, Text, CheckConstraint
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import relationship, validates
 
 from .base import SQLAlchemyBaseModel
-import hashlib
-import re
 
 
 class UserRole:
     """User role constants."""
+
     ADMIN = "admin"
     USER = "user"
     VIEWER = "viewer"
@@ -35,6 +44,7 @@ class UserRole:
 
 class UserStatus:
     """User status constants."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
@@ -43,6 +53,7 @@ class UserStatus:
 
 class SessionStatus:
     """Session status constants."""
+
     ACTIVE = "active"
     EXPIRED = "expired"
     TERMINATED = "terminated"
@@ -51,6 +62,7 @@ class SessionStatus:
 
 class LogLevel:
     """Log level constants."""
+
     DEBUG = "debug"
     INFO = "info"
     WARNING = "warning"
@@ -81,7 +93,7 @@ class User(SQLAlchemyBaseModel):
         nullable=False,
         unique=True,
         index=True,
-        comment="Unique username for authentication"
+        comment="Unique username for authentication",
     )
 
     email = Column(
@@ -89,27 +101,17 @@ class User(SQLAlchemyBaseModel):
         nullable=False,
         unique=True,
         index=True,
-        comment="User email address"
+        comment="User email address",
     )
 
-    full_name = Column(
-        String(255),
-        nullable=True,
-        comment="User's full name"
-    )
+    full_name = Column(String(255), nullable=True, comment="User's full name")
 
     # Authentication
     password_hash = Column(
-        String(255),
-        nullable=True,
-        comment="Hashed password for local authentication"
+        String(255), nullable=True, comment="Hashed password for local authentication"
     )
 
-    salt = Column(
-        String(100),
-        nullable=True,
-        comment="Salt used for password hashing"
-    )
+    salt = Column(String(100), nullable=True, comment="Salt used for password hashing")
 
     # User role and status
     role = Column(
@@ -117,7 +119,7 @@ class User(SQLAlchemyBaseModel):
         nullable=False,
         default=UserRole.USER,
         index=True,
-        comment="User role for authorization"
+        comment="User role for authorization",
     )
 
     status = Column(
@@ -125,55 +127,36 @@ class User(SQLAlchemyBaseModel):
         nullable=False,
         default=UserStatus.PENDING,
         index=True,
-        comment="User account status"
+        comment="User account status",
     )
 
     # Profile information
-    avatar_url = Column(
-        String(500),
-        nullable=True,
-        comment="URL to user avatar image"
-    )
+    avatar_url = Column(String(500), nullable=True, comment="URL to user avatar image")
 
     timezone = Column(
-        String(50),
-        nullable=True,
-        default="UTC",
-        comment="User's preferred timezone"
+        String(50), nullable=True, default="UTC", comment="User's preferred timezone"
     )
 
     language = Column(
-        String(10),
-        nullable=True,
-        default="en",
-        comment="User's preferred language"
+        String(10), nullable=True, default="en", comment="User's preferred language"
     )
 
     # Authentication tracking
-    last_login_at = Column(
-        String(50),
-        nullable=True,
-        comment="Timestamp of last login"
-    )
+    last_login_at = Column(String(50), nullable=True, comment="Timestamp of last login")
 
     login_count = Column(
-        Integer,
-        default=0,
-        nullable=False,
-        comment="Number of successful logins"
+        Integer, default=0, nullable=False, comment="Number of successful logins"
     )
 
     failed_login_attempts = Column(
         Integer,
         default=0,
         nullable=False,
-        comment="Number of consecutive failed login attempts"
+        comment="Number of consecutive failed login attempts",
     )
 
     last_failed_login_at = Column(
-        String(50),
-        nullable=True,
-        comment="Timestamp of last failed login attempt"
+        String(50), nullable=True, comment="Timestamp of last failed login attempt"
     )
 
     # Account verification
@@ -181,54 +164,42 @@ class User(SQLAlchemyBaseModel):
         Boolean,
         default=False,
         nullable=False,
-        comment="Whether email address has been verified"
+        comment="Whether email address has been verified",
     )
 
     email_verification_token = Column(
-        String(255),
-        nullable=True,
-        comment="Token for email verification"
+        String(255), nullable=True, comment="Token for email verification"
     )
 
     # Password reset
     password_reset_token = Column(
-        String(255),
-        nullable=True,
-        comment="Token for password reset"
+        String(255), nullable=True, comment="Token for password reset"
     )
 
     password_reset_expires_at = Column(
         String(50),
         nullable=True,
-        comment="Expiration timestamp for password reset token"
+        comment="Expiration timestamp for password reset token",
     )
 
     # Preferences and settings
-    preferences = Column(
-        JSONB,
-        nullable=True,
-        comment="User preferences and settings"
-    )
+    preferences = Column(JSONB, nullable=True, comment="User preferences and settings")
 
     # API access
     api_key = Column(
         String(255),
         nullable=True,
         unique=True,
-        comment="API key for programmatic access"
+        comment="API key for programmatic access",
     )
 
     api_key_created_at = Column(
-        String(50),
-        nullable=True,
-        comment="Timestamp when API key was created"
+        String(50), nullable=True, comment="Timestamp when API key was created"
     )
 
     # User-specific metadata (avoiding conflict with SQLAlchemy's reserved 'metadata' attribute)
     user_metadata = Column(
-        JSONB,
-        nullable=True,
-        comment="User-specific metadata and configuration"
+        JSONB, nullable=True, comment="User-specific metadata and configuration"
     )
 
     # Override the inherited metadata attribute to avoid SQLAlchemy conflict
@@ -237,26 +208,27 @@ class User(SQLAlchemyBaseModel):
     # === RELATIONSHIPS ===
 
     # One-to-many relationship with sessions
-    sessions = relationship("Session", back_populates="user",
-                            cascade="all, delete-orphan")
+    sessions = relationship(
+        "Session", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def __init__(self, **kwargs):
         """Initialize user with validation."""
         # Set defaults
-        if 'role' not in kwargs:
-            kwargs['role'] = UserRole.USER
-        if 'status' not in kwargs:
-            kwargs['status'] = UserStatus.PENDING
-        if 'timezone' not in kwargs:
-            kwargs['timezone'] = 'UTC'
-        if 'language' not in kwargs:
-            kwargs['language'] = 'en'
-        if 'login_count' not in kwargs:
-            kwargs['login_count'] = 0
-        if 'failed_login_attempts' not in kwargs:
-            kwargs['failed_login_attempts'] = 0
-        if 'email_verified' not in kwargs:
-            kwargs['email_verified'] = False
+        if "role" not in kwargs:
+            kwargs["role"] = UserRole.USER
+        if "status" not in kwargs:
+            kwargs["status"] = UserStatus.PENDING
+        if "timezone" not in kwargs:
+            kwargs["timezone"] = "UTC"
+        if "language" not in kwargs:
+            kwargs["language"] = "en"
+        if "login_count" not in kwargs:
+            kwargs["login_count"] = 0
+        if "failed_login_attempts" not in kwargs:
+            kwargs["failed_login_attempts"] = 0
+        if "email_verified" not in kwargs:
+            kwargs["email_verified"] = False
 
         super().__init__(**kwargs)
 
@@ -265,14 +237,14 @@ class User(SQLAlchemyBaseModel):
 
     # === VALIDATION METHODS ===
 
-    @validates('username')
+    @validates("username")
     def validate_username(self, key: str, value: str) -> str:
         """Validate username format."""
         if not value or not value.strip():
             raise ValueError("Username is required")
 
         # Must be alphanumeric with underscores/hyphens, 3-100 characters
-        if not re.match(r'^[a-zA-Z0-9_-]{3,100}$', value):
+        if not re.match(r"^[a-zA-Z0-9_-]{3,100}$", value):
             raise ValueError(
                 "Username must be 3-100 characters, containing only "
                 "letters, numbers, underscores, and hyphens"
@@ -280,20 +252,20 @@ class User(SQLAlchemyBaseModel):
 
         return value.lower()
 
-    @validates('email')
+    @validates("email")
     def validate_email(self, key: str, value: str) -> str:
         """Validate email format."""
         if not value or not value.strip():
             raise ValueError("Email is required")
 
         # Basic email validation
-        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         if not re.match(email_pattern, value):
             raise ValueError("Invalid email format")
 
         return value.lower()
 
-    @validates('role')
+    @validates("role")
     def validate_role(self, key: str, value: str) -> str:
         """Validate user role."""
         valid_roles = [UserRole.ADMIN, UserRole.USER, UserRole.VIEWER, UserRole.SYSTEM]
@@ -303,11 +275,15 @@ class User(SQLAlchemyBaseModel):
 
         return value
 
-    @validates('status')
+    @validates("status")
     def validate_status(self, key: str, value: str) -> str:
         """Validate user status."""
-        valid_statuses = [UserStatus.ACTIVE, UserStatus.INACTIVE,
-            UserStatus.SUSPENDED, UserStatus.PENDING]
+        valid_statuses = [
+            UserStatus.ACTIVE,
+            UserStatus.INACTIVE,
+            UserStatus.SUSPENDED,
+            UserStatus.PENDING,
+        ]
 
         if value not in valid_statuses:
             raise ValueError(f"Status must be one of: {', '.join(valid_statuses)}")
@@ -323,29 +299,24 @@ class User(SQLAlchemyBaseModel):
 
         # Generate salt
         import secrets
+
         self.salt = secrets.token_hex(32)
 
         # Hash password with salt
         self.password_hash = hashlib.pbkdf2_hmac(
-            'sha256',
-            password.encode('utf-8'),
-            self.salt.encode('utf-8'),
-            100000
+            "sha256", password.encode("utf-8"), self.salt.encode("utf-8"), 100000
         ).hex()
 
     def verify_password(self, password: str) -> bool:
         """Verify password against hash."""
-        password_hash_value = getattr(self, 'password_hash', None)
-        salt_value = getattr(self, 'salt', None)
+        password_hash_value = getattr(self, "password_hash", None)
+        salt_value = getattr(self, "salt", None)
         if not password_hash_value or not salt_value:
             return False
 
         # Hash provided password with stored salt
         password_hash = hashlib.pbkdf2_hmac(
-            'sha256',
-            password.encode('utf-8'),
-            salt_value.encode('utf-8'),
-            100000
+            "sha256", password.encode("utf-8"), salt_value.encode("utf-8"), 100000
         ).hex()
 
         return password_hash == password_hash_value
@@ -365,7 +336,7 @@ class User(SQLAlchemyBaseModel):
 
     def is_locked_out(self, max_attempts: int = 5) -> bool:
         """Check if user is locked out due to failed login attempts."""
-        failed_attempts = getattr(self, 'failed_login_attempts', 0)
+        failed_attempts = getattr(self, "failed_login_attempts", 0)
         return failed_attempts >= max_attempts
 
     # === API KEY MANAGEMENT ===
@@ -373,6 +344,7 @@ class User(SQLAlchemyBaseModel):
     def generate_api_key(self) -> str:
         """Generate new API key for user."""
         import secrets
+
         self.api_key = f"ek_{secrets.token_urlsafe(32)}"
         self.api_key_created_at = datetime.utcnow().isoformat()
         return self.api_key
@@ -386,23 +358,23 @@ class User(SQLAlchemyBaseModel):
 
     def get_profile(self) -> Dict[str, Any]:
         """Get user profile information."""
-        created_at_value = getattr(self, 'created_at', None)
+        created_at_value = getattr(self, "created_at", None)
         return {
-            'id': self.id,
-            'username': self.username,
-            'email': self.email,
-            'full_name': self.full_name,
-            'role': self.role,
-            'status': self.status,
-            'avatar_url': self.avatar_url,
-            'timezone': self.timezone,
-            'language': self.language,
-            'email_verified': self.email_verified,
-            'last_login_at': self.last_login_at,
-            'login_count': getattr(self, 'login_count', 0),
-            'has_api_key': self.api_key is not None,
-            'preferences': self.preferences,
-            'created_at': created_at_value.isoformat() if created_at_value else None
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "full_name": self.full_name,
+            "role": self.role,
+            "status": self.status,
+            "avatar_url": self.avatar_url,
+            "timezone": self.timezone,
+            "language": self.language,
+            "email_verified": self.email_verified,
+            "last_login_at": self.last_login_at,
+            "login_count": getattr(self, "login_count", 0),
+            "has_api_key": self.api_key is not None,
+            "preferences": self.preferences,
+            "created_at": created_at_value.isoformat() if created_at_value else None,
         }
 
 
@@ -425,7 +397,7 @@ class Session(SQLAlchemyBaseModel):
         nullable=False,
         unique=True,
         index=True,
-        comment="Unique session token"
+        comment="Unique session token",
     )
 
     # User association
@@ -434,7 +406,7 @@ class Session(SQLAlchemyBaseModel):
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
-        comment="User this session belongs to"
+        comment="User this session belongs to",
     )
 
     # Session metadata
@@ -443,73 +415,46 @@ class Session(SQLAlchemyBaseModel):
         nullable=False,
         default=SessionStatus.ACTIVE,
         index=True,
-        comment="Session status"
+        comment="Session status",
     )
 
     # Session timing
-    started_at = Column(
-        String(50),
-        nullable=False,
-        comment="Session start timestamp"
-    )
+    started_at = Column(String(50), nullable=False, comment="Session start timestamp")
 
     expires_at = Column(
-        String(50),
-        nullable=False,
-        comment="Session expiration timestamp"
+        String(50), nullable=False, comment="Session expiration timestamp"
     )
 
     last_activity_at = Column(
-        String(50),
-        nullable=True,
-        comment="Last activity timestamp"
+        String(50), nullable=True, comment="Last activity timestamp"
     )
 
-    ended_at = Column(
-        String(50),
-        nullable=True,
-        comment="Session end timestamp"
-    )
+    ended_at = Column(String(50), nullable=True, comment="Session end timestamp")
 
     # Client information
     ip_address = Column(
-        String(45),
-        nullable=True,
-        comment="Client IP address (IPv4/IPv6)"
+        String(45), nullable=True, comment="Client IP address (IPv4/IPv6)"
     )
 
-    user_agent = Column(
-        String(1000),
-        nullable=True,
-        comment="Client user agent string"
-    )
+    user_agent = Column(String(1000), nullable=True, comment="Client user agent string")
 
     device_fingerprint = Column(
-        String(255),
-        nullable=True,
-        comment="Device fingerprint for security"
+        String(255), nullable=True, comment="Device fingerprint for security"
     )
 
     # Activity tracking
     request_count = Column(
-        Integer,
-        default=0,
-        nullable=False,
-        comment="Number of requests in this session"
+        Integer, default=0, nullable=False, comment="Number of requests in this session"
     )
 
     # Session data
     session_data = Column(
-        JSONB,
-        nullable=True,
-        comment="Session-specific data and state"
+        JSONB, nullable=True, comment="Session-specific data and state"
     )
 
     # Session-specific metadata (avoiding conflict with SQLAlchemy's reserved 'metadata' attribute)
     session_metadata = Column(
-        JSONB,
-        nullable=True,
-        comment="Session-specific metadata and configuration"
+        JSONB, nullable=True, comment="Session-specific metadata and configuration"
     )
 
     # Override the inherited metadata attribute to avoid SQLAlchemy conflict
@@ -522,12 +467,12 @@ class Session(SQLAlchemyBaseModel):
     def __init__(self, **kwargs):
         """Initialize session with validation."""
         # Set defaults
-        if 'status' not in kwargs:
-            kwargs['status'] = SessionStatus.ACTIVE
-        if 'request_count' not in kwargs:
-            kwargs['request_count'] = 0
-        if 'started_at' not in kwargs:
-            kwargs['started_at'] = datetime.utcnow().isoformat()
+        if "status" not in kwargs:
+            kwargs["status"] = SessionStatus.ACTIVE
+        if "request_count" not in kwargs:
+            kwargs["request_count"] = 0
+        if "started_at" not in kwargs:
+            kwargs["started_at"] = datetime.utcnow().isoformat()
 
         super().__init__(**kwargs)
 
@@ -538,12 +483,12 @@ class Session(SQLAlchemyBaseModel):
 
     def is_active(self) -> bool:
         """Check if session is active and not expired."""
-        status_value = getattr(self, 'status', SessionStatus.ACTIVE)
+        status_value = getattr(self, "status", SessionStatus.ACTIVE)
         if status_value != SessionStatus.ACTIVE:
             return False
 
         # Check expiration
-        expires_at_value = getattr(self, 'expires_at', None)
+        expires_at_value = getattr(self, "expires_at", None)
         if expires_at_value:
             try:
                 expires = datetime.fromisoformat(expires_at_value)
@@ -556,6 +501,7 @@ class Session(SQLAlchemyBaseModel):
     def extend_session(self, hours: int = 24) -> None:
         """Extend session expiration time."""
         from datetime import timedelta
+
         new_expiry = datetime.utcnow() + timedelta(hours=hours)
         self.expires_at = new_expiry.isoformat()
 
@@ -566,14 +512,14 @@ class Session(SQLAlchemyBaseModel):
 
     def terminate_session(self, reason: str = "user_logout") -> None:
         """Terminate session."""
-        setattr(self, 'status', SessionStatus.TERMINATED)
-        setattr(self, 'ended_at', datetime.utcnow().isoformat())
+        setattr(self, "status", SessionStatus.TERMINATED)
+        setattr(self, "ended_at", datetime.utcnow().isoformat())
 
-        session_data_value = getattr(self, 'session_data', None)
+        session_data_value = getattr(self, "session_data", None)
         if session_data_value is None:
             session_data_value = {}
-        session_data_value['termination_reason'] = reason
-        setattr(self, 'session_data', session_data_value)
+        session_data_value["termination_reason"] = reason
+        setattr(self, "session_data", session_data_value)
 
     def invalidate_session(self) -> None:
         """Invalidate session (security reasons)."""
@@ -600,40 +546,30 @@ class Log(SQLAlchemyBaseModel):
         String(20),
         nullable=False,
         index=True,
-        comment="Log level (debug, info, warning, error, critical)"
+        comment="Log level (debug, info, warning, error, critical)",
     )
 
     category = Column(
         String(100),
         nullable=False,
         index=True,
-        comment="Log category (auth, system, user, api, workflow, etc.)"
+        comment="Log category (auth, system, user, api, workflow, etc.)",
     )
 
     operation = Column(
-        String(100),
-        nullable=False,
-        comment="Specific operation or action being logged"
+        String(100), nullable=False, comment="Specific operation or action being logged"
     )
 
     # Message and context
-    message = Column(
-        Text,
-        nullable=False,
-        comment="Log message description"
-    )
+    message = Column(Text, nullable=False, comment="Log message description")
 
-    details = Column(
-        JSONB,
-        nullable=True,
-        comment="Additional log details and context"
-    )
+    details = Column(JSONB, nullable=True, comment="Additional log details and context")
 
     # Source information
     source = Column(
         String(100),
         nullable=True,
-        comment="Source of the log entry (service, component, module)"
+        comment="Source of the log entry (service, component, module)",
     )
 
     # User and session context
@@ -642,7 +578,7 @@ class Log(SQLAlchemyBaseModel):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
-        comment="User associated with this log entry"
+        comment="User associated with this log entry",
     )
 
     session_id = Column(
@@ -650,82 +586,57 @@ class Log(SQLAlchemyBaseModel):
         ForeignKey("sessions.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
-        comment="Session associated with this log entry"
+        comment="Session associated with this log entry",
     )
 
     # Request context
     request_id = Column(
-        String(255),
-        nullable=True,
-        index=True,
-        comment="Request ID for correlation"
+        String(255), nullable=True, index=True, comment="Request ID for correlation"
     )
 
     correlation_id = Column(
         String(255),
         nullable=True,
         index=True,
-        comment="Correlation ID for distributed tracing"
+        comment="Correlation ID for distributed tracing",
     )
 
     # Resource context
     resource_type = Column(
         String(100),
         nullable=True,
-        comment="Type of resource involved (project, agent, team, etc.)"
+        comment="Type of resource involved (project, agent, team, etc.)",
     )
 
     resource_id = Column(
-        String(255),
-        nullable=True,
-        comment="ID of the resource involved"
+        String(255), nullable=True, comment="ID of the resource involved"
     )
 
     # Client information
-    ip_address = Column(
-        String(45),
-        nullable=True,
-        comment="Client IP address"
-    )
+    ip_address = Column(String(45), nullable=True, comment="Client IP address")
 
-    user_agent = Column(
-        String(1000),
-        nullable=True,
-        comment="Client user agent"
-    )
+    user_agent = Column(String(1000), nullable=True, comment="Client user agent")
 
     # Performance metrics
     duration_ms = Column(
-        Integer,
-        nullable=True,
-        comment="Operation duration in milliseconds"
+        Integer, nullable=True, comment="Operation duration in milliseconds"
     )
 
     # Error information
-    error_code = Column(
-        String(100),
-        nullable=True,
-        comment="Error code if applicable"
-    )
+    error_code = Column(String(100), nullable=True, comment="Error code if applicable")
 
-    stack_trace = Column(
-        Text,
-        nullable=True,
-        comment="Stack trace for errors"
-    )
+    stack_trace = Column(Text, nullable=True, comment="Stack trace for errors")
 
     # Tags for filtering and searching
     tags = Column(
         ARRAY(String(100)),
         nullable=True,
-        comment="Tags for log organization and filtering"
+        comment="Tags for log organization and filtering",
     )
 
     # Log-specific metadata (avoiding SQLAlchemy reserved 'metadata' attribute)
     log_metadata = Column(
-        JSONB,
-        nullable=True,
-        comment="Additional log metadata and context"
+        JSONB, nullable=True, comment="Additional log metadata and context"
     )
 
     # Override SQLAlchemy reserved 'metadata' attribute
@@ -740,11 +651,16 @@ class Log(SQLAlchemyBaseModel):
 
     # === VALIDATION METHODS ===
 
-    @validates('level')
+    @validates("level")
     def validate_level(self, key: str, value: str) -> str:
         """Validate log level."""
-        valid_levels = [LogLevel.DEBUG, LogLevel.INFO,
-            LogLevel.WARNING, LogLevel.ERROR, LogLevel.CRITICAL]
+        valid_levels = [
+            LogLevel.DEBUG,
+            LogLevel.INFO,
+            LogLevel.WARNING,
+            LogLevel.ERROR,
+            LogLevel.CRITICAL,
+        ]
 
         if value not in valid_levels:
             raise ValueError(f"Log level must be one of: {', '.join(valid_levels)}")
@@ -778,7 +694,7 @@ class Log(SQLAlchemyBaseModel):
         session_id: Optional[str] = None,
         resource_type: Optional[str] = None,
         resource_id: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[Dict[str, Any]] = None,
     ) -> "Log":
         """Create log entry for user action."""
         return cls(
@@ -791,7 +707,7 @@ class Log(SQLAlchemyBaseModel):
             resource_type=resource_type,
             resource_id=resource_id,
             details=details,
-            tags=["user_action", action]
+            tags=["user_action", action],
         )
 
     @classmethod
@@ -802,7 +718,7 @@ class Log(SQLAlchemyBaseModel):
         message: str,
         source: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
-        error_code: Optional[str] = None
+        error_code: Optional[str] = None,
     ) -> "Log":
         """Create system log entry."""
         return cls(
@@ -813,7 +729,7 @@ class Log(SQLAlchemyBaseModel):
             source=source,
             details=details,
             error_code=error_code,
-            tags=["system", operation]
+            tags=["system", operation],
         )
 
     @classmethod
@@ -824,7 +740,7 @@ class Log(SQLAlchemyBaseModel):
         error_code: Optional[str] = None,
         stack_trace: Optional[str] = None,
         user_id: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[Dict[str, Any]] = None,
     ) -> "Log":
         """Create error log entry."""
         return cls(
@@ -836,68 +752,73 @@ class Log(SQLAlchemyBaseModel):
             stack_trace=stack_trace,
             user_id=user_id,
             details=details,
-            tags=["error", operation]
+            tags=["error", operation],
         )
 
 
 # Database indexes for performance
-Index('idx_user_username', User.username)
-Index('idx_user_email', User.email)
-Index('idx_user_role_status', User.role, User.status)
-Index('idx_user_last_login', User.last_login_at)
+Index("idx_user_username", User.username)
+Index("idx_user_email", User.email)
+Index("idx_user_role_status", User.role, User.status)
+Index("idx_user_last_login", User.last_login_at)
 
-Index('idx_session_token', Session.session_token)
-Index('idx_session_user_status', Session.user_id, Session.status)
-Index('idx_session_expires', Session.expires_at)
-Index('idx_session_activity', Session.last_activity_at)
+Index("idx_session_token", Session.session_token)
+Index("idx_session_user_status", Session.user_id, Session.status)
+Index("idx_session_expires", Session.expires_at)
+Index("idx_session_activity", Session.last_activity_at)
 
-Index('idx_log_level_category', Log.level, Log.category)
-Index('idx_log_operation', Log.operation)
-Index('idx_log_user_time', Log.user_id, Log.created_at)
-Index('idx_log_request_id', Log.request_id)
-Index('idx_log_correlation_id', Log.correlation_id)
-Index('idx_log_resource', Log.resource_type, Log.resource_id)
-Index('idx_log_created_at', Log.created_at.desc())
+Index("idx_log_level_category", Log.level, Log.category)
+Index("idx_log_operation", Log.operation)
+Index("idx_log_user_time", Log.user_id, Log.created_at)
+Index("idx_log_request_id", Log.request_id)
+Index("idx_log_correlation_id", Log.correlation_id)
+Index("idx_log_resource", Log.resource_type, Log.resource_id)
+Index("idx_log_created_at", Log.created_at.desc())
 
 # Database constraints
 CheckConstraint(
     User.role.in_([UserRole.ADMIN, UserRole.USER, UserRole.VIEWER, UserRole.SYSTEM]),
-    name='ck_user_role_valid'
+    name="ck_user_role_valid",
 )
 
 CheckConstraint(
-    User.status.in_([UserStatus.ACTIVE, UserStatus.INACTIVE,
-                    UserStatus.SUSPENDED, UserStatus.PENDING]),
-    name='ck_user_status_valid'
+    User.status.in_(
+        [
+            UserStatus.ACTIVE,
+            UserStatus.INACTIVE,
+            UserStatus.SUSPENDED,
+            UserStatus.PENDING,
+        ]
+    ),
+    name="ck_user_status_valid",
 )
 
-CheckConstraint(
-    "login_count >= 0",
-    name='ck_user_login_count_non_negative'
-)
+CheckConstraint("login_count >= 0", name="ck_user_login_count_non_negative")
 
 CheckConstraint(
-    "failed_login_attempts >= 0",
-    name='ck_user_failed_login_attempts_non_negative'
+    "failed_login_attempts >= 0", name="ck_user_failed_login_attempts_non_negative"
 )
 
 CheckConstraint(
     "status IN ('active', 'expired', 'terminated', 'invalidated')",
-    name='ck_session_status_valid'
+    name="ck_session_status_valid",
 )
 
 CheckConstraint(
-    Session.request_count >= 0,
-    name='ck_session_request_count_non_negative'
+    Session.request_count >= 0, name="ck_session_request_count_non_negative"
 )
 
 CheckConstraint(
-    Log.level.in_([LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARNING,
-                  LogLevel.ERROR, LogLevel.CRITICAL]),
-    name='ck_log_level_valid'
+    Log.level.in_(
+        [
+            LogLevel.DEBUG,
+            LogLevel.INFO,
+            LogLevel.WARNING,
+            LogLevel.ERROR,
+            LogLevel.CRITICAL,
+        ]
+    ),
+    name="ck_log_level_valid",
 )
 
-CheckConstraint(
-    Log.duration_ms >= 0,
-    name='ck_log_duration_non_negative'
-)
+CheckConstraint(Log.duration_ms >= 0, name="ck_log_duration_non_negative")

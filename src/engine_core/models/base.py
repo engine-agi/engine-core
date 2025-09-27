@@ -14,12 +14,20 @@ import os
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, AsyncGenerator, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Dict, List, Optional, Set, Tuple
 
 from pydantic import BaseModel, Field
 from sqlalchemy import (
-    Boolean, Column, DateTime, Integer, MetaData, String, Text,
-    event, func, text
+    Boolean,
+    Column,
+    DateTime,
+    Integer,
+    MetaData,
+    String,
+    Text,
+    event,
+    func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -36,13 +44,12 @@ if TYPE_CHECKING:
 
 # Database Configuration
 DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+asyncpg://engine:engine@localhost:5432/engine_db"
+    "DATABASE_URL", "postgresql+asyncpg://engine:engine@localhost:5432/engine_db"
 )
 
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
-    "postgresql+asyncpg://engine:engine@localhost:5432/engine_test_db"
+    "postgresql+asyncpg://engine:engine@localhost:5432/engine_test_db",
 )
 
 # SQLAlchemy async engine configuration
@@ -52,14 +59,11 @@ engine = create_async_engine(
     pool_size=20,
     max_overflow=30,
     pool_pre_ping=True,
-    pool_recycle=3600  # 1 hour
+    pool_recycle=3600,  # 1 hour
 )
 
 test_engine = create_async_engine(
-    TEST_DATABASE_URL,
-    echo=False,  # Reduce noise in tests
-    pool_size=5,
-    max_overflow=10
+    TEST_DATABASE_URL, echo=False, pool_size=5, max_overflow=10  # Reduce noise in tests
 )
 
 # Async session factory
@@ -68,7 +72,7 @@ AsyncSessionLocal = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
     autoflush=True,
-    autocommit=False
+    autocommit=False,
 )
 
 TestAsyncSessionLocal = async_sessionmaker(
@@ -76,7 +80,7 @@ TestAsyncSessionLocal = async_sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
     autoflush=True,
-    autocommit=False
+    autocommit=False,
 )
 
 # Naming convention for constraints (required for Alembic)
@@ -85,7 +89,7 @@ convention = {
     "uq": "uq_%(table_name)s_%(column_0_name)s",
     "ck": "ck_%(table_name)s_%(constraint_name)s",
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-    "pk": "pk_%(table_name)s"
+    "pk": "pk_%(table_name)s",
 }
 
 metadata = MetaData(naming_convention=convention)
@@ -136,7 +140,7 @@ class SQLAlchemyBaseModel(Base):
         primary_key=True,
         default=uuid.uuid4,
         index=True,
-        comment="Unique identifier for the entity"
+        comment="Unique identifier for the entity",
     )
 
     # Audit fields
@@ -145,7 +149,7 @@ class SQLAlchemyBaseModel(Base):
         server_default=func.now(),
         nullable=False,
         index=True,
-        comment="Entity creation timestamp"
+        comment="Entity creation timestamp",
     )
 
     updated_at = Column(
@@ -154,7 +158,7 @@ class SQLAlchemyBaseModel(Base):
         onupdate=func.now(),
         nullable=False,
         index=True,
-        comment="Entity last update timestamp"
+        comment="Entity last update timestamp",
     )
 
     # Soft deletion
@@ -163,14 +167,12 @@ class SQLAlchemyBaseModel(Base):
         default=True,
         nullable=False,
         index=True,
-        comment="Flag for soft deletion (True = active, False = deleted)"
+        comment="Flag for soft deletion (True = active, False = deleted)",
     )
 
     # Flexible metadata storage
     metadata = Column(
-        JSONB,
-        nullable=True,
-        comment="Additional metadata and configuration"
+        JSONB, nullable=True, comment="Additional metadata and configuration"
     )
 
     def __repr__(self) -> str:
@@ -209,7 +211,9 @@ class SQLAlchemyBaseModel(Base):
 
         return cls(**filtered_data)
 
-    def update_from_dict(self, data: Dict[str, Any], exclude: Optional[List[str]] = None) -> None:
+    def update_from_dict(
+        self, data: Dict[str, Any], exclude: Optional[List[str]] = None
+    ) -> None:
         """Update model instance from dictionary."""
         exclude = exclude or ["id", "created_at"]  # Don't update immutable fields
 
@@ -230,7 +234,7 @@ class StringIdentifierMixin:
         String(255),
         primary_key=True,
         index=True,
-        comment="User-defined string identifier"
+        comment="User-defined string identifier",
     )
 
     def __repr__(self) -> str:
@@ -241,15 +245,11 @@ class TimestampMixin:
     """Mixin for additional timestamp fields."""
 
     last_accessed_at = Column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Last access timestamp"
+        DateTime(timezone=True), nullable=True, comment="Last access timestamp"
     )
 
     last_executed_at = Column(
-        DateTime(timezone=True),
-        nullable=True,
-        comment="Last execution timestamp"
+        DateTime(timezone=True), nullable=True, comment="Last execution timestamp"
     )
 
 
@@ -257,36 +257,33 @@ class ConfigurationMixin:
     """Mixin for configuration storage."""
 
     config = Column(
-        JSONB,
-        nullable=True,
-        default=dict,
-        comment="Entity configuration settings"
+        JSONB, nullable=True, default=dict, comment="Entity configuration settings"
     )
 
     def get_config(self, key: str, default: Any = None) -> Any:
         """Get configuration value by key."""
-        config_value = getattr(self, 'config', None)
+        config_value = getattr(self, "config", None)
         if config_value:
             return config_value.get(key, default)
         return default
 
     def set_config(self, key: str, value: Any) -> None:
         """Set configuration value by key."""
-        config_value = getattr(self, 'config', None)
+        config_value = getattr(self, "config", None)
         if config_value is None:
-            setattr(self, 'config', {})
-        config_dict = getattr(self, 'config', {})
+            setattr(self, "config", {})
+        config_dict = getattr(self, "config", {})
         config_dict[key] = value
-        setattr(self, 'config', config_dict)
+        setattr(self, "config", config_dict)
 
     def update_config(self, updates: Dict[str, Any]) -> None:
         """Update multiple configuration values."""
-        config_value = getattr(self, 'config', None)
+        config_value = getattr(self, "config", None)
         if config_value is None:
-            setattr(self, 'config', {})
-        config_dict = getattr(self, 'config', {})
+            setattr(self, "config", {})
+        config_dict = getattr(self, "config", {})
         config_dict.update(updates)
-        setattr(self, 'config', config_dict)
+        setattr(self, "config", config_dict)
 
 
 class ValidationMixin:
@@ -353,16 +350,24 @@ def get_alembic_config():
     try:
         from alembic.config import Config  # type: ignore
     except ImportError:
-        raise ImportError("Alembic is not installed. Install it with: pip install alembic")
+        raise ImportError(
+            "Alembic is not installed. Install it with: pip install alembic"
+        )
 
     # Path to alembic.ini file
-    alembic_cfg = Config(str(Path(__file__).parent.parent.parent.parent / \
-                         "engine-infra" / "config" / "alembic.ini"))
+    alembic_cfg = Config(
+        str(
+            Path(__file__).parent.parent.parent.parent
+            / "engine-infra"
+            / "config"
+            / "alembic.ini"
+        )
+    )
 
     # Set script location
     alembic_cfg.set_main_option(
         "script_location",
-        str(Path(__file__).parent.parent.parent.parent / "engine-infra" / "alembic")
+        str(Path(__file__).parent.parent.parent.parent / "engine-infra" / "alembic"),
     )
 
     # Set database URL
@@ -390,16 +395,12 @@ async def check_database_health() -> Dict[str, Any]:
             "status": "healthy",
             "database": "connected",
             "engine": str(engine.url),
-            "pool_size": getattr(engine.pool, 'size', lambda: 0)(),
-            "checked_in": getattr(engine.pool, 'checkedin', lambda: 0)(),
-            "checked_out": getattr(engine.pool, 'checkedout', lambda: 0)(),
+            "pool_size": getattr(engine.pool, "size", lambda: 0)(),
+            "checked_in": getattr(engine.pool, "checkedin", lambda: 0)(),
+            "checked_out": getattr(engine.pool, "checkedout", lambda: 0)(),
         }
     except Exception as e:
-        return {
-            "status": "unhealthy",
-            "error": str(e),
-            "database": "disconnected"
-        }
+        return {"status": "unhealthy", "error": str(e), "database": "disconnected"}
 
 
 # Export commonly used items
@@ -424,5 +425,5 @@ __all__ = [
     "engine",
     "test_engine",
     "DATABASE_URL",
-    "TEST_DATABASE_URL"
+    "TEST_DATABASE_URL",
 ]

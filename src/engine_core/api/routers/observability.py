@@ -12,8 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from engine_core.api.dependencies import get_current_user
-from engine_core.core.project_service import ProjectService
 from engine_core.api.schemas.enums import LogLevel
+from engine_core.core.project_service import ProjectService
 from engine_core.shared_types.engine_types import EngineError
 
 

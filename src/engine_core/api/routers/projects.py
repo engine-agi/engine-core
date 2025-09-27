@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from engine_core.api.dependencies import get_current_user, get_event_broadcaster
 from engine_core.api.websocket import EventType
-from engine_core.core.project_service import ProjectService, ProjectLimits
+from engine_core.core.project_service import ProjectLimits, ProjectService
 from engine_core.shared_types.engine_types import EngineError
 
 

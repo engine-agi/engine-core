@@ -1,17 +1,4 @@
 """
-from abc import abstractmethod
-from enum import Enum
-from dataclasses import dataclass
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from pydantic import Field
-from typing import Optional, List, Dict, Any
-
-from datetime import datetime
-from typing import Optional, List, Dict, Any
 Team Service Layer - Business Logic for Team Management.
 
 The TeamService provides high-level business logic for team management,
@@ -36,20 +23,22 @@ Architecture:
 import asyncio
 import logging
 import uuid
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from pydantic import Field
 
 # Import core team system
+from ..core.teams import (
     TeamBuilder, BuiltTeam, TeamExecutionContext, TeamTask, TeamMember,
     TeamCoordinationStrategy, TeamMemberRole, TeamExecutionMode, TeamState
 )
 
 # Import agent service for member management
+from .agent_service import AgentService
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
@@ -95,7 +84,7 @@ class TeamCreateRequest:
     description: Optional[str] = None
     coordination_strategy: TeamCoordinationStrategy = TeamCoordinationStrategy.HIERARCHICAL
     execution_mode: TeamExecutionMode = TeamExecutionMode.SYNCHRONOUS
-    members: List[Dict[str, Any]] = None
+    members: Optional[List[Dict[str, Any]]] = None
     protocol_id: Optional[str] = None
     workflow_id: Optional[str] = None
     book_id: Optional[str] = None
@@ -170,27 +159,27 @@ class TeamRepository(ABC):
     """Abstract repository interface for team data access."""
 
     @abstractmethod
-    async def create(self, team_data: Dict[str, Any]) -> 'Team':
+    async def create(self, team_data: Dict[str, Any]) -> Dict[str, Any]:
         """Create new team in database."""
         pass
 
     @abstractmethod
-    async def get_by_id(self, team_id: str) -> Optional['Team']:
+    async def get_by_id(self, team_id: str) -> Optional[Dict[str, Any]]:
         """Get team by ID."""
         pass
 
     @abstractmethod
-    async def get_by_project_id(self, project_id: str) -> List['Team']:
+    async def get_by_project_id(self, project_id: str) -> List[Dict[str, Any]]:
         """Get teams by project ID."""
         pass
 
     @abstractmethod
-    async def list_all(self, skip: int = 0, limit: int = 100) -> List['Team']:
+    async def list_all(self, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
         """List all teams with pagination."""
         pass
 
     @abstractmethod
-    async def update(self, team_id: str, update_data: Dict[str, Any]) -> Optional['Team']:
+    async def update(self, team_id: str, update_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Update team."""
         pass
 
@@ -372,7 +361,7 @@ class TeamService:
             logger.info(f"Created team {request.id}", extra={
                 'team_id': request.id,
                 'coordination_strategy': request.coordination_strategy.value,
-                'member_count': len(request.members),
+                'member_count': len(request.members or []),
                 'created_by': request.created_by
             })
 
@@ -434,6 +423,8 @@ class TeamService:
 
             # Update in database
             updated_team = await self.repository.update(team_id, update_data)
+            if updated_team is None:
+                raise TeamServiceError(f"Failed to update team {team_id}")
 
             # Invalidate cached team if exists
             if team_id in self._active_teams:
@@ -720,6 +711,8 @@ class TeamService:
         """Get team execution statistics."""
         try:
             team = await self.get_team(team_id)
+            if team is None:
+                raise TeamNotFoundError(f"Team {team_id} not found")
 
             # Get built team stats if active
             built_team_stats = None
@@ -764,7 +757,7 @@ class TeamService:
             raise TeamValidationError(f"Team with ID {request.id} already exists")
 
         # Validate members exist if provided
-        for member_data in request.members:
+        for member_data in request.members or []:
             agent_id = member_data.get('agent_id')
             if agent_id:
                 try:
@@ -788,7 +781,7 @@ class TeamService:
                 builder.with_metadata(request.metadata)
 
             # Add members
-            for member_data in request.members:
+            for member_data in request.members or []:
                 builder.add_member(
                     agent_id=member_data['agent_id'],
                     role=TeamMemberRole(member_data.get('role', 'member')),
@@ -812,6 +805,8 @@ class TeamService:
 
         # Get team data from repository
         team_data = await self.get_team(team_id)
+        if team_data is None:
+            raise TeamNotFoundError(f"Team {team_id} not found")
 
         # Get agents for team members
         agents = {}
@@ -920,10 +915,19 @@ class TeamService:
 
                 # Calculate execution time if available
                 if task.started_at and task.completed_at:
-                    start = datetime.fromisoformat(
-                        task.started_at.replace('Z', '+00:00'))
-                    end = datetime.fromisoformat(
-                        task.completed_at.replace('Z', '+00:00'))
+                    # Handle both string and datetime formats
+                    if isinstance(task.started_at, str):
+                        start = datetime.fromisoformat(
+                            str(task.started_at).replace('Z', '+00:00'))
+                    else:
+                        start = task.started_at
+
+                    if isinstance(task.completed_at, str):
+                        end = datetime.fromisoformat(
+                            str(task.completed_at).replace('Z', '+00:00'))
+                    else:
+                        end = task.completed_at
+
                     execution_time = (end - start).total_seconds()
 
                     # Update average (simple moving average)

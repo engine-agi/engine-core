@@ -16,13 +16,13 @@ from engine_core.api.dependencies import get_current_user, get_event_broadcaster
 from engine_core.api.websocket import EventType
 from engine_core.core.project_service import ProjectService
 from engine_core.core.teams.team_builder import TeamCoordinationStrategy
-from engine_core.shared_types.engine_types import EngineError
 from engine_core.services.agent_service import AgentService
 from engine_core.services.team_service import (
     TaskExecutionRequest,
     TeamCreateRequest,
     TeamService,
 )
+from engine_core.shared_types.engine_types import EngineError
 
 
 class TeamSummary(BaseModel):

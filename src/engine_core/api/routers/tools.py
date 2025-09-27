@@ -14,8 +14,8 @@ from pydantic import BaseModel, Field
 from engine_core.api.dependencies import get_current_user
 from engine_core.api.websocket import EventType, get_event_broadcaster
 from engine_core.core.project_service import ProjectService
-from engine_core.shared_types.engine_types import EngineError, ToolType
 from engine_core.services.tool_service import ToolService
+from engine_core.shared_types.engine_types import EngineError, ToolType
 
 
 class ToolAuthentication(BaseModel):

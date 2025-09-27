@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 # Type checking imports to avoid circular imports
 if TYPE_CHECKING:
-    from ...models.workflow import Workflow, WorkflowVertex, WorkflowEdge
+    from ...models.workflow import Workflow, WorkflowEdge, WorkflowVertex
     from ..agents.agent_builder import BuiltAgent
     from ..teams.team_builder import BuiltTeam
 

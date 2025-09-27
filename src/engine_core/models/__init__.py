@@ -19,15 +19,28 @@ Usage:
 
 
 # Base classes and mixins
+from pydantic import BaseModel
+from .base import (
+    StringIdentifierMixin,
+    ConfigurationMixin,
+    ValidationMixin,
+)
 
 # Core domain models
+from .project import Project
+from .agent import Agent
+from .team import Team
+from .workflow import Workflow, WorkflowVertex, WorkflowEdge
+from .protocol import Protocol
+from .tool import Tool
+from .book import Book, BookChapter, BookPage
 
 # Infrastructure models
+from .infrastructure import User, Session, Log
 
 # Export all models
 __all__ = [
     # Base classes
-    "BaseModel",
     "StringIdentifierMixin",
     "ConfigurationMixin",
     "ValidationMixin",
